@@ -1,0 +1,175 @@
+
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+#include "opcode_6502.h"
+#include "opcodes.h"
+#include "rom_file.h"
+#include "cpu6502.h"
+#include "nes.h"
+#include "instruction6502.h"
+#include "label.h"
+#include "recompilateur.h"
+
+
+Crecompilateur::Crecompilateur()
+{
+  strcpy(m_error_str, "");
+}
+
+void Crecompilateur::labelgen(t_label *plabel)
+{
+  static int jsr = 0;
+  static int jmp = 0;
+  static int ind = 0;
+
+  if (plabel->is_jsr)
+    plabel->countjsr = jsr++;
+  else
+    plabel->countjsr = -1;
+  if (plabel->is_staticjmp)
+    plabel->countjmp = jmp++;
+  else
+    plabel->countjmp = -1;    
+  if (plabel->is_indirectjmp)
+    plabel->countijmp = ind++;
+  else
+    plabel->countijmp = -1;
+  assert(jmp < 10000 && jsr < 10000);
+}
+
+void Crecompilateur::create_label_list(Cprogramlisting *plisting,
+				       Copcodes *pops)
+{
+  t_label         tmplabel;
+  Instruction6502 *pinstr;
+  bool            bstart = true;
+
+  pinstr = plisting->get_next(bstart);
+  bstart = false;
+  while (pinstr != NULL)
+    {
+      if (pinstr->is_label())
+	{
+
+	  assert(pinstr->label_category(pops, &tmplabel.is_jsr, &tmplabel.is_staticjmp, &tmplabel.is_indirectjmp));
+	  labelgen(&tmplabel);
+	  tmplabel.addr = pinstr->addr;
+	  m_label_gen_list.push_front(tmplabel);
+	}
+      pinstr = plisting->get_next(bstart);
+    }
+}
+
+t_label_list *Crecompilateur::get_label_gen_info()
+{
+  return &m_label_gen_list;
+}
+
+t_label *Crecompilateur::findlabel(int addr)
+{
+  t_label_list::iterator LI;
+
+  for (LI = m_label_gen_list.begin(); LI != m_label_gen_list.end(); LI++)
+    {
+      if ((*LI).addr == addr)
+	return (&(*LI));
+    }
+  return NULL;
+}
+
+// Only instructions addressing 16bits are replaced.
+// And this 16bit address must access an IO port or the backup ram, and not the joystick 1 register.
+int Crecompilateur::isreplaced(t_pinstr pinstr, Copcodes *popcode_list)
+{
+  int addressing;
+  int ret;
+  int addr;
+
+  addressing = popcode_list->addressing(pinstr->opcode);
+  assert (addressing >= 0);
+  ret = noreplace;
+  switch (addressing)
+    {
+    case Ind:
+      return replaceJumpIndirect;
+    case Abs:
+    case AbsX:
+    case AbsY:
+    case IndX:
+    case IndY:
+      addr = pinstr->operand;
+      if (IS_PORT(addr) && addr != JOYSTICK1)
+	{
+	  return replaceIOPort;
+	}
+      if (IS_PORT_RANGE(addr) && addr != JOYSTICK1)
+	{
+	  snprintf(m_error_str, sizeof(m_error_str),
+		   "unknown Io port $%4X", addr);
+	  throw int(1);
+	}
+      if (IS_BACKUP_RAM_RANGE(pinstr->addr))
+	return replaceBackupRam;
+    default:
+      break;
+    };
+  return noreplace;
+}
+
+int Crecompilateur::re(const char *outname, Cprogramlisting *plisting,
+		       Copcodes *popcode_list, Crom_file *prom)
+{
+  FILE *fp;
+  Instruction6502 *pinstr;
+
+  try
+    {
+      fp = fopen(outname, "w");
+      if (fp == NULL)
+	{
+	  snprintf(m_error_str, sizeof(m_error_str),
+		   "opening file %s failed", outname);
+	  throw int(1);
+	}
+      //      fp = stdout;
+      create_label_list(plisting, popcode_list);
+      writeheader(fp);
+      // Label d'entrée dans le programme nes
+      fprintf(fp, "NESReset:\n");
+      pinstr = plisting->get_next(true);
+      while (pinstr != NULL)
+	{
+	  printlabel(fp, pinstr);
+	  switch (isreplaced(pinstr, popcode_list))
+	    {
+	    case noreplace:
+	      outinstr(fp, pinstr, popcode_list);
+	      break;
+	    case replaceIOPort:
+	      outReplaceIOport(fp, pinstr, popcode_list);
+	      break;
+	    case replaceBackupRam:
+	      //outReplaceBackupRam(fp, pinstr, popcode_list);
+	      break;
+	    case replaceJumpIndirect:
+	      outReplaceJumpIndirect(fp, pinstr, popcode_list);
+	      break;
+	    default:
+	      break;
+	    };
+	  pinstr = plisting->get_next(false);
+	}
+      fprintf(fp, "\n");
+      // io port accesses are replaced by a jsr to a routine,
+      // the routines are written here.
+      writeiop_routines(fp, plisting, popcode_list);
+      fprintf(fp, "\n.ENDS\n");
+      fclose(fp);
+    }
+  catch (int e)
+    {
+      return 1;
+    }
+  return 0;
+}

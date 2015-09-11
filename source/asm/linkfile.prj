@@ -1,0 +1,6 @@
+[objects]
+init.o
+recomp.o
+instructions.o
+iopemulation.o
+indjmp.o

@@ -1,0 +1,169 @@
+NES MEMORY MAP
+#########################################################################################################
+// CPU memory map
+
+--------------------------------------- $0000
+ 2kB Internal RAM, mirrored 4 times
+
+2kb = 0x800
+The first 2k of snes sram at the same address will be used for it.
+Every access to a mirrored sram bank over 0x0800 on th nes must be converted to the equivalent access in 0x0000 to 0x0800.
+The stack stays the same in the second 256B page.
+
+--------------------------------------- $2000
+ Input/Output
+
+Every access to an io port is emulated using a jsr to an emulation routine (except writes to $4016 kept as it is)
+Every access to an unsuported port is a critical error stoping the recompilation.
+
+--------------------------------------- $5000
+ Expansion Modules
+
+Every access to an unsuported port is a critical error stoping the recompilation.
+
+--------------------------------------- $6000
+ Cartridge RAM (may be battery-backed)
+
+0x2000 = 8KB
+Should be conveted to backup ram in snes address space: 
+? 00-3F   6000-7FFF       Expansion RAM? Same address but not used on most cartridges
+or
+? 7D      0000-7FFF       Backup SRAM <- 32KB always present on copiers, and mostly
+                          used on cartridges for save ram. This one should be used.
+			  And therefore an address conversion from 00:6000 to 7D:6000 or 7D:0000
+The next banks 7E and 7F are the 128KB of work ram, and are not used for backup data.
+
+--------------------------------------- $8000
+ Lower Bank of Cartridge ROM
+
+--------------------------------------- $C000
+ Upper Bank of Cartridge ROM
+
+CHR Roms are maped in a snes 64K rom bank at the same base address: $8000
+
+#########################################################################################################
+// PPU memory map
+--------------------------------------- $4000
+ Empty
+Every access to this area must do nothing and probably print a warning
+
+--------------------------------------- $3F20
+ Sprite Palette
+--------------------------------------- $3F10
+ Image Palette
+
+The super nes has a palette of 256 bgr colors. The first 16 can be Background palette and the next 16 Sprite palette
+The first color of each 4 color nes palette must be the same for every multiple of 4 color index. Thus a software
+test must emulate the behaviour of the nes first color mirroring. (In the case of the background, a second background using
+this color can be used, and the first color is transparent for the first background. This in order to minimise the writes
+to the palette ram.)
+
+--------------------------------------- $3F00
+ Empty
+Every access to this area must do nothing and probably print a warning
+
+--------------------------------------- $3000
+ Attribute Table 3
+--------------------------------------- $2FC0
+ Name Table 3 (32x30 tiles)
+--------------------------------------- $2C00
+ Attribute Table 2
+Uses the BG2 plane
+--------------------------------------- $2BC0
+ Name Table 2 (32x30 tiles)
+Uses the BG2 plane
+--------------------------------------- $2800
+ Attribute Table 1
+--------------------------------------- $27C0
+ Name Table 1 (32x30 tiles)
+--------------------------------------- $2400
+ Attribute Table 0
+Selects the 4 color palette of each tile. On the super nes this is included in the tile map, upper 4bits.
+Uses the BG1 plane
+--------------------------------------- $23C0
+ Name Table 0 (32x30 tiles)
+Selects the tile from 256 indexes in the CHR data. On the super nes this is included in the tile map, lower 8 bits.
+Uses the BG1 plane
+--------------------------------------- $2000
+ Pattern Table 1 (256x2x8, may be VROM)
+Stored in the following snes ppu VRAM at $1000
+The snes tile map can access 1024 tiles. The background granularity is 8KB While it is 4KB on the nes, thus
+the CHR select must be emulated or vram space is not available for BG patterns. Using upper 2 bits of tile
+number to select the extra 2KB banks can work but would be slow.
+Total CHR memory in VRAM is 16kB. Is it used for background and sprites. The extra 8KB can be used to emulate
+CHR bank switching.
+Anyway snes VRAM is 64KB, 40KB can be used for CHR data (5x8KB CHR banks). And 128K of SRAM also.
+
+--------------------------------------- $1000
+ Pattern Table 0 (256x2x8, may be VROM)
+Stored in the begining of the snes ppu VRAM at $0000
+
+--------------------------------------- $0000
+
+#########################################################################################################
+// Sprite memory map
+--------------------------------------- $0000
+ Nes sprite attributes (256 Bytes, 63 x 4Bytes)
+ Stored in the snes OAM data (512Bytes)
+
+
+
+#########################################################################################################
+SNES MEMORY MAP
+#########################################################################################################
+
+The animated background makes use of bank switching (4 banks on smb2).
+The sprite bank switches less often and not all the bank.
+A DMA transfer from WRAM could be intersting for simulating the sprite CHR bank switching.
+
+Snes VRAM, 64kB - 32kW:
+------------------------
+$0000
+  SPRITE 4bpp CHR 8KB 4KW
+  Ascii tiles     4KB 2KW
+  - Empty -       4KB 2KW
+------------------------
+$2000    8KW
+  BG CHR          4KB 2kW
+  - Empty -       4KB 2KW
+  BG CHR          4KB 2kW
+  - Empty -       4KB 2KW
+ascii table CHR 2K $3800
+------------------------
+$4000   16KW
+  BG CHR          4KB 2kW
+  - Empty -       4KB 2KW
+  BG CHR          4KB 2kW
+  - Empty -       4KB 2KW
+------------------------
+$6000   24KW
+  BG Nametable   16KB 8KW
+  4 nametables of 2KB each
+$7FFF
+------------------------
+
+SPRITE TABLES 256B are in the snes "Object Aattribute Memory" (OAM)
+
+
+Snes SRAM:
+
+8kB sram at 0x0000:
+first 2KB is the nes ram
+next 2KB begining at 0x0800 are used for emulation, storing apu ppu states.
+next 4KB begining at 0x1000 can be used as work buffer.
+
+32KB save ram at 7D:0000 is used to store the backup ram data of the nes game originaly located at 0x6000.
+
+128K wram: 64K in 7E:2000 and 64K in 7F:0000 (the first 8K bytes of the bank 7E are the mirroring of the sram at 00:0000).
+This 120KB memory is used as a cache to store converted CHR data and as DMA source data
+40K for 10 BG CHRs
+80K for 10 Sprites CHRs
+later 32k for the prg switching will be needed then only 2x5CHR banks will be stored here
+
+ROM:
+
+Bank 1 is the recompiled prg
+Bank 2 is the original prg rom
+Bank 3 contains the CHR data
+
+
