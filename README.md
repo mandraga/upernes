@@ -31,7 +31,7 @@ graphic data.
 
 Status:
 The disassembler and assembler coded in C++ is nearly finished since 2011.
-The emulated PPU is work in progress, it must be taken at once with a clear view of what os programmed.
+The emulated PPU is work in progress, it must be taken at once with a clear view of what is programmed.
 Any working contribution will be apreciated. Basically, the remaining work is: finish the io APU emulation,
 integrate the NSF player for SNES by Memblers, add/fix interrupts. And finally add comon bank switching for
 bigger roms.
