@@ -30,16 +30,14 @@ graphic data.
 (check source/asm/memap.txt for information on code and data remaping)
 
 Status:
-The disassembler and assembler coded in C++ is nearly finished.
-The emulated PPU is work in progress, any working contribution will be apreciated. Basically, the remaining
-work is: finish the io APU emulation, integrate the NSF player for SNES by Memblers, add/fix interrupts.
-Bonus to do: add comon bank switching.
-The emulation part is very tricky because not everything is at his original place and because of assembler.
+The disassembler and assembler coded in C++ is nearly finished since 2011.
+The emulated PPU is work in progress, it must be taken at once with a clear view of what os programmed.
+Any working contribution will be apreciated. Basically, the remaining work is: finish the io APU emulation,
+integrate the NSF player for SNES by Memblers, add/fix interrupts. And finally add comon bank switching for
+bigger roms.
+The emulation part is very tricky because not everything is at his original place and because of the assembler
+langage.
 
-
-Developed in 2010-2011 by Patrick Xavier Areny
-
-Released on GitHub in sept 2015 under the GPL licence.
-
+Copyright 2015 Patrick Xavier Areny released under the GPL licence.
 
 
