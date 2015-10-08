@@ -247,7 +247,7 @@ int Cdisasm::disasm_addr(Copcodes *pops, Crom_file *prom,
   unsigned long instruction;
   
   m_cur_addr = addr;
-  printf("\nDesassemblage de %s a 0x%x:\n", addr_name, addr);
+  printf("\nDisassembling %s at 0x%x:\n", addr_name, addr);
   while ((ret = get_next_instruction(&instruction, pops, prom, pindjmp)) != stopdisasm)
     {
       switch (ret)
@@ -280,7 +280,7 @@ int Cdisasm::disasm_addr(Copcodes *pops, Crom_file *prom,
       update_screen();
 #endif
     }
-  printf("Desassemblage fini\n");
+  printf("Disassembling finished\n");
   return 0;
 }
 

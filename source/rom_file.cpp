@@ -128,7 +128,7 @@ int Crom_file::open_nes(char *file_path)
   unsigned char header[16];
   int  size;
 
-  fp = fopen(file_path, "r");
+  fp = fopen(file_path, "rb");
   if (fp == NULL)
     {
       snprintf(m_error_str, sizeof(m_error_str), "open file %s", file_path);

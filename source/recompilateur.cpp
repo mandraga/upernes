@@ -97,12 +97,10 @@ t_label *Crecompilateur::findlabel(int addr)
 int Crecompilateur::isreplaced(t_pinstr pinstr, Copcodes *popcode_list)
 {
   int addressing;
-  int ret;
   int addr;
 
   addressing = popcode_list->addressing(pinstr->opcode);
   assert (addressing >= 0);
-  ret = noreplace;
   switch (addressing)
     {
     case Ind:

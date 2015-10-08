@@ -243,7 +243,7 @@ void Cprogramlisting::print_IO_accessed()
   for (pind = 0; pind < NBIOPORTS; pind++)
     {
       if (m_IOaccesses[pind].size())
-	printf("%4d access%s to port $%04x %s.\n", m_IOaccesses[pind].size(),
+	printf("%4d access%s to port $%04x %s.\n", (int)m_IOaccesses[pind].size(),
 	       m_IOaccesses[pind].size() > 1? "es" : "  ",
 	       CnesIO::m_nesios[pind].addr, CnesIO::m_nesios[pind].name);
 //       for (II = m_listing.begin(); II != m_listing.end(); II++)

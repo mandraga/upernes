@@ -3,11 +3,28 @@
 #
 #
 
+#OPERATINGON=__LINUX
+OPERATINGON=__WINDOWS
+RELEASE=TRUE
+
 CC = g++
+INCLUDES = "/usr/include/"
+
+
+CC = g++
+C  = gcc
 CFLAGS = -Wall -g -c
 LIB = -L./video/ -lvideo -lSDL
+ifeq ($(OPERATINGON),__LINUX)
+CONSOLEFLAG=
+EXT=
+else
+CONSOLEFLAG=-mconsole
+EXT=.exe
+endif
 
 EXE_NAME=upernes
+
 
 default: all
 
@@ -18,23 +35,25 @@ clean:
 
 .PHONY: test
 test:
-	cat opcodes.txt | ./test_lex_yy
+	cat opcodes.txt | ./test_lex_yy$(EXT)
 
 testzz:
-	cat opcodes.txt | ./test_lex_zz
+	cat opcodes.txt | ./test_lex_zz$(EXT)
 
 lex.yy.o: opcode_desctxt.l parse_codes.h yywrap.c
 	flex opcode_desctxt.l
-	cc -c lex.yy.c
-	cc -c yywrap.c
-	cc lex.yy.o -o test_lex_yy -lfl
+	$(C) -c lex.yy.c
+	$(C) -c yywrap.c
+	$(C) -c test_lex_yy.c
+	$(C) lex.yy.o yywrap.o test_lex_yy.o -o test_lex_yy$(EXT) $(CONSOLEFLAG)
+#-lfl
 
 lex.zz.o: runtimeaddrcfg.l parse_codes.h zzwrap.c
 	flex -P zz runtimeaddrcfg.l
-	cc -c lex.zz.c
-	cc -c zzwrap.c
-	cc -c test_lex_zz.c
-	cc lex.zz.o zzwrap.o test_lex_zz.o -o test_lex_zz
+	$(C) -c lex.zz.c
+	$(C) -c zzwrap.c
+	$(C) -c test_lex_zz.c
+	$(C) lex.zz.o zzwrap.o test_lex_zz.o -o test_lex_zz$(EXT) $(CONSOLEFLAG)
 
 opcode_6502.o: opcode_6502.h
 parser.o: parser.h parse_codes.h
@@ -64,6 +83,6 @@ $(objects): %.o: %.cpp
 	$(CC) $(CFLAGS) $<
 
 all: lex.yy.o lex.zz.o $(objects)
-	@echo "-------- Makes: $(EXE_NAME)"
-	$(CC) $(flexObjects) $(objects) -Lsystem/ $(LIB) -o $(EXE_NAME)
+	@echo "-------- Makes: $(EXE_NAME)$(EXT)"
+	$(CC) $(flexObjects) $(objects) -Lsystem/ $(LIB) -o $(EXE_NAME)$(EXT) $(CONSOLEFLAG)
 

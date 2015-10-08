@@ -101,7 +101,10 @@ int main(int argc, char *argv[])
   if (argc > 1)
     ROMpath = argv[1];
   else
-    return 0;
+    {
+      printf("Usage: upernes romname.nes\n\n");
+      return 0;
+    }
   scr.init_video(640, 480);
   popcode_list = NULL;
   popcode_list = new Copcodes();
