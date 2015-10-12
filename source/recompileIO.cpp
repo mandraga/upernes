@@ -277,8 +277,8 @@ void Crecompilateur::outReplaceIOport(FILE *fp, t_pinstr pinstr,
       ReplaceAbsXAddressing(fp, pinstr, popcode_list, replaced);
       break;
     case AbsY:
-      break;
       ReplaceAbsYAddressing(fp, pinstr, popcode_list, replaced);
+      break;
     default:
       {
 	printf("IO addressing not yet programmed (in recompileIO.cpp)\n");
