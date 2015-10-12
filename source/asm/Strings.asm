@@ -57,10 +57,10 @@ textcpy:
 	; Vram increments 1 by 1 after VMDATAH write
 	lda #$80
 	sta VMAINC
-	; Tile map is at $B000 (CHR data is at $3800 ($1C00 word @))
+	; Tile map is at $1800W (CHR data is at $1000W)
 	lda #$00
-	sta VMADDL		; Word address (= $5800word for $B000byte)
-	lda #$58
+	sta VMADDL		; Word address
+	lda #$18
 	sta VMADDH
 	; Counters
 	ldy #$0400		; Total number of tiles 32x32, 1024 tiles for a screen
@@ -68,7 +68,7 @@ textcpy:
 BG3strloop:
 	lda TextBuffer.w,X	; Ascii tile number
 	sta VMDATAL		; Flip tile & palette selection: 0
-	lda #$01		; Second set of 256 tiles
+	lda #$00		; Palette 0 low priority
 	sta VMDATAH		; tile attributes high byte
 	inx
 	dey
@@ -117,9 +117,12 @@ Print:
 	rep #$10	        ; A/mem=8bit, X/Y=16bit
 	sep #$20
 
-	; ASCII CHR is at $3800 = $2000 + 6 x 1024 first tile is at 128+256. Offset 256 in the high byte set by the
-	; textclr toutine and 128 is set here as the ORA $80.
-	ORA #$80
+	; ASCII CHR is at $1000W = $2000B, first tile is at +?????
+	
+	; textclr routine and 128 is set here as the ORA $80
+	;;  FIXME what is the offset????
+	;ORA #$00		;
+	
 	LDX Cursor
 	STA TextBuffer, X	; Output character
 	INX
@@ -146,10 +149,10 @@ Print:
 ;       \\ -- normal slash
 ;     String pointers all refer to current Data Bank (DB)
 PrintF:         ;Assumes 8b mem, 16b index
-	PHP
 	PHA
 	PHX
 	PHY
+	PHP
 
 	rep #$10	        ; A/mem=8bit, X/Y=16bit
 	sep #$20
@@ -167,10 +170,10 @@ NormalPrint:
 	BRA PrintFLoop
 
 PrintFDone:
+	PLP
 	PLY
 	PLX
 	PLA
-	PLP
 	RTS
 
 PrintFControl:

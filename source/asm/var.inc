@@ -5,14 +5,14 @@
 ;--------------------------------------------------------------------
 .DEFINE	RAMBASE	$0800		; 2kB
 
-;; Variables pour ne pas utiliser la pile lors des appels d'émulation des E/S
+;; Theese variables are used to avoid using the stack when emulating I/O ports
 .DEFINE Acc	        RAMBASE
 .DEFINE Xi	        RAMBASE + 2
 .DEFINE Yi	        RAMBASE + 4
 .DEFINE SP	        RAMBASE + 6
 .DEFINE Flags	        RAMBASE + 8
 
-;; Addresse du port à émuler
+;; Address of the port to emulate
 .DEFINE IOAddr	        RAMBASE + 10
 
 .DEFINE IndirAddress    RAMBASE + 12
@@ -32,6 +32,7 @@
 .DEFINE PPUmemaddrB		IOBASE + 6	; Low/Hight byte write
 
 .DEFINE tmp_addr		IOBASE + 7	; Word, tmp address storage
+.DEFINE tmp_dat 		IOBASE + 9	; Word, tmp data storage
 
 .DEFINE PPUcontrolreg1		IOBASE + 12
 .DEFINE PPUcontrolreg2		IOBASE + 14
@@ -39,14 +40,28 @@
 .DEFINE	SpriteMemoryAddress	IOBASE + 16
 .DEFINE PPTMP                   IOBASE + 17
 
-.DEFINE CurScrolRegister        IOBASE + 20     ; 0 or 1 selects teh vertical scroll register
+.DEFINE CurScrolRegister        IOBASE + 20     ; 0 or 1 selects the vertical scroll register
 
-.DEFINE attributeaddr           IOBASE + 22	; Used for nes attribute table
+.DEFINE attributeaddr           IOBASE + 22	; Used as the nes attribute table
 
 ;--------------------------------------------------------------------
 .DEFINE SpriteMemoryBase	$0A00           ; 256 bytes
 
 ;--------------------------------------------------------------------
 ; String buffer
-.DEFINE TextBuffer	        $0C00	        ; 1KB for the text buffer
-; $0C00 $0D00 $0E00 $0F00 pages are FULL
+.DEFINE Printfbuffer            $0C00           ; 16bytes for the printf parameters
+.DEFINE TextBuffer	        $0C10	        ; 512B for the text buffer
+; $0C00 $0D00
+
+.DEFINE SPRITEFLAGSCONVTABLE    $0E00           ; Precalculated sprite flags nes to super nes, 256 bytes
+; $0F00 not used
+
+
+
+;--------------------------------------------------------------------
+;               SNES VRAM defines (WORD addresses)
+;--------------------------------------------------------------------
+.DEFINE NAMETABLE1BASE          $7000
+.DEFINE NAMETABLE2BASE          $7400
+
+

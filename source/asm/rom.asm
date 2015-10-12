@@ -26,14 +26,17 @@
 
 ;; --------------------------------------------------------------------
 ; PRG
+/*
+	Created by the software
 .BANK 1 SLOT 0
-.ORG 16384
+.ORG 0
+;.ORG 16384
 ; .SECTION "OriginalPRGrom"
 	
 PRGrom:
 	.INCBIN "nesprg.bin"
 ;.ENDS
-
+*/
 ;; --------------------------------------------------------------------
 ; CHR
 .BANK 2 SLOT 0

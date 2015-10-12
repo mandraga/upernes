@@ -3,7 +3,7 @@
 	;; using io ports must be replaced by code doing the equivalent thing 
 	;; on the super nes.
 	;;
-	;; Documentation for io ports from the "Nintendo Entertainment System
+	;; Documentation for io ports taken from the "Nintendo Entertainment System
 	;; Architecture" version 2.6 (01/24/2005) by Marat Fayzullin
 
 .include "snesregisters.inc"
@@ -23,6 +23,7 @@
 .ORG 0
 .SECTION "IOemulation"
 
+;; Write ports
 IOWroutinestable:
 .DW	WPPUC1			; $2000
 .DW	WPPUC2			; $2001
@@ -61,7 +62,7 @@ IOWroutinestable:
 .DW	WJOYSTICK1		; $4016 WJOYSTICK1
 .DW	WSNDSEQUENCER		; WSNDSEQUENCER / WJOYSTICK2
 
-
+;; Read ports
 IORroutinestable:
 .DW	RPPUC1			; $2000
 .DW	RPPUC2			; $2001
@@ -127,44 +128,78 @@ IORroutinestable:
 ;       |   7 | VBlank Enable, 1 = generate interrupts on VBlank.
 
 WPPUC1:
+	sep #$30		; All 8 bit
 	sta PPUcontrolreg1
+	;; ------------------------------------------
+	;; Test Nametable @ bits
+	;; Mirroring is the default value. FIXME add cartridge nametables?
+	and #$01
+	beq firstnametableaddress  ; If zero flag then it it the first nametable
+        lda #$74                ; (1k word segment $7400 / $400)=$1D << 2
+	ora #$01                ; Right screen following the first one
+        sta BG1SC
+	jmp endnametableaddress
+firstnametableaddress:	
+        lda #$70                ; (1k word segment $7000 / $400)=$1C << 2
+	ora #$01                ; Right screen following the first one
+        sta BG1SC
+endnametableaddress:
 	;; ------------------------------------------
 	;; Sprite pattern table address
 	lda #$08
-	bit PPUcontrolreg1	; test if bit 3 (#$08), zero if not set (and result)
+	bit PPUcontrolreg1	; test bit 3 (#$08), zero if not set ("bit and" result)
 	bne Spritesinsecondbank
-	;; $0000 in snes Vram
-	lda #$00                ; 8x8 sprites @ $0000 8KB segment 0
-	sta OBSEL
+	;; Do a conversion in the WRAM and then a DMA transfert to $0000 in vram
+	lda #$00		;; TODO use a table to organise the sprite buffers as a cache
+	ldy #$00
+	jsr NesSpriteCHRtoWram
+	jsr DMA_WRAMtoVRAM_sprite_bank
 	jmp Spritebankend
 Spritesinsecondbank:
-	;; $4000 in snes Vram
-	lda #$01		; 8x8 sprites @ $4000 8kB segment 2
-	sta OBSEL
+	lda #$01
+	ldy #$01
+	jsr NesSpriteCHRtoWram
+	jsr DMA_WRAMtoVRAM_sprite_bank
+	jmp Spritebankend
 Spritebankend:
+	sep #$30		; All 8 bit
 	;; ------------------------------------------
 	;; Test Screen Pattern Table Address (BG chr 4kB bank 0 or 1)
 	lda #$10
 	bit PPUcontrolreg1
 	bne secondbgchrbank
-	lda #$01		; 0x0001 -> 4kWord=8kB segment 1
+	lda #$02		; 0x0002 -> 4kWord=8kB segment 2
 	sta BG12NBA		; CHR data in VRAM starts at 0x2000
 	jmp BGbankend
 secondbgchrbank:
 	lda #$03		; 0x0003 -> 4kWord=8kB segment 3
-	sta BG12NBA		; CHR data in VRAM starts at 0x6000
+	sta BG12NBA		; CHR data in VRAM starts at 0x3000
 BGbankend:
 	;; ------------------------------------------
-	;; Test Vblank
-	lda #$80
-	bit PPUcontrolreg1
-	bne vblank
+	;; Sprite size
+	
+	;; ------------------------------------------
+
+	;; FIXME is it used on the nes?.???? enable and disable screen?????????????????????????????????,,,,,,,
 	lda #$0F		  ;Turn on screen, 100% brightness
 	sta INIDISP
+	;lda #$8F		  ;Turn off screen, 100% brightness
+	;sta INIDISP
+
+	;; Test Vblank
+	;lda #$80
+	bit PPUcontrolreg1  	; Puts the 7th bit in the n flag
+	bpl novblank		; Therefore bpl branches if th 7th bit is not set
+	; Vblank interrupt enabled
+	lda NMITIMEN
+	ora #$80
+	sta NMITIMEN
 	jmp vblankend
-vblank:
-	lda #$8F		  ;Turn off screen, 100% brightness
-	sta INIDISP
+novblank:
+	; Vblank interrupt disabled
+	lda NMITIMEN
+	and #$7F
+	sta NMITIMEN
 vblankend:
 	RETW
 
@@ -176,7 +211,7 @@ RPPUC1:
 ; $2001 | RW  | PPU Control Register 2
 ;       |   0 | Unknown (???)
 ;       |   1 | Image Mask, 0 = don't show left 8 columns of the screen.
-;       |   2 | Sprite Mask, 0 = don't show sprites in left 8 columns. 
+;       |   2 | Sprite Mask, 0 = don't show sprites in left 8 columns.
 ;       |   3 | Screen Enable, 1 = show picture, 0 = blank screen.
 ;       |   4 | Sprites Enable, 1 = show sprites, 0 = hide sprites.
 ;       | 5-7 | Background Color, 0 = black, 1 = blue, 2 = green, 4 = red.
@@ -192,11 +227,12 @@ WPPUC2:
 	lsr A
 	lsr A
 	lsr A
-        sta TM			; BG1 enabled as a main screen if A=$01
+	sta tmp_dat
 	;; Test bit 4:	Sprite enable
-	lda #$10
-	bit PPUcontrolreg2	; A contains $10 if Sprites enabled
-	;; TODO Sprite enable!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	lda PPUcontrolreg2
+	and #$10                ; Keep only the 4rth bit
+	ora tmp_dat
+	sta TM			; BG1 enabled as a main screen, Sprite enable (also bit 4)
 endWPPUC2:
 	RETW
 
@@ -217,12 +253,14 @@ RPPUC2:
 RPPUSTATUS:
 	sep #$20
 	;; vblank
-	lda HVBJOY
+	
+	;lda HVBJOY
+	lda NMIFLAG 	; NMIFLAG has the same behaviour as the nes, and not HVBJOY flag
 	and #$80
 	;; TODO sprite 0
 
 	;; Flags must be kept like it was a real lda
-; 	????????????????
+; 	???????????????? TODO Flags ??
 ; 	tax			; save a
 ; 	php			; push status register
 ; 	pla			; pop status register
@@ -237,13 +275,15 @@ RPPUSTATUS:
 ;       |     | accessed via $2004. This address will increment by 1 after
 ;       |     | each access to $2004. Sprite Memory contains coordinates,
 ;       |     | colors, and other sprite attributes (see "Sprites").
-
 WSPRADDR:
 	; OAM direct address conversion: 4bytes on nes, 4bytes on snes
-	; but OAM is a word address and can be update by dma
-	; and therefore a buffer in ram could be nice and therfore
+	; but OAM is a word address and can be updated by dma
+	; and therefore a buffer in ram could be nice and therefore
 	; a buffer it will be in order to keep Byte addressing.
 	sta SpriteMemoryAddress
+	lsr A          		; Word address on the snes
+	sta OAMADDL             ; OAM address set to Acc
+	stz OAMADDH             ; OAM address set to $00
 	RETW
 
 ; ------+-----+---------------------------------------------------------------
@@ -252,9 +292,8 @@ WSPRADDR:
 ;       |     | $2003 and increments by 1 after each access. Sprite Memory 
 ;       |     | contains coordinates, colors, and other sprite attributes
 ;       |     | sprites (see "Sprites").
-;       |     | Writes directly in OAM but because the sprite format is
-;       |     | not the same, a lot of address changes occur.
-
+        ; Writes directly in OAM but because the sprite format is
+        ; not the same, a lot of address changes occur.
 WR_OAMconversionroutines:
 	.DW WRITE_SPR_Y
 	.DW WRITE_SPR_TILE
@@ -273,11 +312,10 @@ WSPRDATA:
 	lda SpriteMemoryAddress
 	;; Test which of the 4 bytes is to be written
 	and #$03
-	asl
+	asl A			; x2 to get the routine index
 	tax
 	jmp (WR_OAMconversionroutines,X)
-
-	;; Writes th byte twice: first converts it and writes in the buffer and then write a word
+	;; Writes the byte twice: first converts it and writes in the buffer and then write a word
 	;; in the coresponding OAM address to update it.
 sprwrdoneHi:
 	lda SpriteMemoryAddress
@@ -290,16 +328,21 @@ sprwrdoneLo:
 	and #$FC
 updateOAM:
 	tax
+	lsr A
 	sta OAMADDL
 	lda SpriteMemoryBase,X
 	sta OAMDATA
 	lda SpriteMemoryBase + 1,X
 	sta OAMDATA
 IncSprAddr:
-	;; Increment the buffer's bytes address
+	;; Increment the buffer's byte address
 	ldy SpriteMemoryAddress
+	tya
+	cmp #$FF		; If 256 do not loop od what? FIXME TODO
+	beq endWSPRDATA
 	iny
 	sty SpriteMemoryAddress
+endWSPRDATA:
 	RETW
 
 WRITE_SPR_Y:
@@ -405,7 +448,7 @@ convert_sprflags_to_nes:
 	pha
 	; pp
 	and #$06
-	lsr
+	lsr A
 	sta PPTMP
 	pla
 	; vh
@@ -434,26 +477,26 @@ convert_sprflags_to_nes:
 ;       |     | Remember that because of the mirroring there are only 2 real
 ;       |     | Name Tables, not 4.
 WSCROLOFFSET:
-	sep #$03		; All 8b
+	sep #$30		; All 8b
 	tax
 	cmp #240		; > 239?
 	bcs ignorescrollvalue
 	lda CurScrolRegister
-	beq vertical_scroll
-horizontal_scroll:
-	txa
-	sta BG1HOFS
-	stz BG1HOFS 		; High byte is 0
-	jmp chgscrollregister
+	beq horizontal_scroll   ; 0 horizontal, 1 vertical
 vertical_scroll:
 	txa
-	sta BG1VOFS
+	sta BG1VOFS             ; This register must be written twice
 	stz BG1VOFS 		; High byte is 0
+	jmp chgscrollregister
+horizontal_scroll:
+	txa
+	sta BG1HOFS		; This register must be written twice
+	stz BG1HOFS 		; High byte is 0
+ignorescrollvalue:              ; ignore the value but change the register state
 chgscrollregister:
 	lda CurScrolRegister
 	eor #$01		; Change the acessed scroll register
 	sta CurScrolRegister
-ignorescrollvalue:
 	RETW
 
 ; ------+-----+---------------------------------------------------------------
@@ -467,7 +510,7 @@ ignorescrollvalue:
 	;; saisie ici.
 	;; Name table, Attribute table, Palette, ou empty
 WPPUMEMADDR:
-	sep #$30
+	sep #$30                ; All 8b
 	ldy PPUmemaddrB
 	sta PPUmemaddrL,Y	; Store the address in this byte
 	tya
@@ -486,11 +529,15 @@ WPPUMEMADDR:
 	;; #$20 <= @ < #$30
 	;; $2000 to $23C0 = Nametables  $23C0 to $2400 = Attributes
 	jsr set_tilemap_addr
-	lda PPUmemaddrL
-	and #$F0		; Keep only bits 4-7 for attribute table
-	cmp #$C0
-	bcc nametables		; A < #$C0
-	jmp attributetables
+	lda PPUmemaddrL         ; xxxx xx11 11xx xxxx means attribute table
+	and #$C0		; Lo bits $C0 11xx.  Keep only bits 6-7
+	sta tmp_addr
+	lda PPUmemaddrH
+	and #$03                ; Hi bits $03 xx11
+        ora tmp_addr
+	cmp #$C3                ; Test if all 4 bits are set
+	beq attributetables	; == it is an attribute table: above $x3C00
+	jmp nametables          ; else it is a nametable
 ppumaddret:
 	RETW
 emptyrangej:
@@ -523,7 +570,7 @@ attributetables:
 	clc
 	adc tmp_addr		; ((c & 0x00E0) << 2) + (c & 0x1C)
 	sta tmp_addr
-	tya
+	tya         		; y is VRAM base @ set by set_tilemap_addr
 	clc
 	adc tmp_addr		; snes VRAM segment + Addr
 	; Store the address
@@ -550,7 +597,7 @@ nametables:
 	lda PPUmemaddrL
 	and #$03FF		; Lower address value
 	sta tmp_addr
-	tya
+	tya                     ; y is VRAM base @ set by set_tilemap_addr
 	clc
 	adc tmp_addr
 	; Set the address in snes register
@@ -559,9 +606,19 @@ nametables:
 	sta VMADDL
 	xba
 	sta VMADDH
+	; Test bit 2 of PPUCTRL: 1 or 32 nametable increment
+	lda #$04
+	bit PPUcontrolreg1	; test bit 2, zero if not set ("bit and" result)
+	bne name_incr_32
 	; Vram increments 1 by 1 after VMDATAL write
-	lda #$00
+	lda #$00 		; after VMDATAL wr
 	sta VMAINC
+	jmp set_nametables_routines
+name_incr_32:
+	; Vram increments 32 by 32 after VMDATAL write
+	lda #$01
+	sta VMAINC
+set_nametables_routines:
 	;; Tile map routines
 	rep #$20		; A 16bits
 	lda #NametableW
@@ -597,16 +654,16 @@ emptyrange:
 ; Select where goes the name table data in VRAM
 set_tilemap_addr
 ;.8BIT
-	sep #$30		; BUG!!!!!!!!!!!!
+	sep #$30		; A 8bit
+	rep #$10                ; X Y are 16bits
 	lda PPUmemaddrH		; address hight byte
-	and #$04		; bit 11: 0 = Tables 0 & 2; 1 = Tables 1 & 3
+	and #$04		; bit 11: 0 = Tables 0 & 2; 1 = Tables 1 & 3 (TODO not always mirror???)
 	cmp #$04
 	beq Tables1_3
-	rep #$10                ;  X Y are 16bits
-	ldy #$1800		; snes BG1 names/attributes VRAM address: $3000 >> 1 (Word addres)
+	ldy #NAMETABLE1BASE	; snes BG1 names/attributes VRAM address: $7000 (Word addres)
 	rts
 Tables1_3:
-	ldy #$3800		; snes BG2 names/attributes VRAM address: $7000 >> 1
+	ldy #NAMETABLE2BASE	; snes BG1 names/attributes VRAM address: $7400 (Word addres)
 	rts
 
 emptyW:
@@ -741,7 +798,7 @@ add128:
 	;; Name tables
 NametableW:
 	sep #$20		; Acc Mem 8bits
-	sta VMDATAL             ; Write to VRAM
+	sta VMDATAL             ; Write to VRAM. This is the lower nametable byte, the character code number.
 	RETW
 
 	;; ---------------------------------------------------------------
@@ -907,39 +964,46 @@ WDMASPRITEMEMACCESS:
 	pha			; push the page of the sprite data
 	pld			; Here every zero page read is in the indicated page
 	;; Convert the 256 bytes of the memory area to 256bytes of snes oam data
-	sep #$30			; all 8b
+	sep #$30		; all 8b
+	stz OAMADDL             ; OAM address set to $00
+	stz OAMADDH             ; OAM address set to $00
 	ldx #0
 sprconversionloop:
 	lda $03,X			; sprite X position
 	sta SpriteMemoryBase + 0,X
+	sta OAMDATA
 	lda $00,X			; sprite Y position
 	sta SpriteMemoryBase + 1,X
+	sta OAMDATA
 	lda $01,X			; sprite tile number
 	sta SpriteMemoryBase + 2,X
+	sta OAMDATA
 	lda $02,X			; sprite flags
 	;; Convert the flags to the snes sprite flags
 	jsr convert_sprflags_to_nes
 	sta SpriteMemoryBase + 3,X
+	sta OAMDATA
 	inx
 	inx
 	inx
 	inx
-	bne sprconversionloop		; loop if not zero
-
+	bne sprconversionloop	; loop if not zero
+	pld			; restore the direct page register
+	RETW
+/*	
 	;; Loop transfert
-	stz OAMADDL
+
 	ldx #0
 looptransfert:
 	lda SpriteMemoryBase,X	; sprite X position
 	sta OAMDATA
 	inx
-	bne looptransfert		; loop if not zero
-
-	pld				; restore the direct page register
+	bne looptransfert	; loop if not zero
+	pld			; restore the direct page register
 	RETW
 
 	;; TODO DMA use seems stupid because a loop has been already executed...
-	;; Transfert the 256 bytes to the OAM memory port via DMA 1
+	;; Transfer the 256 bytes to the OAM memory port via DMA 1
 	;; -------------------------------------------------------------
 	;; Writes to OAMDATA from 0 to 256
 	stz OAMADDL
@@ -961,6 +1025,7 @@ looptransfert:
 	lda #$02
 	sta MDMAEN
 	RETW
+*/
 
 ;; NES
 ; Sprite Attribute RAM:

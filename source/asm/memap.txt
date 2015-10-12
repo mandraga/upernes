@@ -68,10 +68,8 @@ Every access to this area must do nothing and probably print a warning
  Name Table 3 (32x30 tiles)
 --------------------------------------- $2C00
  Attribute Table 2
-Uses the BG2 plane
 --------------------------------------- $2BC0
  Name Table 2 (32x30 tiles)
-Uses the BG2 plane
 --------------------------------------- $2800
  Attribute Table 1
 --------------------------------------- $27C0
@@ -107,43 +105,47 @@ Stored in the begining of the snes ppu VRAM at $0000
  Stored in the snes OAM data (512Bytes)
 
 
-
 #########################################################################################################
 SNES MEMORY MAP
 #########################################################################################################
 
 The animated background makes use of bank switching (4 banks on smb2).
 The sprite bank switches less often and not all the bank.
-A DMA transfer from WRAM could be intersting for simulating the sprite CHR bank switching.
+A DMA transfer from WRAM could be interesting for simulating the sprite CHR bank switching.
 
 Snes VRAM, 64kB - 32kW:
 ------------------------
 $0000
   SPRITE 4bpp CHR 8KB 4KW
   Ascii tiles     4KB 2KW
-  - Empty -       4KB 2KW
+  Ascii nametable 4KB 2KW
 ------------------------
-$2000    8KW
-  BG CHR          4KB 2kW
+$2000 Word @  8KW
+  BG CHR          4KB 2kW   tmp nes bank 0
   - Empty -       4KB 2KW
-  BG CHR          4KB 2kW
+  BG CHR          4KB 2kW   tmp nes bank 1 (fixme, use the tile index to concatenate the 2 banks?)
   - Empty -       4KB 2KW
 ascii table CHR 2K $3800
 ------------------------
-$4000   16KW
+$4000 Word @ 16KW
   BG CHR          4KB 2kW
   - Empty -       4KB 2KW
   BG CHR          4KB 2kW
   - Empty -       4KB 2KW
 ------------------------
-$6000   24KW
-  BG Nametable   16KB 8KW
-  4 nametables of 2KB each
+$6000 Word @ 24KW
+  - Empty -       8KB 4KW
+  BG Nametable    8KB 4KW
+     4 nametables of 2KB each
 $7FFF
 ------------------------
 
 SPRITE TABLES 256B are in the snes "Object Aattribute Memory" (OAM)
 
+Snes CGRAM:
+$00: background palette
+$40: ascii table palette
+$80: Sprite palette
 
 Snes SRAM:
 
@@ -156,8 +158,7 @@ next 4KB begining at 0x1000 can be used as work buffer.
 
 128K wram: 64K in 7E:2000 and 64K in 7F:0000 (the first 8K bytes of the bank 7E are the mirroring of the sram at 00:0000).
 This 120KB memory is used as a cache to store converted CHR data and as DMA source data
-40K for 10 BG CHRs
-80K for 10 Sprites CHRs
+56KB for 7 Sprites CHRs
 later 32k for the prg switching will be needed then only 2x5CHR banks will be stored here
 
 ROM:

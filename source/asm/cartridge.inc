@@ -8,7 +8,7 @@ SLOT        0 $8000
 
 .ROMBANKMAP
 BANKSTOTAL 3		; Number of 64KB rom banks
-BANKSIZE $8000
+BANKSIZE $8000          ; 64KB
 BANKS 3
 .ENDRO
 

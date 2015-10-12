@@ -29,6 +29,11 @@
 .EQU TM       $212C     ;; Windows mask for main screen
 .EQU TS       $212D     ;; Windows mask for sub screen
 
+.EQU WMDATA   $2180     ;; WRAM Data Read/Write Register
+.EQU WMADDL   $2181     ;; WRAM Address Registers (Low)
+.EQU WMADDM   $2182     ;; WRAM Address Registers (Mid)
+.EQU WMADDH   $2183	;; WRAM Address Registers (High)
+
 .EQU NMITIMEN $4200
 .EQU NMIFLAG  $4210	;; Blank Non Maskable Interrupt flag
 .EQU HVBJOY   $4212	;; V-Blank flag

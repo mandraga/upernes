@@ -23,7 +23,7 @@
 ;; -------------------------------------------------------------------- 
 ; Absolute addressing:
 ;
-; ???? These instructions ay be never used to access the io ports because the 65C02 writes twice
+; ???? These instructions may be never used to access the io ports because the 65C02 writes twice
 ; the result, or has a problem somewhere with this kind of instructions.
 ; And because io ports auto increment when accessed it can bring problems.
 ;
@@ -60,7 +60,7 @@
 ; 	RW Sprite Memory Data
 ; 	 W Screen Scroll Offsets
 ; 	 W PPU Memory Address
-; 	RW PPU Memory Data <- By far the most difficult!
+; 	RW PPU Memory Data
 ; 	 W Sound registers	
 ; 	 W DMA Access to the Sprite Memory
 ; 	RW Sound Channel Switch/Sound Status
@@ -76,6 +76,7 @@
 ; The save ram must be 32KB because last 8KB are used
 
 .MACRO NATIVE
+	sei
 	clc			; native 65816 mode
 	xce
 .ENDM

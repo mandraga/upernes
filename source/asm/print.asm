@@ -4,6 +4,7 @@
 	;; The then unknown indirect address is printed on the BG3.
 
 ; .include "cartridge.inc"
+;.include "snesregisters.inc"
 
 .BANK 0
 .ORG 0
@@ -11,7 +12,7 @@
 
 ;; -----------------------------------------------
 ;; 
-;; Prints strings, ints and hexadecimal values on BG2
+;; Prints strings, ints and hexadecimal values on BG3
 ;; 
 ;; -----------------------------------------------
 init_BG3_and_textbuffer:
@@ -20,19 +21,19 @@ init_BG3_and_textbuffer:
 
 	; Set the text start to the second line
 	SetCursorPos  1, 1
-	; Clear the 1K text buffer
+ 	; Clear the 1K text buffer
 	jsr textclr
 
-	; Load the 2KB ASCII table CHR data at VRAM $3800
+	; Load the 2KB ASCII table CHR data at VRAM $1000W ($2000B)
 	;; -----------------------------------------------
 	rep #$10	        ; X/Y=16bit
 	sep #$20		; A/mem=8bit
-	LoadBlockToVRAM ASCIITiles, $1C00, $0800	;128 tiles * (2bit color = 2 planes) --> 2048 bytes
+	LoadBlockToVRAM ASCIITiles, $1000, $0800	;128 tiles * (2bit color = 2 planes) --> 2048 bytes
 
 	; BG3 CHR address
-	; Ascii CHR data is constitued of 128 tiles at $3800
+	; Ascii CHR data is constitued of 128 tiles at $2000B
 	;; -----------------------------------------------
-	lda #$01		; 0x2000 -> second 4kWord=8k segment (512 tiles, the asci table starts at 0x3800: tile 384/0x180
+	lda #$01		; 0x2000 -> second 4kWord=8k segment (512 tiles, the asci table starts at offset 0x0000: tile 384/0x180
 	sta BG34NBA
 
 	; BG3 palette
@@ -66,16 +67,16 @@ palconv3:
         ;; -----------------------------------------------
         ; BG3 tilemap (nes name table + attibute tables)
         ; Set tile map address (Addr >> 11) << 2
-	; $B000 >> 11 << 2= $58
-        lda #$58                ; (1k word segment $B000 / $800)=$16 << 2
+	; $1800 >> 11 << 2= $18
+        lda #$18                ; (1800 / $400 = 6 << 2 = $18)
         sta BG3SC
-	
+
 	rts
 
 
 ;; -----------------------------------------------
 ;;
-;; Prints the indirect jump informaiton on an unknown
+;; Prints the indirect jump information of an unknown
 ;; indirect jump address.
 ;;
 ;; -----------------------------------------------
@@ -87,24 +88,37 @@ endindjmp:
 	;; Print error msg
 	;; "Unknown indirect jump \"$pc@ jmp ($06)\" to @"
 	rep #$30
-	SetCursorPos  1, 1
+	ldy #Printfbuffer
 	swa
-	tay
-	PrintString "Unknown indirect jump:\n jmp ($%x "  ; higher byte of A
-	swa
-	tay
-	PrintString "%x) to @ $"			; lower byte of A
+	sta $0000, Y
 	txa
 	swa
-	tay
-	PrintString "%x"
-	swa
-	tay
-	PrintString "%x"
+	iny
+	iny
+	sta $0000, Y
+	ldy #Printfbuffer
+	SetCursorPos  1, 1
+	PrintString "Unknown indirect jump:\n jmp ($%x%x) to @ $%x%x"  ; higher byte of A
+	;PrintString "%x) to @ $"			; lower byte of A
+	/*
+	txa
+	;swa
+	ldy #Printfbuffer
+	sta $0000, Y
+	PrintString "%x%x"
+	;PrintString "%x"
+	*/
+	;; Enable BG3 and BG1
+	lda #%00000101	        ; Turn on BG1 and BG3
+	sta TM
+        lda #$18
+        sta BG3SC
 	;; Send all the string buffer to the BG3 VRAM name table
 	jsr textcpy
+	lda #$0F		; Turn on screen, 100% brightness
+	sta INIDISP
 	;; Loop unitl reset
 infloopindjmp:
-	jsr infloopindjmp
+	jmp infloopindjmp
 
 .ENDS

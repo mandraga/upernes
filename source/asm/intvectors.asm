@@ -13,9 +13,9 @@
 .DW     EmptyHandler		; COP
 .DW     $0000			; (Unused)
 .DW     EmptyHandler		; ABORT
-.DW     EmptyHandler		; NMI
-.DW     Reset			; RESET
-.DW     DebugHandler		; IRQ/BRK
+.DW     NESNonMaskableInterrupt	; NMI
+.DW     Reset			; RESET            The entire program starts here and the calls NESReset
+.DW     NESIRQBRK		; IRQ/BRK
 
 ; ============================================
 
@@ -30,6 +30,9 @@ DebugHandler:
 	nop
 	nop
 	nop
+	pha
+	lda #$E077    ; use this to set a breakpoint
+	pla
 	nop
 	nop
 	nop
