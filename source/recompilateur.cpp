@@ -100,7 +100,13 @@ int Crecompilateur::isreplaced(t_pinstr pinstr, Copcodes *popcode_list)
   int addr;
 
   addressing = popcode_list->addressing(pinstr->opcode);
-  assert (addressing >= 0);
+  if (addressing < 0)
+    {
+      addressing = popcode_list->addressing(pinstr->opcode);
+      fprintf(stderr, "Wrong address and opcode $%4X at $%4X!!!! FIXME rom code confusion?\n", pinstr->opcode, pinstr->addr);
+      return 80;
+    }
+  //assert (addressing >= 0);
   switch (addressing)
     {
     case Ind:
@@ -134,6 +140,8 @@ int Crecompilateur::re(const char *outname, Cprogramlisting *plisting,
 {
   FILE *fp;
   Instruction6502 *pinstr;
+  bool            irqbrkvector = false;
+  bool            nmivector = false;
 
   try
     {
@@ -147,11 +155,28 @@ int Crecompilateur::re(const char *outname, Cprogramlisting *plisting,
       //      fp = stdout;
       create_label_list(plisting, popcode_list);
       writeheader(fp);
-      // Label d'entrée dans le programme nes
-      fprintf(fp, "NESReset:\n");
       pinstr = plisting->get_next(true);
       while (pinstr != NULL)
 	{
+	  switch (pinstr->isvectorstart)
+	    {
+	    case resetstart:
+	      // Label of the first instruction executed on start/reset
+	      fprintf(fp, "NESReset:\n");
+	      break;
+	    case nmistart:
+	      // Label of the non maskable interrupt routine
+	      fprintf(fp, "NESNonMaskableInterrupt:\n");
+	      nmivector = true;
+	      break;
+	    case irqbrkstart:
+	      //
+	      fprintf(fp, "NESIRQBRK:\n");
+	      irqbrkvector = true;
+	      break;
+	    default:
+	      break;
+	    }
 	  printlabel(fp, pinstr);
 	  switch (isreplaced(pinstr, popcode_list))
 	    {
@@ -171,6 +196,17 @@ int Crecompilateur::re(const char *outname, Cprogramlisting *plisting,
 	      break;
 	    };
 	  pinstr = plisting->get_next(false);
+	}
+      fprintf(fp, "\n");
+      if (!nmivector)
+	{
+	  fprintf(fp, "NESNonMaskableInterrupt:\n");
+	  fprintf(fp, "\tjmp DebugHandler\n");
+	}
+      if (!irqbrkvector)
+	{
+	  fprintf(fp, "NESIRQBRK:\n");
+	  fprintf(fp, "\tjmp DebugHandler\n");
 	}
       fprintf(fp, "\n");
       // io port accesses are replaced by a jsr to a routine,

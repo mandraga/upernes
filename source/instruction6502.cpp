@@ -116,7 +116,7 @@ Instruction6502 *Cprogramlisting::create_instr(int addr)
   return pinstr;
 }
 
-void Cprogramlisting::insert(int opcode, int operand, int addr)
+void Cprogramlisting::insert(int opcode, int operand, int addr, int vectstart)
 {
   Instruction6502 *instr;
 
@@ -126,6 +126,7 @@ void Cprogramlisting::insert(int opcode, int operand, int addr)
   instr->opcode = opcode;
   instr->operand = operand;
   instr->addr = addr;
+  instr->isvectorstart = vectstart;
 }
 
 void Cprogramlisting::insert_branch(int jmpaddr, int destaddr)

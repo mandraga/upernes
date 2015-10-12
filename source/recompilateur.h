@@ -31,13 +31,18 @@ private:
   void print_save(FILE *fp);
   void print_restore(FILE *fp);
   void routineSTAiop(FILE *fp, int iopaddr, Copcodes *popcode_list);
+  void routineSTAAbsXiop(FILE *fp, int iopaddr, Copcodes *popcode_list);
+  void routineSTAAbsYiop(FILE *fp, int iopaddr, Copcodes *popcode_list);
   void routineLDAiop(FILE *fp, int iopaddr, Copcodes *popcode_list);
   void routineLDXiop(FILE *fp, int iopaddr, Copcodes *popcode_list);
   void routineLDYiop(FILE *fp, int iopaddr, Copcodes *popcode_list);
   void routineSTXiop(FILE *fp, int iopaddr, Copcodes *popcode_list);
   void routineSTYiop(FILE *fp, int iopaddr, Copcodes *popcode_list);
+  void ReplaceAbsAddressing(FILE *fp, t_pinstr pinstr, Copcodes *popcode_list, bool &replaced);
+  void ReplaceAbsXAddressing(FILE *fp, t_pinstr pinstr, Copcodes *popcode_list, bool &replaced);
+  void ReplaceAbsYAddressing(FILE *fp, t_pinstr pinstr, Copcodes *popcode_list, bool &replaced);
   void outReplaceIOport(FILE *fp, t_pinstr pinstr, Copcodes *popcode_list);
-  bool findinstr(const char *mnemonicstr, t_instrlist *plist, Copcodes *popcode_list);
+  bool findinstr(const char *mnemonicstr, t_instrlist *plist, Copcodes *popcode_list, int &addressing);
   void writeiop_routines(FILE *fp, Cprogramlisting *plisting, Copcodes *popcode_list);
   // recompileIndJmp.cpp
   void outReplaceJumpIndirect(FILE *fp, t_pinstr pinstr, Copcodes *popcode_list);

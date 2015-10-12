@@ -8,6 +8,13 @@ enum
     jsr,
     relativebranch
   };
+enum
+  {
+    novector,
+    resetstart,
+    nmistart,
+    irqbrkstart
+  };
 
 typedef class Instruction6502 *t_pinstr;
 typedef std::list<t_pinstr> t_instrlist;
@@ -27,6 +34,7 @@ public:
   unsigned short branchaddr;  // Only for branches
   bool binsubroutine;
   t_instrlist *pbranches; // List of branches having this instruction for destination
+  int            isvectorstart;
   // known cpu state
   Ccpu6502       cpustate;
 };
@@ -37,7 +45,7 @@ public:
   Cprogramlisting();
   ~Cprogramlisting();
 
-  void insert(int opcode, int operand, int addr);
+  void insert(int opcode, int operand, int addr, int vectstart);
   void insert_branch(int jmpaddr, int destaddr);
   Instruction6502 *find_instr(int addr);
 

@@ -15,6 +15,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 #include "rom_file.h"
 
 Crom_file::Crom_file():
@@ -213,6 +214,7 @@ unsigned long Crom_file::buffer_crc(unsigned char *buffer, int size)
     {
       crc[i & 3] ^= buffer[i];
     }
+  lcrc = 0;
   lcrc = crc[3] << 24;
   lcrc |= crc[2] << 16;
   lcrc |= crc[1] << 8;
@@ -226,7 +228,7 @@ unsigned long Crom_file::crc()
 
   crc = buffer_crc(m_pPRG, m_PRG_size);
   crc ^= buffer_crc(m_pCHR, m_CHR_size);
-  return crc;
+  return (crc & 0x00000000FFFFFFFF);
 }
 
 int Crom_file::getromname(char *str, unsigned int sz)
@@ -245,3 +247,46 @@ int Crom_file::getromname(char *str, unsigned int sz)
   strncpy(str, &m_name_str[i], sz);
   return 0;
 }
+
+int Crom_file::create_rom_headerfile(const char *file_name)
+{
+  FILE *fp;
+  int  prg_banks;
+
+  try
+    {
+      fp = fopen(file_name, "w");
+      if (fp == NULL)
+	{
+	  snprintf(m_error_str, sizeof(m_error_str),
+		   "in create_rom_headerfile opening the file \"%s\" failed", file_name);
+	  throw int(1);
+	}
+      fprintf(fp, ";; --------------------------------------------------------------------\n");
+      fprintf(fp, "; PRG\n");
+      fprintf(fp, ".BANK 1 SLOT 0\n");
+      prg_banks = m_PRG_size / PRG_BANK_SIZE;
+      switch (prg_banks)
+	{
+	case 1:
+	  fprintf(fp, ".ORG 16384\n");
+	  break;
+	case 2:
+	  fprintf(fp, ".ORG 0\n");
+	  break;
+	default:
+	  assert(false);
+	};
+      fprintf(fp, "; .SECTION \"OriginalPRGrom\"\n");
+      fprintf(fp, "PRGrom:\n");
+      fprintf(fp, ".INCBIN \"nesprg.bin\"\n");
+      fprintf(fp, ";.ENDS\n");
+      fclose(fp);
+    }
+  catch (int e)
+    {
+      return 1;
+    }
+  return 0;
+}
+

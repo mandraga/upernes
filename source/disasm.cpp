@@ -37,6 +37,9 @@ Cdisasm::Cdisasm():
   pexplore(NULL),
   m_cur_addr(0),
   m_instr_addr(0),
+  m_NMI_vector_start(-1),
+  m_Reset_vector_start(-1),
+  m_IRQBRK_vector_start(-1),
   m_img(256, 256)
 {
 }
@@ -112,6 +115,7 @@ int Cdisasm::get_next_instruction(unsigned long *instruction,
   int           operand;
   unsigned int  addr;
   unsigned int  ind_addr;
+  int           vectorstart;
 
   if (m_cur_addr < (int)BASE_ADDR || m_cur_addr >= 0xFFFF)
     {
@@ -126,7 +130,14 @@ int Cdisasm::get_next_instruction(unsigned long *instruction,
     }
   if (pexplore[cpu2prg(m_cur_addr)] != 0)
     {
-      return (JUMP_stack_sz > 0? alreadyread : stopdisasm);
+      if (pexplore[cpu2prg(m_cur_addr)] == enOpcode)
+	return (JUMP_stack_sz > 0? alreadyread : stopdisasm);
+      else
+	{
+	  // Problem: a jump in the middle of a previous instruction
+	  assert(pexplore[cpu2prg(m_cur_addr)] == enArgs);
+	  return (JUMP_stack_sz > 0? middleofapreviousinstruction : stopdisasm);
+	}
     }
   // Find instruction size
   opsz = pops->op_call_size(opcode);
@@ -135,14 +146,26 @@ int Cdisasm::get_next_instruction(unsigned long *instruction,
     {
       addr = cpu2prg(m_cur_addr + i);
       *instruction |= prom->m_pPRG[addr] << (i * 8);
-      // "Teinte" ce qui est parcouru
-      pexplore[addr] = 1;
+      // "Teints" what it reads: opcode or his argument. To be able to find unexpected jumps to an argument address, per security.
+      pexplore[addr] = (i == 0? enOpcode : enArgs);
       m_img.pixel(addr % 256, addr / 256) = m_color;
     }
   operand = ((*instruction) >> 8) & 0xFFFF;
   m_instr_addr = m_cur_addr;
-  m_listing.insert(opcode, operand, m_instr_addr);
-  // Test for the case of a JUMP or increment program address
+  // Detect if it is an interrupt vector
+  vectorstart = novector;
+  if (m_instr_addr == m_Reset_vector_start)
+    vectorstart = resetstart;
+  else
+    {
+      if (m_instr_addr == m_NMI_vector_start)
+	vectorstart = nmistart;
+      else
+	if (m_instr_addr == m_IRQBRK_vector_start)
+	  vectorstart = irqbrkstart;
+    }
+  m_listing.insert(opcode, operand, m_instr_addr, vectorstart);
+  // Test for the case of a JUMP or increment of the program address
   if (pops->is_mnemonic(opcode, "jmp"))
     {
       addr = operand;
@@ -222,7 +245,7 @@ int Cdisasm::get_next_instruction(unsigned long *instruction,
 	      return newinstruction;
 	    }
     }
-  // Prochaine instruction
+  // Next instruction @ out of range?
   if (m_cur_addr > 0xFFFF - opsz)
     {
       printf("address pointer reached the end of the PRG rom\n");
@@ -232,12 +255,14 @@ int Cdisasm::get_next_instruction(unsigned long *instruction,
   return newinstruction;
 }
 
+/*
 int Cdisasm::disasm_vector(Copcodes *pops, Crom_file *prom,
 			   int addr, const char *vector_name,
 			    CindirectJmpRuntimeLabels *pindjmp)
 {
   return (disasm_addr(pops, prom, get_routine_addr(addr, prom), vector_name, pindjmp));
 }
+*/
 
 int Cdisasm::disasm_addr(Copcodes *pops, Crom_file *prom,
 			 int addr, const char *addr_name,
@@ -274,6 +299,11 @@ int Cdisasm::disasm_addr(Copcodes *pops, Crom_file *prom,
 	  if (next_jump_in_stack() == 0)
 	    return 1;
 	  break;
+	case middleofapreviousinstruction:
+	  printf("Warning: jump in the middle of a previous instruction to @ 0x%04x\n", m_cur_addr);
+	  if (next_jump_in_stack() == 0)
+	    return 1;
+	  break;
 	};
 #if 0
       copy_to_bitmap(&m_img, 30, 30);
@@ -290,20 +320,23 @@ int Cdisasm::disasm(Copcodes *pops, Crom_file *prom, CindirectJmpRuntimeLabels *
   unsigned int  addr;
   unsigned int  operand;
 
+  m_Reset_vector_start  = get_routine_addr(VECTOR_ADDR_RESET, prom);
+  m_NMI_vector_start    = get_routine_addr(VECTOR_ADDR_NMI, prom);
+  m_IRQBRK_vector_start = get_routine_addr(VECTOR_ADDR_IRQ_BRK, prom);
   m_color = 0xFE12;
-  if (disasm_vector(pops, prom, VECTOR_ADDR_RESET, "RESET", pindjmp))
-    {    
-      printf("critical error disassembling the interrupt vector\n");
+  if (disasm_addr(pops, prom, m_Reset_vector_start, "RESET", pindjmp))
+    {
+      printf("critical error disassembling the RESET interrupt vector\n");
     }
   m_color = 0xF800;
-  if (disasm_vector(pops, prom, VECTOR_ADDR_NMI, "NMI", pindjmp))
-    {    
-      printf("critical error disassembling the interrupt vector\n");
+  if (disasm_addr(pops, prom, m_NMI_vector_start, "NMI", pindjmp))
+    {
+      printf("critical error disassembling the NMI interrupt vector\n");
     }
   m_color = 0x001F;
-  if (disasm_vector(pops, prom, VECTOR_ADDR_IRQ_BRK, "IRQBRK", pindjmp))
+  if (disasm_addr(pops, prom, m_IRQBRK_vector_start, "IRQBRK", pindjmp))
     {    
-      printf("critical error disassembling the interrupt vector\n");
+      printf("critical error disassembling the IRQBRK interrupt vector\n");
     }
   // Disassembles runtime indirect addresses
   m_color = 0x0780;

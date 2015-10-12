@@ -46,7 +46,7 @@
 #include "indirectJmp.h"
 #include "parse_codes.h"
 
-#define CFG_FILENAME_SZ 256
+#define CFG_FILENAME_SZ 4096
 
 CindirectJmpRuntimeLabels::CindirectJmpRuntimeLabels():
   m_crc(-2),
@@ -109,7 +109,7 @@ int CindirectJmpRuntimeLabels::init(Crom_file *rom)
 }
 
 // bnew is true if this opcode has been found on the current disassembly
-int CindirectJmpRuntimeLabels::addjmpoperand(int jopaddr, bool bnew)
+int CindirectJmpRuntimeLabels::addjmpoperand(unsigned int jopaddr, bool bnew)
 {
   t_indirjmpiter Ijopaddr;
   t_indirjmp indjmp;
@@ -156,7 +156,7 @@ bool CindirectJmpRuntimeLabels::next_address(bool first, unsigned int *paddr, un
 }
 
 // Returns each indirect address for a given opcode address (used on indirect jumps to create branches lists, to create lables later)
-bool CindirectJmpRuntimeLabels::next_op_address(bool first, int jopaddr, unsigned int *paddr)
+bool CindirectJmpRuntimeLabels::next_op_address(bool first, unsigned int jopaddr, unsigned int *paddr)
 {
   static t_indirjmpiter Ijopaddr;
   static t_jmpaddriter  Iaddr;
@@ -185,14 +185,57 @@ bool CindirectJmpRuntimeLabels::next_op_address(bool first, int jopaddr, unsigne
   return false;
 }
 
+bool CindirectJmpRuntimeLabels::next_operand(bool first, unsigned int *pjoperand)
+{
+  static t_indirjmpiter Ijopaddr;
+
+  if (m_jmplist.size() == 0)
+    return false;
+  if (first)
+      Ijopaddr = m_jmplist.begin();
+  else
+    Ijopaddr++;
+  if (Ijopaddr == m_jmplist.end())
+    return false;
+  *pjoperand = (*Ijopaddr).jopaddr;
+  return true;
+}
+
+bool CindirectJmpRuntimeLabels::next_indaddr(bool first, unsigned int joperand, unsigned int *paddr)
+{
+  static t_jmpaddriter  Iaddr;
+  static t_indirjmpiter Ijopaddr;
+
+  if (first)
+    {
+      Ijopaddr = m_jmplist.begin();
+      while (Ijopaddr != m_jmplist.end() && (*Ijopaddr).jopaddr != joperand)
+	Ijopaddr++;
+      if (Ijopaddr == m_jmplist.end())
+	return false;
+      if ((*Ijopaddr).addrlist.size() == 0)
+	return false;
+      Iaddr = (*Ijopaddr).addrlist.begin();
+    }
+  else
+    Iaddr++;
+  if (Iaddr == (*Ijopaddr).addrlist.end())
+    return false;
+  *paddr = *Iaddr;
+  return true;
+}
+
 bool CindirectJmpRuntimeLabels::check_crc(Crom_file *rom)
 {
-  char romname[CFG_FILENAME_SZ];
+  char          romname[CFG_FILENAME_SZ];
+  unsigned long romcrc;
 
-  if (rom->crc() != m_crc)
+  romcrc = rom->crc();
+  if (romcrc != m_crc)
     {
       assert (rom->getromname(romname, CFG_FILENAME_SZ) == 0);
       snprintf(m_error_str, sizeof(m_error_str), "%s, wrong crc, indirect jumps are not for this rom.", romname);
+      snprintf(m_error_str, sizeof(m_error_str), "rom crc=%X %X   indirect jumps file crc=%X %X", (int)(romcrc >> 32), (int)romcrc, (int)(m_crc >> 32), (int)m_crc);
       return 1;
     }
   return 0;

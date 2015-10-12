@@ -47,6 +47,7 @@ int recompile(Cprogramlisting *plisting,
       printf("Error: %s\n", asr.m_error_str);
       return 1;
     }
+  prom->create_rom_headerfile("outsrc/romprg.asm");
   return 0;
 }
 

@@ -46,6 +46,7 @@ public:
   int  addressing(unsigned char opcode);
   void print_instruction(int instr_addr, unsigned long  instruction);
   void out_instruction(FILE *fd, int opcode, int operand, char *label);
+  void out_mnemonic(FILE *fd, int opcode);
 private:
   int  build_search_table();
   void print_category(int category);
@@ -54,7 +55,6 @@ private:
   // In opcode_utils.cpp
   t_ops *find_op(unsigned char opcode, Cmnemonic_6502 *pmnemonic);
   void out_operand(FILE *fd, int opcode, int operand, char *label);
-  void out_mnemonic(FILE *fd, int opcode);
 private:
   int             m_nb_mnemonics;
   Cmnemonic_6502  *m_pmnemonics_6502[256];

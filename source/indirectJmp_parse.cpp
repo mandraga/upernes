@@ -61,7 +61,7 @@ int CindirectJmpRuntimeLabels::close_data()
   return 0;
 }
 
-int CindirectJmpRuntimeLabels::list_add_jopaddr(int jopaddr)
+int CindirectJmpRuntimeLabels::list_add_jopaddr(unsigned int jopaddr)
 {
   if (addjmpoperand(jopaddr, false))
     {
@@ -74,7 +74,7 @@ int CindirectJmpRuntimeLabels::list_add_jopaddr(int jopaddr)
 }
 
 
-void CindirectJmpRuntimeLabels::add_addr(int addr)
+void CindirectJmpRuntimeLabels::add_addr(unsigned int addr)
 {
   t_indirjmp elt;
 

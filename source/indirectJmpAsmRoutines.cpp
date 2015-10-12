@@ -87,9 +87,9 @@ void CindirectJmpAsmRoutines::write_asm_routines_header(FILE *fp)
 
 void CindirectJmpAsmRoutines::write_asm_testfailcase(FILE *fp, int addr, int jmpoperand)
 {
-  fprintf(fp, "\trep #$30\n");
+  fprintf(fp, "\trep #$30                   ; All 16bits \n");
   fprintf(fp, "\tlda #$%04X                 ; Address of the indirect address\n", jmpoperand);
-  fprintf(fp, "\tldx $%04X                  ; Indirect address\n", addr);
+  fprintf(fp, "\tldx $%04X                  ; Indirect address\n", jmpoperand); // Will load the indirect address from the ram.
   fprintf(fp, "\tjmp endindjmp              ; The address is unknown then print it\n");
   fprintf(fp, "\t;; ------------------------------\n");
   fprintf(fp, "\n");
@@ -119,9 +119,10 @@ int  CindirectJmpAsmRoutines::create_indjump_asm_routines(const char *outname,
 {
   FILE         *fp;
   bool         first;
+  bool         firstadd;
   unsigned int jmpoperand;
   unsigned int addr;
-  unsigned int prevjmpoperand;
+  //unsigned int prevjmpoperand;
   int          lcounter;
   int          indlabelnumber;
 
@@ -138,50 +139,52 @@ int  CindirectJmpAsmRoutines::create_indjump_asm_routines(const char *outname,
       write_asm_routines_header(fp);
       // For each indirect jump, creates a test routine
       first = true;
-      lcounter = 2;
-      prevjmpoperand = 0xFFFFFF; // starts with an impossible value for a nes address.
+      //prevjmpoperand = 0xFFFFFF; // starts with an impossible value for a nes address.
 
-      // FIXME cas où il n'y a pas d'addresse mais où il y a bien un saut indirect
-      while (pindjmp->next_address(first, &addr, &jmpoperand))
+      if (pindjmp->next_operand(first, &jmpoperand) == false)
+	fprintf(fp, "\t; no indirect jump\n");
+      else
 	{
-	  if (prevjmpoperand != jmpoperand)
+	  // FIXME case where no addres was found but an indirect jump occurs????
+	  while (pindjmp->next_operand(first, &jmpoperand))
 	    {
-	      if (first)
-		first = false;
-	      else
-		{
-		  write_asm_testfailcase(fp, addr, jmpoperand);
-		}
+	      first = false;
 	      fprintf(fp, "\n\n");
+	      fprintf(fp, ".ACCU 16\n");
 	      fprintf(fp, "IndJmp%04X:\n", jmpoperand);
 	      fprintf(fp, "\tsta Acc                    ; save Acc\n");
 	      fprintf(fp, "\tclc                        ; To native mode\n");
 	      fprintf(fp, "\txce\n");
-	      fprintf(fp, "\trep #$20                   ; A to 16bits\n");
-	      fprintf(fp, "\tlda $%04X                  ; load the indirect address\n", jmpoperand);
-	      fprintf(fp, "\t;; ------------------------------\n");
-	      lcounter = 2;
-	      prevjmpoperand = jmpoperand;
+	      // Go through the possible known addresses
+	      firstadd = true;
+	      if (pindjmp->next_indaddr(firstadd, jmpoperand, &addr))
+		{
+		  fprintf(fp, "\trep #$20                   ; A to 16bits\n");
+		  fprintf(fp, "\tlda $%04X                  ; load the indirect address\n", jmpoperand);
+		  fprintf(fp, "\t;; ------------------------------\n");
+		  lcounter = 1;
+		  while (pindjmp->next_indaddr(firstadd, jmpoperand, &addr))
+		    {
+		      firstadd = false;
+		      // Compares A with all the known addresses
+		      fprintf(fp, ".ACCU 16\n");
+		      fprintf(fp, "\tcmp #$%04X                 ; Is it address $%04X?\n", addr, addr);
+		      fprintf(fp, "\tbne IndJmp%04Xtestaddr%04d ; no then test the next possible address\n", jmpoperand, lcounter);
+		      fprintf(fp, "\tsep #$20                   ; A to 8bits\n");
+		      fprintf(fp, "\tsec                        ; return to emulation mode\n");
+		      fprintf(fp, "\txce\n");
+		      fprintf(fp, "\tlda Acc                    ; restore the Accumulator\n");
+		      if (get_indirect_jump_labelnumber(plabel_gen_list, addr, &indlabelnumber))
+			fprintf(fp, "\tjmp indirectlabel%04d   ; static jump to the indirect label\n", indlabelnumber);
+		      else
+			assert(false);
+		      fprintf(fp, "IndJmp%04Xtestaddr%04d:\n", jmpoperand, lcounter);
+		      lcounter++;
+		    }
+		}
+	      write_asm_testfailcase(fp, addr, jmpoperand);
 	    }
-	  // Compares A with all the known addresses
-	  fprintf(fp, ".ACCU 16\n");
-	  fprintf(fp, "\tcmp #$%04X                 ; Is it address $%04X?\n", addr, addr);
-	  fprintf(fp, "\tbne IndJmp%04Xtestaddr%04d ; no then test the next possible address\n", jmpoperand, lcounter);
-	  fprintf(fp, "\tsep #$20                   ; A to 8bits\n");
-	  fprintf(fp, "\tsec                        ; return to emulation mode\n");
-	  fprintf(fp, "\txce\n");
-	  fprintf(fp, "\tlda Acc                    ; restore the Accumulator\n");
-	  if (get_indirect_jump_labelnumber(plabel_gen_list, addr, &indlabelnumber))
-	    fprintf(fp, "\tjmp indirectlabel%04d   ; static jump to the indirect label\n", indlabelnumber);
-	  else
-	    assert(false);
-	  fprintf(fp, "IndJmp%04Xtestaddr%04d:\n", jmpoperand, lcounter);
-	  lcounter++;
 	}
-      if (!first)
-	write_asm_testfailcase(fp, addr, jmpoperand);
-      else
-	fprintf(fp, "\t; no indirect jump\n");
       fprintf(fp, "\n.ENDS\n");
       fclose(fp);
     }

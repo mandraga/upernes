@@ -19,6 +19,7 @@ public:
   int dump(const char *prgname, const char *chrname);
   unsigned long crc();
   int getromname(char *str, unsigned int sz);
+  int create_rom_headerfile(const char *file_name);
 private:
   int read_mapper(unsigned char *header);
   int proces_header(unsigned char *header);
