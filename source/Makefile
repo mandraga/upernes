@@ -3,8 +3,12 @@
 #
 #
 
-#OPERATINGON=__LINUX
+# Trick from http://stackoverflow.com/questions/4058840/makefile-that-distincts-between-windows-and-unix-like-systems
+ifdef SystemRoot
 OPERATINGON=__WINDOWS
+else
+OPERATINGON=__LINUX
+endif
 RELEASE=TRUE
 
 CC = g++
