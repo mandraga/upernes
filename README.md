@@ -40,5 +40,4 @@ langage.
 
 Copyright 2015 Patrick Xavier Areny released under the GPL licence.
 
-![alt tag](https://github.com/mandraga/upernes/blob/master/Screenshot.png)
 
