@@ -83,7 +83,7 @@ int CindirectJmpRuntimeLabels::find_config_filename(Crom_file *rom, char *cfg_fi
     }
   else
       strcpy(&tmp_rom_file_name[i], ".txt");
-  snprintf(cfg_file_name, CFG_FILENAME_SZ, "outsrc/%s", tmp_rom_file_name);
+  snprintf(cfg_file_name, CFG_FILENAME_SZ, "../outsrc/%s", tmp_rom_file_name);
   return 0;
 }
 

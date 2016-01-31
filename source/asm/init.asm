@@ -96,6 +96,7 @@ Reset:
 	; Does nothing. Just here to help finding the end of the initialisation, and the call of the nes reset vector.
 	nop
 	nop
+	rep #$30
 	pha
 	lda #$E0B2    ; Random value used to find the breakpoint after the init sequence
 	pla

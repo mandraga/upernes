@@ -1,0 +1,392 @@
+# 6502 opcodes
+#
+# Types:
+# Logic
+# Arithmetic
+# Move
+# Stack
+# Jump
+# Flags
+# Interrupt
+
+# mode, commande, code hexadécimal, longueur en octets, cycles d'horloge
+
+####################################################
+ Arithmetic:
+
+Opcode: adc
+Imm;  adc #$44;    $69; 2; 2
+zp;   adc $44;     $65; 2; 3
+zpX;  adc $44,X;   $75; 2; 4
+Abs;  adc $4400;   $6D; 3; 4
+AbsX; adc $4400,X; $7D; 3; 4+
+AbsY; adc $4400,Y; $79; 3; 4+
+IndX; adc ($44,X); $61; 2; 6
+IndY; adc ($44),Y; $71; 2; 5+
+Flags: N Z C V
+Description: Add with carry
+
+Opcode: asl
+Acc;  asl A;       $0A; 1; 2
+zp;   asl $44;     $06; 2; 3
+zpX;  asl $44,X;   $16; 2; 6
+Abs;  asl $4400;   $0E; 3; 6
+AbsX; asl $4400,X; $1E; 3; 7
+Flags: N Z C
+Description: arithmetic shift left (with carry)
+
+Opcode: dec
+zp;    dec $44;     $C6; 2;  5
+zpX;   dec $44,X;   $D6; 2;  6
+Abs;   dec $4400;   $CE; 3;  6
+AbsX;  dec $4400,X; $DE; 3;  7
+Flags: N Z
+Description: Decrement memory
+
+Opcode: inc
+zp;    inc $44;     $E6; 2;  5
+zpX;   inc $44,X;   $F6; 2;  6
+Abs;   inc $4400;   $EE; 3;  6
+AbsX;  inc $4400,X; $FE; 3;  7
+Flags: N Z
+Description: Increment memory
+
+Opcode: sbc
+Imm;   sbc #$44;      $E9; 2; 2
+zp;    sbc $44;       $E5; 2; 3
+zpX;   sbc $44,X;     $F5; 2; 4
+Abs;   sbc $4400;     $ED; 3; 4
+AbsX;  sbc $4400,X;   $FD; 3; 4+
+AbsY;  sbc $4400,Y;   $F9; 3; 4+
+IndX;  sbc ($44,X);   $E1; 2; 6
+IndY;  sbc ($44),Y;   $F1; 2; 5+
+Flags: N V Z C
+Description: Substract with carry
+
+####################################################
+ Logic:
+
+Opcode: and
+Imm;   and #$44;      $29; 2; 2
+zp;    and $44;       $25; 2; 2
+zpX;   and $44,X;     $35; 2; 3
+Abs;   and $4400;     $2D; 3; 4
+AbsX;  and $4400,X;   $3D; 3; 4+
+AbsY;  and $4400,Y;   $39; 3; 4+
+IndX;  and ($44,X);   $21; 2; 6
+IndY;  and ($44),Y;   $31; 2; 5+
+Flags: N Z
+Description: bitwise and with accumulator
+
+Opcode: eor
+Imm;   eor #$44;      $49; 2; 2
+zp;    eor $44;       $45; 2; 3
+zpX;   eor $44,X;     $55; 2; 4
+Abs;   eor $4400;     $4D; 3; 4
+AbsX;  eor $4400,X;   $5D; 3; 4+
+AbsY;  eor $4400,Y;   $59; 3; 4+
+IndX;  eor ($44,X);   $41; 2; 6
+IndY;  eor ($44),Y;   $51; 2; 5+
+Flags: N Z
+Description: bitwise exclusive OR
+
+Opcode: lsr
+Acc;   lsr A;         $4A; 1; 2
+zp;    lsr $44;       $46; 2; 5
+zpX;   lsr $44,X;     $56; 2; 6
+Abs;   lsr $4400;     $4E; 3; 6
+AbsX;  lsr $4400,X;   $5E; 3; 7
+Flags: N Z C
+Description: Logical shift right
+
+Opcode: ora
+Imm;    ora #$44;      $09; 2; 2
+zp;     ora $44;       $05; 2; 2
+zpX;    ora $44,X;     $15; 2; 3
+Abs;    ora $4400;     $0D; 3; 4
+AbsX;   ora $4400,X;   $1D; 3; 4+
+AbsY;   ora $4400,Y;   $19; 3; 4+
+IndX;   ora ($44,X);   $01; 2; 6
+IndY;   ora ($44),Y;   $11; 2; 5+
+Flags: N Z
+Description: bitwise OR with accumulator
+
+Opcode: rol
+Acc;   rol A;         $2A; 1; 2
+zp;    rol $44;       $26; 2; 5
+zpX;   rol $44,X;     $36; 2; 6
+Abs;   rol $4400;     $2E; 3; 6
+AbsX;  rol $4400,X;   $3E; 3; 7
+Flags: N Z C
+Description: Shifts all bits left one position
+
+Opcode: ror
+Acc;   ror A;         $6A; 1; 2
+zp;    ror $44;       $66; 2; 5
+zpX;   ror $44,X;     $76; 2; 6
+Abs;   ror $4400;     $6E; 3; 6
+AbsX;  ror $4400,X;   $7E; 3; 7
+Flags: N Z C
+Description: Shifts all bits right one position
+
+####################################################
+ Move:
+
+Opcode: lda
+Imm;    lda #$44;      $A9; 2; 2
+zp;     lda $44;       $A5; 2; 3
+zpX;    lda $44,X;     $B5; 2; 4
+Abs;    lda $4400;     $AD; 3; 4
+AbsX;   lda $4400,X;   $BD; 3; 4+
+AbsY;   lda $4400,Y;   $B9; 3; 4+
+IndX;   lda ($44,X);   $A1; 2; 6
+IndY;   lda ($44),Y;   $B1; 2; 5+
+Flags: N Z
+Description: Load accumulator
+
+Opcode: ldx
+Imm;    ldx #$44;      $A2; 2; 2
+zp;     ldx $44;       $A6; 2; 3
+zpY;    ldx $44,Y;     $B6; 2; 4
+Abs;    ldx $4400;     $AE; 3; 4
+AbsY;   ldx $4400,Y;   $BE; 3; 4+
+Flags: N Z
+Description: Load X register
+
+Opcode: ldy
+Imm;    ldy #$44;      $A0; 2; 2
+zp;     ldy $44;       $A4; 2; 3
+zpX;    ldy $44,X;     $B4; 2; 4
+Abs;    ldy $4400;     $AC; 3; 4
+AbsX;   ldy $4400,X;   $BC; 3; 4+
+Flags: N Z
+Description: Load Y register
+
+Opcode: tax
+Implied; tax; $AA; 1; 2
+Flags: N Z
+Description: Transfer A to X
+
+Opcode: txa
+Implied; txa; $8A; 1; 2
+Flags: N Z
+Description: Transfer X to A 
+
+Opcode: dex
+Implied; dex; $CA; 1; 2
+Flags: N Z
+Description: Decrement X
+
+Opcode: inx
+Implied; inx; $E8; 1; 2
+Flags: N Z
+Description: Increment X
+
+Opcode: tay
+Implied; tay; $A8; 1; 2
+Flags: N Z
+Description: Transfer A to Y
+
+Opcode: tya
+Implied; tya; $98; 1; 2
+Flags: N Z
+Description: Transfer Y to A
+
+Opcode: dey
+Implied; dey; $88; 1; 2
+Flags: N Z
+Description: Decrement Y
+
+Opcode: iny
+Implied; iny; $C8; 1; 2
+Flags: N Z
+Description: Increment Y
+
+Opcode: sta
+zp;    sta $44;      $85; 2; 3
+zpX;   sta $44,X;    $95; 2; 4
+Abs;   sta $4400;    $8D; 3; 4
+AbsX;  sta $4400,X;  $9D; 3; 5
+AbsY;  sta $4400,Y;  $99; 3; 5
+IndX;  sta ($44,X);  $81; 2; 6
+IndY;  sta ($44),Y;  $91; 2; 6
+Description: Store accumulator in memory
+
+Opcode: stx
+zp;    stx $44;      $86; 2; 3
+zpY;   stx $44,Y;    $96; 2; 4
+Abs;   stx $4400;    $8E; 3; 4
+Description: Store X register in memory
+
+Opcode: sty
+zp;    sty $44;      $84; 2; 3
+zpX;   sty $44,X;    $94; 2; 4
+Abs;   sty $4400;    $8C; 3; 4
+Description: Store Y register in memory
+
+####################################################
+# Stack operations: page one $100-$1FF
+ Stack:
+
+Opcode: txs
+Implied; txs; $9A; 1; 2
+Description: Transfer X to stack ptr location
+
+Opcode: tsx
+Implied; tsx; $BA; 1; 2
+Description: Transfer stack ptr location to X
+
+Opcode: pha
+Implied; pha; $48; 1; 3
+Description: Push accumulator
+
+Opcode: pla
+Implied; pla; $68; 1; 4
+Description: Pull accumulator (pop)
+
+Opcode: php
+Implied; php; $08; 1; 3
+Description: Push processor status
+
+Opcode: plp
+Implied; plp; $28; 1; 4
+Description: Pull processor status (pop)
+
+####################################################
+ Flags:
+
+Opcode: bit
+zp;    bit $44;       $24; 2; 3
+Abs;   bit $4400;     $2C; 3; 4
+Flags: N V Z
+Description: tests memory bits against accumulator
+
+Opcode: cmp
+Imm;    cmp #$44;      $C9; 2; 2
+zp;     cmp $44;       $C5; 2; 3
+zpX;    cmp $44,X;     $D5; 2; 4
+Abs;    cmp $4400;     $CD; 3; 4
+AbsX;   cmp $4400,X;   $DD; 3; 4+
+AbsY;   cmp $4400,Y;   $D9; 3; 4+
+IndX;   cmp ($44,X);   $C1; 2; 6
+IndY;   cmp ($44),Y;   $D1; 2; 5+
+Flags: N Z C
+Description: Compares accumulator with memory
+
+Opcode: cpx
+Imm;    cpx #$44;      $E0; 2; 2
+zp;     cpx $44;       $E4; 2; 3
+Abs;    cpx $4400;     $EC; 3; 4
+Flags: N Z C
+Description: Compares index register X with memory
+
+Opcode: cpy
+Imm;    cpy #$44;      $C0; 2; 2
+zp;     cpy $44;       $C4; 2; 3
+Abs;    cpy $4400;     $CC; 3; 4
+Flags: N Z C
+Description: Compares index register Y with memory
+
+Opcode: clc
+Implied;  clc; $18; 1; 2
+Flags: C
+Description: clear carry
+
+Opcode: sec
+Implied;  sec; $38; 1; 2
+Flags: C
+Description:set carry
+
+Opcode: cli
+Implied;  cli; $58; 1; 2
+Flags: I
+Description: clear interrupt
+
+Opcode: sei
+Implied;  sei; $78; 1; 2
+Flags: I
+Description: set interrupt
+
+Opcode: clv
+Implied;  clv; $B8; 1; 2
+Flags: V
+Description: clear overflow
+
+Opcode: cld
+Implied;  cld; $D8; 1; 2
+Flags: D
+Description: clear decimal mode flag
+
+Opcode: sed
+Implied;  sed; $F8; 1; 2
+Flags: D
+Description: set decimal mode flag
+
+####################################################
+ Jump:
+
+Opcode: bpl
+PCR; bpl $44; $10; 2; 1
+Description: Branch if plus, branch if not equal (relative branch -127 +128)
+
+Opcode: bmi
+PCR; bmi $44; $30; 2; 1
+Description: Branch if minus
+
+Opcode: bvc
+PCR; bvc $44; $50; 2; 1
+Description: Branch if overflow clear
+
+Opcode: bvs
+PCR; bvs $44; $70; 2; 1
+Description: Branch if overflow set
+
+Opcode: bcc
+PCR; bcc $44; $90; 2; 1
+Description: Branch if carry clear
+
+Opcode: bcs
+PCR; bcs $44; $B0; 2; 1
+Description: Branch if carry set
+
+Opcode: bne
+PCR; bne $44; $D0; 2; 1
+Description: Branch if not equal
+
+Opcode: beq
+PCR; beq $44; $F0; 2; 1
+Description: Branch if equal
+
+Opcode: jmp
+Abs;  jmp $5597;   $4c; 3; 3
+Ind;  jmp ($5597); $6C; 3; 5
+Description: Jumps to a 16bit address, direct or indirect, must not be used on page boundary (256 Bytes boundary)
+
+Opcode: jsr
+Abs;  jsr $5597;   $20; 3; 6
+Description: Jump to subroutine
+
+Opcode: nop
+Implied; nop;         $EA; 1; 2
+Description: only a program counter increment
+
+Opcode: rts
+Implied; rts;  $60; 1; 6
+Description: Return from subroutine
+
+####################################################
+ Interrupt:
+
+Opcode: brk
+Implied;  brk;  $00; 2; 7
+Flags: B
+Description: Causes a non maskable interrupt if plus, second byte is a signature byte
+
+Opcode: rti
+Implied;  rti;  $40; 1; 6
+Flags: all
+Description: Return from interrupt. Retrieves the flags and program counter from the stack
+
+
+
+

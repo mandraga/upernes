@@ -1,4 +1,7 @@
-
+# Installing wla-65816:
+# download the binaries and add the path to them somewere like in your shell configuration.
+# add it to .bashrc like: PATH=~/home/me/upernes/asm/wla_linux_binaries/:$PATH
+#
 ASM= wla-65816
 LINK= wlalink
 LILKFILE= linkfile.prj

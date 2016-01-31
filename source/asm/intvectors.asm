@@ -30,6 +30,7 @@ DebugHandler:
 	nop
 	nop
 	nop
+	rep #$30
 	pha
 	lda #$E077    ; use this to set a breakpoint
 	pla

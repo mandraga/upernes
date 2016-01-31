@@ -37,17 +37,17 @@ int recompile(Cprogramlisting *plisting,
   Crecompilateur recompilateur;
   CindirectJmpAsmRoutines asr;
 
-  if (recompilateur.re("outsrc/recomp.asm", plisting, popcode_list, prom))
+  if (recompilateur.re("../outsrc/recomp.asm", plisting, popcode_list, prom))
     {
       printf("Error: %s\n", recompilateur.m_error_str);
       return 1;
     }
-  if (asr.create_indjump_asm_routines("outsrc/indjmp.asm", pindjmp, recompilateur.get_label_gen_info()))
+  if (asr.create_indjump_asm_routines("../outsrc/indjmp.asm", pindjmp, recompilateur.get_label_gen_info()))
     {
       printf("Error: %s\n", asr.m_error_str);
       return 1;
     }
-  prom->create_rom_headerfile("outsrc/romprg.asm");
+  prom->create_rom_headerfile("../outsrc/romprg.asm");
   return 0;
 }
 
@@ -82,7 +82,7 @@ int open_rom(char *file_path, Copcodes *popcode_list)
       return 1;
     }
   rom.print_inf();
-  rom.dump("outsrc/data/nesprg.bin", "outsrc/data/neschr.bin");
+  rom.dump("../outsrc/data/nesprg.bin", "../outsrc/data/neschr.bin");
   disassemble(popcode_list, &rom);
   return 0;
 }
