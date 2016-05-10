@@ -277,10 +277,10 @@ int Crom_file::create_rom_headerfile(const char *file_name)
 	default:
 	  assert(false);
 	};
-      fprintf(fp, "; .SECTION \"OriginalPRGrom\"\n");
+      fprintf(fp, ".SECTION \"OriginalPRGrom\"\n");
       fprintf(fp, "PRGrom:\n");
       fprintf(fp, ".INCBIN \"nesprg.bin\"\n");
-      fprintf(fp, ";.ENDS\n");
+      fprintf(fp, ".ENDS\n");
       fclose(fp);
     }
   catch (int e)

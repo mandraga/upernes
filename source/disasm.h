@@ -24,7 +24,7 @@ public:
   ~Cdisasm();
 
   int init(Crom_file *prom);
-  int disasm(Copcodes *pops, Crom_file *prom, CindirectJmpRuntimeLabels *pindjmp);
+  int disasm(Copcodes *pops, Crom_file *prom, CindirectJmpRuntimeLabels *pindjmp, char *output_path);
   Cprogramlisting *getlisting();
 
 private:

@@ -27,7 +27,7 @@
 // 5) The indirect address is added by hand to the conversion configuration file.
 // Return to 1) where the new address is disassembled.
 //
-// Aide mémoire:
+// Aide memoire:
 // 1) Read the file, create a list of the known indirect jump and their potential jump adresses.
 // 2) During dissassembly, add the discovered new indirect jumps to the list (knowing nothing yet of their potential jump addresses).
 // 2' Update the file. 
@@ -62,7 +62,7 @@ CindirectJmpRuntimeLabels::~CindirectJmpRuntimeLabels()
 }
 
 // Constructs the indirect address parameter text file name from the rom name
-int CindirectJmpRuntimeLabels::find_config_filename(Crom_file *rom, char *cfg_file_name)
+int CindirectJmpRuntimeLabels::find_config_filename(Crom_file *rom, char *cfg_file_name, char *output_path)
 {
   char tmp_rom_file_name[CFG_FILENAME_SZ];
   int  i;
@@ -83,15 +83,15 @@ int CindirectJmpRuntimeLabels::find_config_filename(Crom_file *rom, char *cfg_fi
     }
   else
       strcpy(&tmp_rom_file_name[i], ".txt");
-  snprintf(cfg_file_name, CFG_FILENAME_SZ, "../outsrc/%s", tmp_rom_file_name);
+  snprintf(cfg_file_name, CFG_FILENAME_SZ, "%s/%s", output_path, tmp_rom_file_name);
   return 0;
 }
 
-int CindirectJmpRuntimeLabels::init(Crom_file *rom)
+int CindirectJmpRuntimeLabels::init(Crom_file *rom, char *output_path)
 {
   char cfg_file_name[CFG_FILENAME_SZ];
 
-  if (find_config_filename(rom, cfg_file_name))
+  if (find_config_filename(rom, cfg_file_name, output_path))
     return 1;
   if (open_data(cfg_file_name))
     return 0; // Nothing to do, the file does not exist
@@ -284,7 +284,7 @@ void CindirectJmpRuntimeLabels::writenewjumps(FILE *fp)
     }
 }
 
-int CindirectJmpRuntimeLabels::update_indjump_file(Crom_file *rom)
+int CindirectJmpRuntimeLabels::update_indjump_file(Crom_file *rom, char *output_path)
 {
   bool           bupdate;
   t_indirjmpiter jmpiter;
@@ -296,7 +296,7 @@ int CindirectJmpRuntimeLabels::update_indjump_file(Crom_file *rom)
       bupdate |= (*jmpiter).bnew;
   if (bupdate)
     {
-      if (find_config_filename(rom, cfg_file_name))
+      if (find_config_filename(rom, cfg_file_name, output_path))
 	return 1;
       fp = fopen(cfg_file_name, "a");
       if (fp == NULL)

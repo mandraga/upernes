@@ -24,15 +24,15 @@ enum
 public:
   CindirectJmpRuntimeLabels();
   ~CindirectJmpRuntimeLabels();
-  int  init(Crom_file *rom);
+  int  init(Crom_file *rom, char *output_path);
   int  addjmpoperand(unsigned int jopaddr, bool bnew);
-  int  update_indjump_file(Crom_file *rom);
+  int  update_indjump_file(Crom_file *rom, char *output_path);
   bool next_address(bool first, unsigned int *paddr, unsigned int *poperand);
   bool next_op_address(bool first, unsigned int jopaddr, unsigned int *paddr);
   bool next_operand(bool first, unsigned int *pjoperand);
   bool next_indaddr(bool first, unsigned int joperand, unsigned int *paddr);
 private:
-  int  find_config_filename(Crom_file *rom, char *cfg_file_name);
+  int  find_config_filename(Crom_file *rom, char *cfg_file_name, char *output_path);
   bool check_crc(Crom_file *rom);
   void writeheader(FILE *fp, Crom_file *rom);
   void writenewjumps(FILE *fp);

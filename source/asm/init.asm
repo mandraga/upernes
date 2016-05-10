@@ -65,7 +65,7 @@ Reset:
 	; Set tile map address (Addr >> 11) << 2
 	sep #$30		;  All 8bits
 	lda #$70		; (1k word segment $7000 / $400)=$1C << 2
-	sta BG1SC               ;  the two lower bits are the screen size and are set to 00 : only one screen
+	sta BG1SC       ;  the two lower bits are the screen size and are set to 00 : only one screen
 
 	; Initialises the nes port emulation vars
 	;; -----------------------------------------------

@@ -1,0 +1,46 @@
+#!bash
+# echo commands
+#set -vx
+
+UPERNES_PATH="../binw64"
+
+if [ "$1" = "" ]; then
+	echo "usage: convert.sh \"rompath/romname\" [\"output_path\"]";
+fi
+if [ "$2" = "" ]; then
+	OUTPUT_PATH="./"
+else
+	OUTPUT_PATH=$2
+fi
+echo "output path = " $OUTPUT_PATH
+# Copy all the things in the asm directory
+cp ../asm/*.asm ./
+cp ../asm/*.inc ./
+cp ../asm/linkfile.prj ./
+cp ../opcodes.txt ./
+cp ../asm/data/* ./data/
+
+# Runs uppernes on the nes rom
+set -vx
+$UPERNES_PATH/upernes.exe $1 $OUTPUT_PATH
+
+# Build the snes rom using the makefile
+make all
+set +vx
+
+# Clean the static sources
+rm ./CHR.asm
+rm ./indjmp.asm
+rm ./init.asm
+rm ./instructions.asm
+rm ./intvectors.asm
+rm ./iopemulation.asm
+rm ./LoadGraphics.asm
+rm ./print.asm
+rm ./recomp.asm
+rm ./rom.asm
+rm ./Sound.asm
+rm ./Strings.asm
+rm ./zeromem.asm
+rm ./*.inc
+rm ./opcodes.txt

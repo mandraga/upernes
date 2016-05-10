@@ -9,7 +9,7 @@
 # Flags
 # Interrupt
 
-# mode, commande, code hexadécimal, longueur en octets, cycles d'horloge
+# mode, command, hexadecimal code, length in bytes, clock cycles
 
 ####################################################
  Arithmetic:
@@ -22,7 +22,7 @@ Abs;  adc $4400;   $6D; 3; 4         direct - emulation if ppu apu
 AbsX; adc $4400,X; $7D; 3; 4+	     direct - emulation if ppu apu
 AbsY; adc $4400,Y; $79; 3; 4+        direct - emulation if ppu apu
 IndX; adc ($44,X); $61; 2; 6         @ = *($44 + X) + (*($44 + X + 1) << 8) -> Emulation
-IndY; adc ($44),Y; $71; 2; 5+	     @ = (*$44 *44 +1) + Y Emulation, direct peut être tenté pour voir
+IndY; adc ($44),Y; $71; 2; 5+	     @ = (*$44 *44 +1) + Y Emulation, direct?
 Flags: V Z C
 Description: Add with carry
 
@@ -265,7 +265,7 @@ Opcode: cmp
 Imm;    cmp #$44;      $C9; 2; 2         direct
 zp;     cmp $44;       $C5; 2; 3         direct
 zpX;    cmp $44,X;     $D5; 2; 4         direct
-Abs;    cmp $4400;     $CD; 3; 4         direct - emulation if ppu apu (quasi not if pad (ou avec 0x40))
+Abs;    cmp $4400;     $CD; 3; 4         direct - emulation if ppu apu(quasi not if padle, if 0x40))
 AbsX;   cmp $4400,X;   $DD; 3; 4+        direct - emulation if ppu apu
 AbsY;   cmp $4400,Y;   $D9; 3; 4+        direct - emulation if ppu apu
 IndX;   cmp ($44,X);   $C1; 2; 6         EMULATION

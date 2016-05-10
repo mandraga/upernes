@@ -233,7 +233,7 @@ _bf:
 	CMP #'b'
 	BNE _xf
 	JSR PrintInt8           ; Print 8-bit Integer
-	BRA PrintFLoop
+	BRL PrintFLoop
 _xf:	
 	CMP #'x'
 	BNE _defaultF

@@ -5,38 +5,38 @@
 ;--------------------------------------------------------------------
 .DEFINE	RAMBASE	$0800		; 2kB
 
-;; Variables pour ne pas utiliser la pile lors des appels d'émulation des E/S
-.DEFINE Acc		RAMBASE
-.DEFINE Xi		RAMBASE + 2
-.DEFINE Yi		RAMBASE + 4
-.DEFINE SP		RAMBASE + 6
-.DEFINE Flags		RAMBASE + 8
+;; Variables to avoid calling the stack during IO operations.
+.DEFINE Acc				RAMBASE
+.DEFINE Xi				RAMBASE + 2
+.DEFINE Yi				RAMBASE + 4
+.DEFINE SP				RAMBASE + 6
+.DEFINE Flags			RAMBASE + 8
 
-;; Addresse du port à émuler
-.DEFINE IOAddr		RAMBASE + 10
+;; Addres of the emulated port
+.DEFINE IOAddr			RAMBASE + 10
 
 .DEFINE IndirAddress	RAMBASE + 12
 
 ; String Functions
-.DEFINE Cursor		RAMBASE + 14    ; Holds the 16-bit position on screen
+.DEFINE Cursor			RAMBASE + 14    ; Holds the 16-bit position on screen
 
 ;--------------------------------------------------------------------
 .DEFINE IOBASE	$0900
 ;; IO Emulation state machine variables
 
-.DEFINE PPUR_RAM_routineAddr  IOBASE +  0  ; Contains the routine to read ppu ram depending on vram @
-.DEFINE PPUW_RAM_routineAddr  IOBASE +  2  ; Contains the routine to write ppu ram depending on vram @
+.DEFINE PPUR_RAM_routineAddr	IOBASE + 0  ; Contains the routine to read ppu ram depending on vram @
+.DEFINE PPUW_RAM_routineAddr	IOBASE + 2  ; Contains the routine to write ppu ram depending on vram @
 
-.DEFINE PPUmemaddrL		IOBASE + 4	; Current ppu vram address
-.DEFINE PPUmemaddrH		IOBASE + 5
-.DEFINE PPUmemaddrB		IOBASE + 6	; Low/Hight byte write
+.DEFINE PPUmemaddrL				IOBASE + 4	; Current ppu vram address
+.DEFINE PPUmemaddrH				IOBASE + 5
+.DEFINE PPUmemaddrB				IOBASE + 6	; Low/Hight byte write
 
-.DEFINE tmp_addr		IOBASE + 7	; Word, tmp address storage
+.DEFINE tmp_addr				IOBASE + 7	; Word, tmp address storage
 
-.DEFINE PPUcontrolreg1		IOBASE + 12
-.DEFINE PPUcontrolreg2		IOBASE + 14
+.DEFINE PPUcontrolreg1			IOBASE + 12
+.DEFINE PPUcontrolreg2			IOBASE + 14
 
-.DEFINE	SpriteMemoryAddress	IOBASE + 16
+.DEFINE	SpriteMemoryAddress		IOBASE + 16
 
 ;--------------------------------------------------------------------
 .DEFINE SpriteMemoryBase	$0A00           ; 256 bytes

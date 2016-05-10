@@ -26,19 +26,17 @@
 
 ;; --------------------------------------------------------------------
 ; PRG
-/*
-	Created by the software
-.BANK 1 SLOT 0
-.ORG 0
+; defined in romprg.asm dynamicly writen by upernes
+;.BANK 1 SLOT 0
+;.ORG 0
 ;.ORG 16384
-; .SECTION "OriginalPRGrom"
-	
-PRGrom:
-	.INCBIN "nesprg.bin"
+;.SECTION "OriginalPRGrom"	
+;PRGrom:
+;	.INCBIN "nesprg.bin"
 ;.ENDS
-*/
+
 ;; --------------------------------------------------------------------
-; CHR
+; CHR data
 .BANK 2 SLOT 0
 .ORG 0
 .SECTION "CharacterData"
@@ -52,4 +50,4 @@ nes2snespalette:
 	.INCBIN "data/palette.dat"
 .ENDS
 
-; -------------------------------------------------
+; --------------------------------------------------------------------

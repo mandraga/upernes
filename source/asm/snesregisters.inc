@@ -20,18 +20,18 @@
 .EQU BG1VOFS  $210E
 
 .EQU VMAINC   $2115	;; Vram address increment register
-.EQU VMADDL   $2116     ;; VRAM Address Registers (Low)
+.EQU VMADDL   $2116 ;; VRAM Address Registers (Low)
 .EQU VMADDH   $2117	;; VRAM Address Registers (High)
 
-.EQU VMDATAL  $2118     ;; VRAM Data Write Registers (Low)
-.EQU VMDATAH  $2119     ;; VRAM Data Write Registers (High)
+.EQU VMDATAL  $2118 ;; VRAM Data Write Registers (Low)
+.EQU VMDATAH  $2119 ;; VRAM Data Write Registers (High)
 
-.EQU TM       $212C     ;; Windows mask for main screen
-.EQU TS       $212D     ;; Windows mask for sub screen
+.EQU TM       $212C ;; Windows mask for main screen
+.EQU TS       $212D ;; Windows mask for sub screen
 
-.EQU WMDATA   $2180     ;; WRAM Data Read/Write Register
-.EQU WMADDL   $2181     ;; WRAM Address Registers (Low)
-.EQU WMADDM   $2182     ;; WRAM Address Registers (Mid)
+.EQU WMDATA   $2180 ;; WRAM Data Read/Write Register
+.EQU WMADDL   $2181 ;; WRAM Address Registers (Low)
+.EQU WMADDM   $2182 ;; WRAM Address Registers (Mid)
 .EQU WMADDH   $2183	;; WRAM Address Registers (High)
 
 .EQU NMITIMEN $4200

@@ -32,31 +32,37 @@
 
 int recompile(Cprogramlisting *plisting,
 	      Copcodes *popcode_list, Crom_file *prom,
-	      CindirectJmpRuntimeLabels *pindjmp)
+	      CindirectJmpRuntimeLabels *pindjmp,
+	      char *outpath)
 {
   Crecompilateur recompilateur;
   CindirectJmpAsmRoutines asr;
+  const int cstrsz = 4096;
+  char      path[cstrsz];
 
-  if (recompilateur.re("../outsrc/recomp.asm", plisting, popcode_list, prom))
+  snprintf(path, cstrsz, "%s/%s", outpath, "recomp.asm");
+  if (recompilateur.re(path, plisting, popcode_list, prom))
     {
       printf("Error: %s\n", recompilateur.m_error_str);
       return 1;
     }
-  if (asr.create_indjump_asm_routines("../outsrc/indjmp.asm", pindjmp, recompilateur.get_label_gen_info()))
+  snprintf(path, cstrsz, "%s/%s", outpath, "indjmp.asm");
+  if (asr.create_indjump_asm_routines(path, pindjmp, recompilateur.get_label_gen_info()))
     {
       printf("Error: %s\n", asr.m_error_str);
       return 1;
     }
-  prom->create_rom_headerfile("../outsrc/romprg.asm");
+  snprintf(path, cstrsz, "%s/%s", outpath, "romprg.asm");
+  prom->create_rom_headerfile(path);
   return 0;
 }
 
-int disassemble(Copcodes *popcode_list, Crom_file *prom)
+int disassemble(Copcodes *popcode_list, Crom_file *prom, char *output_path)
 {
   CindirectJmpRuntimeLabels indjmp;
   Cdisasm                   disassembler;
 
-  switch (indjmp.init(prom))
+  switch (indjmp.init(prom, output_path))
     {
     case 1:
       printf("Error: %s\n", indjmp.m_error_str);
@@ -67,14 +73,17 @@ int disassemble(Copcodes *popcode_list, Crom_file *prom)
     }
   if (disassembler.init(prom))
       return 1;
-  disassembler.disasm(popcode_list, prom, &indjmp);
-  recompile(disassembler.getlisting(), popcode_list, prom, &indjmp);
+  disassembler.disasm(popcode_list, prom, &indjmp, output_path);
+  recompile(disassembler.getlisting(), popcode_list, prom, &indjmp, output_path);
   return 0;
 }
 
-int open_rom(char *file_path, Copcodes *popcode_list)
+int open_rom(char *file_path, char *output_path, Copcodes *popcode_list)
 {
   Crom_file rom;
+  const int strsz = 1024;
+  char      prg_path[strsz];
+  char      chr_path[strsz];
 
   if (rom.open_nes(file_path))
     {
@@ -82,8 +91,10 @@ int open_rom(char *file_path, Copcodes *popcode_list)
       return 1;
     }
   rom.print_inf();
-  rom.dump("../outsrc/data/nesprg.bin", "../outsrc/data/neschr.bin");
-  disassemble(popcode_list, &rom);
+  snprintf(prg_path, strsz, "%s/%s", output_path, "nesprg.bin");
+  snprintf(chr_path, strsz, "%s/%s", output_path, "neschr.bin");
+  rom.dump(prg_path, chr_path);
+  disassemble(popcode_list, &rom, output_path);
   return 0;
 }
 
@@ -91,20 +102,30 @@ int main(int argc, char *argv[])
 {
   Copcodes *popcode_list;
   char path[] = "./opcodes.txt";
+  char outpath[] = "./";
   //char ROMpath[] = "../rom/Super Mario Bros. (W) [!].nes";
   //char ROMpath[] = "../rom/nes/Balloon Fight (JU) [!].nes";
   //char ROMpath[] = "../rom/nes/dev/ppu0/ppu0.nes";
   //char ROMpath[] = "../rom/Xevious (E).nes";
   //char ROMpath[] = "../rom/Galaga (U).nes";
   char *ROMpath;
+  char *OutputPath;
   Ivideo scr;
 
   if (argc > 1)
     ROMpath = argv[1];
   else
     {
-      printf("Usage: upernes romname.nes\n\n");
+      printf("Usage: upernes romname.nes [output directory]\n\n");
       return 0;
+    }
+  if (argc > 2)
+    {
+      OutputPath = argv[2];
+    }
+  else
+    {
+      OutputPath = outpath;
     }
   scr.init_video(640, 480);
   popcode_list = NULL;
@@ -116,9 +137,10 @@ int main(int argc, char *argv[])
 #else
       printf("\n\n");
 #endif
-      open_rom(ROMpath, popcode_list);
+      open_rom(ROMpath, OutputPath, popcode_list);
     }
   delete popcode_list;
   scr.free_video();
   return 0;
 }
+

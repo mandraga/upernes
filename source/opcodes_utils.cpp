@@ -164,8 +164,9 @@ void Copcodes::print_instruction(int instr_addr, unsigned long instruction)
   printf("%4x ", instr_addr);
   out_instruction(stdout, opcode, (instruction >> 8) & 0xFFFF, NULL);
   snprintf(out, sizeof(out), "\t%s", m_pop2mnemonic[opcode]->pstr_description);
-  while (index(out, '\n'))
-    *index(out, '\n') = ' ';
+  // Remove the end of lines
+  while (strchr(out, '\n'))
+    *strchr(out, '\n') = ' ';
   printf("%s", out);
   printf("\n");
 }

@@ -7,9 +7,9 @@ SLOT        0 $8000
 .ENDME
 
 .ROMBANKMAP
-BANKSTOTAL 3		; Number of 64KB rom banks
-BANKSIZE $8000          ; 64KB
-BANKS 3
+BANKSTOTAL   4		; Number of 32KB rom banks
+BANKSIZE $8000      ; 32KB
+BANKS        4
 .ENDRO
 
 .EMPTYFILL $FF

@@ -21,7 +21,7 @@
 #include "parse_codes.h"
 #include "parser.h"
 
-// Utilise lex seul pour récupérer les éléments de texte
+// Uses only lex to recover the text elements, yacc equivalent state machine is coded internally
 extern FILE *yyin;
 extern char *yytext;
 extern int  yyleng;

@@ -23,16 +23,16 @@
 .ORG 0
 .SECTION "IOemulation"
 
-;; Write ports
+;; Write ports, this is an array of routine addresses
 IOWroutinestable:
-.DW	WPPUC1			; $2000
-.DW	WPPUC2			; $2001
+.DW	WPPUC1				; $2000
+.DW	WPPUC2				; $2001
 .DW	$0000
-.DW	WSPRADDR		; $2003
-.DW	WSPRDATA		; $2004
+.DW	WSPRADDR			; $2003
+.DW	WSPRDATA			; $2004
 .DW	WSCROLOFFSET		; $2005
-.DW	WPPUMEMADDR		; $2006
-.DW	WPPUMEMDATA		; $2007
+.DW	WPPUMEMADDR			; $2006
+.DW	WPPUMEMDATA			; $2007
 ;; Sound registers
 .DW	WSNDSQR1CTRL		; $4000
 .DW	WSNDSQR1E
@@ -50,51 +50,51 @@ IOWroutinestable:
 .DW     $0000
 .DW	WSNDNOISESHM		; $400E
 .DW	WSNDNOISELEN		; $400F
-.DW	WSNDDMCCTRL		; $4010
-.DW	WSNDDMCDAC		; $4011
+.DW	WSNDDMCCTRL			; $4010
+.DW	WSNDDMCDAC			; $4011
 .DW	WSNDDMCSADDR		; $4012
-.DW	WSNDDMCSLEN		; $4013
+.DW	WSNDDMCSLEN			; $4013
 ;; DMA
 .DW	WDMASPRITEMEMACCESS	; $4014
 ;; Sound again
 .DW	WSNDCHANSWITCH		; $4015
 ;; Joystick but not replaced
-.DW	WJOYSTICK1		; $4016 WJOYSTICK1
+.DW	WJOYSTICK1			; $4016 WJOYSTICK1
 .DW	WSNDSEQUENCER		; WSNDSEQUENCER / WJOYSTICK2
 
 ;; Read ports
 IORroutinestable:
-.DW	RPPUC1			; $2000
-.DW	RPPUC2			; $2001
-.DW	RPPUSTATUS		; $2002
+.DW	RPPUC1				; $2000
+.DW	RPPUC2				; $2001
+.DW	RPPUSTATUS			; $2002
 .DW	$0000
-.DW	RSPRDATA		; $2004
+.DW	RSPRDATA			; $2004
 .DW	$0000
 .DW	$0000
-.DW	RPPUMEMDATA		; $2007
+.DW	RPPUMEMDATA			; $2007
 ;; Sound registers
-.DW	$0000			; $4000
-.DW	$0000			; $4001
-.DW	$0000			; $4002
-.DW	$0000			; $4003
-.DW	$0000			; $4004
-.DW	$0000			; $4005
-.DW	$0000			; $4006
-.DW	$0000			; $4007
-.DW	$0000			; $4008
-.DW	$0000			; $4009
-.DW	$0000			; $400A
-.DW	$0000			; $400B
-.DW	$0000			; $400C
-.DW	$0000			; $400D
-.DW	$0000			; $400E
-.DW	$0000			; $400F
-.DW	$0000			; $4010
-.DW	$0000			; $4011
-.DW	$0000			; $4012
-.DW	$0000			; $4013
+.DW	$0000				; $4000
+.DW	$0000				; $4001
+.DW	$0000				; $4002
+.DW	$0000				; $4003
+.DW	$0000				; $4004
+.DW	$0000				; $4005
+.DW	$0000				; $4006
+.DW	$0000				; $4007
+.DW	$0000				; $4008
+.DW	$0000				; $4009
+.DW	$0000				; $400A
+.DW	$0000				; $400B
+.DW	$0000				; $400C
+.DW	$0000				; $400D
+.DW	$0000				; $400E
+.DW	$0000				; $400F
+.DW	$0000				; $4010
+.DW	$0000				; $4011
+.DW	$0000				; $4012
+.DW	$0000				; $4013
 ;; DMA
-.DW	$0000			; $4014 DMA
+.DW	$0000				; $4014 DMA
 .DW	RSNDCHANSWITCH		; $4015 APU status register
 .DW	RJOYSTICK1
 .DW	RJOYSTICK2
@@ -177,7 +177,6 @@ secondbgchrbank:
 BGbankend:
 	;; ------------------------------------------
 	;; Sprite size
-	
 	;; ------------------------------------------
 
 	;; FIXME is it used on the nes?.???? enable and disable screen?????????????????????????????????,,,,,,,

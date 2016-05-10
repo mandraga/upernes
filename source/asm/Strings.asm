@@ -179,11 +179,11 @@ PrintFDone:
 PrintFControl:
 	LDA $0000,X             ; Read control character
 	BEQ PrintFDone          ; Check for NULL terminator
-	INX                     ; Increment input pointer
+	INX             ; Increment input pointer
 	CMP #'n'
 _cn:
 	BNE _ct
-	rep #$30                ; 16b mem, 16b X
+	rep #$30        ; 16b mem, 16b X
 	LDA Cursor		; Get Current position
 	CLC
 	ADC #$0020		; move to the next line
@@ -194,7 +194,7 @@ _cn:
 _ct:
 	CMP #'t'
 	BNE _cb
-	rep #$30                ; 16b mem, 16b X
+	rep #$30		; 16b mem, 16b X
 	LDA Cursor		; Get Current position
 	CLC
 	ADC #$0008		; move to the next tab
@@ -234,7 +234,7 @@ _bf:
 	CMP #'b'
 	BNE _xf
 	JSR PrintInt8           ; Print 8-bit Integer
-	BRA PrintFLoop
+	BRL PrintFLoop          ; Long always branch
 _xf:	
 	CMP #'x'
 	BNE _defaultF

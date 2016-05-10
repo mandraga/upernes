@@ -11,7 +11,7 @@
 ;- Changes applied for inclusion in the nes rom recompiler.
 ;------------------------------------------------------------------------
 
-; .include "var.inc"
+.include "var.inc"
 
 .define BASETILE $80
 
@@ -236,7 +236,7 @@ _bf:
 	CMP #'b'
 	BNE _xf
 	JSR PrintInt8           ; Print 8-bit Integer
-	BRA PrintFLoop
+	BRL PrintFLoop
 _xf:	
 	CMP #'x'
 	BNE _defaultF

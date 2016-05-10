@@ -314,7 +314,7 @@ int Cdisasm::disasm_addr(Copcodes *pops, Crom_file *prom,
   return 0;
 }
 
-int Cdisasm::disasm(Copcodes *pops, Crom_file *prom, CindirectJmpRuntimeLabels *pindjmp)
+int Cdisasm::disasm(Copcodes *pops, Crom_file *prom, CindirectJmpRuntimeLabels *pindjmp, char *output_path)
 {
   bool          first;
   unsigned int  addr;
@@ -351,7 +351,7 @@ int Cdisasm::disasm(Copcodes *pops, Crom_file *prom, CindirectJmpRuntimeLabels *
         m_color += 0x61C4;
     }
   // 0xC3BF, 0xC3ed, 0xC434, 0xC455
-  if (pindjmp->update_indjump_file(prom))
+  if (pindjmp->update_indjump_file(prom, output_path))
     {
       printf("Error: %s\n", pindjmp->m_error_str);
       return 1;
