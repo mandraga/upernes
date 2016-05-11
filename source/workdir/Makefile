@@ -22,7 +22,7 @@ linkfile:
 
 # linkfile.prj
 all: linkfile $(objects)
-	wlalink -vr linkfile.prj ppu0.fig
+	wlalink -vr linkfile.prj $(ROM_NAME)
 
 clean:
 	-rm *.obj

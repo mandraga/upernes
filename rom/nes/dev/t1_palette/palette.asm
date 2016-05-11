@@ -24,12 +24,12 @@ VRAM_PAL_ADDR   equ $3F00
 	.org $C000
 
 Init:
-	cld			; Clear decimal mode flag
-	lda PPUSTATUS           ; reset a latch?
+	cld					; Clear decimal mode flag
+	lda PPUSTATUS		; reset a latch?
 	lda #%00010000     	; Background patern table address at VRAM $1000
-        sta PPU0          	; PPU control 1
-        lda #%00011110
-        sta PPU1		; PPU control 2 No cliping BG & Sprites visible
+    sta PPU0          	; PPU control 1
+    lda #%00011110
+    sta PPU1			; PPU control 2 No cliping BG & Sprites visible
 	jmp overpal
 PaletteData:
 	.db $0F,$00,$01,$02, $0F,$03,$04,$05, $0F,$06,$07,$08, $0F,$09,$0A,$0B

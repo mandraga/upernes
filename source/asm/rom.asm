@@ -5,13 +5,13 @@
 ;; Part 1
 .BANK 0
 .ORG    $7FB0
-.DB     "00"			; New Licensee Code
-.DB     "SNES"			; ID
+.DB     "00"					; New Licensee Code
+.DB     "SNES"					; ID
 .ORG    $7FC0
-.DB     "test nes ppu0"		; Title (21 bytes)
+.DB     "upernes conversion   "	; Title (21 bytes)
 ;       "123456789012345678901"
 .ORG    $7FD5
-.DB     $20			; Memory Mode ($20=Slow LoRom, $21=Slow HiRom)
+.DB     $20						; Memory Mode ($20=Slow LoRom, $21=Slow HiRom)
 
 ;; Part 2
 .ORG    $7FD6
@@ -20,9 +20,9 @@
 .DB     $00			; SRAM Size ($00=0bits, $01=16kbits, $02=32kbits, $03=64kbits)
 .DB     $01			; Country ($01=USA)
 .DB     $00			; Licensee Code
-.DB	$00			; Version
-.DW	$0000			; Checksum Complement  (not calculated here)
-.DW	$0000			; Checksum
+.DB	    $00			; Version
+.DW	    $0000		; Checksum Complement  (not calculated here)
+.DW	    $0000		; Checksum
 
 ;; --------------------------------------------------------------------
 ; PRG

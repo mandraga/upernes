@@ -21,11 +21,20 @@ cp ../opcodes.txt ./
 cp ../asm/data/* ./data/
 
 # Runs uppernes on the nes rom
-set -vx
+set +vx
 $UPERNES_PATH/upernes.exe $1 $OUTPUT_PATH
+
+# Extract the ROM name from the path
+ROM_NAME=$(echo $1 | sed "s/.*\///")
+ROM_NAME=$(echo $ROM_NAME | sed "s/nes/fig/")
+echo "Rom name = " $ROM_NAME
+# Put it in the environment for the Makefile
+export ROM_NAME
 
 # Build the snes rom using the makefile
 make all
+
+unset ROM_NAME
 set +vx
 
 # Clean the static sources
@@ -37,7 +46,6 @@ rm ./intvectors.asm
 rm ./iopemulation.asm
 rm ./LoadGraphics.asm
 rm ./print.asm
-rm ./recomp.asm
 rm ./rom.asm
 rm ./Sound.asm
 rm ./Strings.asm

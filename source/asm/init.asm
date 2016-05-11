@@ -22,7 +22,7 @@ Reset:
 	clc			; native mode
 	xce
 
-	rep #$38		; all regs 16 bits, decimal mode off
+	rep #$38	; all regs 16 bits, decimal mode off
 
 	; Direct page $00
 	pea $0000
@@ -85,9 +85,9 @@ Reset:
 	; Data bank is bank 1 containing original source code
 	; Program bank is 0 contains recompiled source code
 	; Bank 2 is chr data 
-	sep #$30
+	sep #$30		;  All 8bits
 	lda #$01
-	pha ;??????????????????????????????? Erreur interprété comme brk
+	pha
 	plb
 	; Set 6502 emulation mode
 	sec
@@ -96,10 +96,6 @@ Reset:
 	; Does nothing. Just here to help finding the end of the initialisation, and the call of the nes reset vector.
 	nop
 	nop
-	rep #$30
-	pha
-	lda #$E0B2    ; Random value used to find the breakpoint after the init sequence
-	pla
 	nop
 	nop
 	; Go to the start of the nes routine

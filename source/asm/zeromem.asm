@@ -41,7 +41,7 @@ ClearRegisters:
         phx
 	php
 
-	sep #$30			; All 8bit
+	sep #$30		; All 8bit
 	lda #$8F		; Forced blank
 	sta $2100
 	CLRMEM  $2101 $03

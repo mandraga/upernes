@@ -184,10 +184,10 @@ int Crom_file::dump_buffer(const char *name, unsigned char *buffer, int size)
   FILE *fp;
   int   ret = 0;
 
-  fp = fopen(name, "w");
+  fp = fopen(name, "wb"); // Binary or it will not work (oversized data...).
   if (fp)
     {
-      ret = fwrite(buffer, size, 1, fp);
+      ret = fwrite(buffer, 1, size, fp);
       fclose(fp);
     }
   return ret;
@@ -195,6 +195,7 @@ int Crom_file::dump_buffer(const char *name, unsigned char *buffer, int size)
 
 int Crom_file::dump(const char *prgname, const char *chrname)
 {
+  assert(m_PRG_size % PRG_BANK_SIZE == 0);
   if (dump_buffer(prgname, m_pPRG, m_PRG_size) == 0)
     return 1;
   if (dump_buffer(chrname, m_pCHR, m_CHR_size) == 0)
@@ -269,7 +270,7 @@ int Crom_file::create_rom_headerfile(const char *file_name)
       switch (prg_banks)
 	{
 	case 1:
-	  fprintf(fp, ".ORG 16384\n");
+	  fprintf(fp, ".ORG $4000\n"); // If the prg rom is <= 16kb then it begins in the uper bank (0xC000) but 0x4000 in wla-dx
 	  break;
 	case 2:
 	  fprintf(fp, ".ORG 0\n");
@@ -277,10 +278,10 @@ int Crom_file::create_rom_headerfile(const char *file_name)
 	default:
 	  assert(false);
 	};
-      fprintf(fp, ".SECTION \"OriginalPRGrom\"\n");
+      //      fprintf(fp, ".SECTION \"OriginalPRGrom\" FORCE\n");
       fprintf(fp, "PRGrom:\n");
       fprintf(fp, ".INCBIN \"nesprg.bin\"\n");
-      fprintf(fp, ".ENDS\n");
+      // fprintf(fp, ".ENDS\n");
       fclose(fp);
     }
   catch (int e)
