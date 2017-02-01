@@ -13,7 +13,7 @@ upernes outputs an assembler file and converted tile data in outsrc, they must b
 and compiled to a rom with "wla-65816".
 "wla-65816" puts everything back together to an smc file.
 
-Tricky parts are:
+Tricky modifications:
 The indirect jumps, they cannot be detected by reading the ROM, they must be displayed
 when running into an unknown address on the SNES. Added manually to a txt file, and the
 rom recompiled including the new indirect address.
@@ -37,6 +37,40 @@ integrate the NSF player for SNES by Memblers, add/fix interrupts. And finally a
 bigger roms.
 The emulation part is very tricky because not everything is at his original place and because of the assembler
 langage.
+
+Tests:
+T1 Palette   1 more or less
+T2 PPU       1
+T3 PPU       0 missing sprites and wrong background
+T4 PPU       0 missing sprites
+T5 PPUScrol  0 scrolling ok but wrong position
+T6 PPUSprtie 0 too much sprites
+T7 Pad0      0 color and backgorund error
+T8 indjump   0 not working
+
+
+Windows installation:
+
+Since the best snes debuggers are only available on windows, you may be interested in how to install
+upernes on windows.
+First install Msys2, it is the build environment, using gcc, make.
+You must install the following modules from the Msys module installer:
+    Make - Used to make upernes and to call wla-65816
+    Gdb - Used to debug upernes
+    SDL2 - Used to show the disassembly progress.
+    Flex and Bison - Used to parse opcodes
+You need to install wla-65816 from the web site. Wla-65816 is one of the best assemblers for retro gaming.
+Add wla-65816 to your windows path (like adding C:\dev\snes\wladx_binaries_20040822\ to your $PATH)
+I use FCEUX for the nes roms and bsnes for the snes roms because they have a debugger.
+
+How to use upernes:
+
+Once everythnig is installed, go to the directory upernes/source/workdir/ and call ./convert.sh "rompath/romname" "outputpath"
+This script calls upernes on the nes rom file and disassembles it and rebuilds the graphic tables. It then makes copies
+of the source code and ressources and builds the output rom using wla-65816.
+Indirect jumps cannot be analysed until the jump adress is known. Therefore the snes rom will stop on every missing
+indirect jump adress and display the adress on a "crash" screen. You must add this address to romfilename.txt and call a new
+convertion until all the indirect jumps are known.
 
 Copyright 2015 Patrick Xavier Areny released under the GPL licence.
 

@@ -37,13 +37,13 @@ Reset:
 	jsr ClearVRAM
 	jsr ClearCGRam
 
-	; Load the APU simulator in the SPC700
+	; Load the APU simulator into the SPC700
 	;; -----------------------------------------------
 	;; TODO
 
 	; Video mode settings
 	;; -----------------------------------------------
-	sep #$20		; A 8bit
+	sep #$20		; All 8bit
 	; Mode 0 background
 	lda #$00
 	sta BGMODE
@@ -53,7 +53,7 @@ Reset:
 	;; -----------------------------------------------
 	jsr init_BG3_and_textbuffer
 
-	; Load the nes cartridge's CHR data at VRAM $2000
+	; Load the nes cartridge's CHR data in the snes VRAM at $2000
 	; 4KB
 	;; -----------------------------------------------
 	rep #$30		; All 16bits
@@ -70,7 +70,7 @@ Reset:
 	; Initialises the nes port emulation vars
 	;; -----------------------------------------------
 	stz PPUmemaddrB
-	inc PPUmemaddrB
+	inc PPUmemaddrB   ; The first adressed PPU adresse byte is the most significant byte.
 	stz PPUmemaddrL
 	stz PPUmemaddrH
 	stz CurScrolRegister
@@ -80,7 +80,7 @@ Reset:
 ; 	sta NMITIMEN
 
 	; Return to emulation mode and jump to the
-	; original nes reset routine.
+	; recompiled nes reset routine.
 	;; -----------------------------------------------
 	; Data bank is bank 1 containing original source code
 	; Program bank is 0 contains recompiled source code

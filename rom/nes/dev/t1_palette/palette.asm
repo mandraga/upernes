@@ -102,12 +102,13 @@ waitvblank:
 ATTRIBUTE_TILES:
 	;  Atribute data
 	ldy #ATTR_TABLE_SZ
-	lda #$23
+	lda #$23               ; Attribute Table 0 at $23C0
 	sta PPUADDRR
 	lda #$C0
 	sta PPUADDRR
 beginattributes:
-	lda #$1B              	; palete 0 1 2 3
+	lda #$00              	; palete 0 0 0 0
+	;lda #$1B              	; palete 0 1 2 3
 	sta PPURWR
 	dey
 	bne beginattributes
@@ -133,6 +134,7 @@ begintiles:
 	rts
 
 	;----------------------------------------------------
+	; Loads the palete to VRAM (16 values)
 PALETE_CHG:
 	; Palete
 	lda #HIGH(VRAM_PAL_ADDR) ; 
@@ -162,9 +164,10 @@ paletec:
 	iny
 	cpy #$20
 	bne paletec
+	; Change the palete index
 	lda PAL_INDEX
-	adc #$10
-	cmp #$50        	; end of the palete values
+	;adc #$10
+	;cmp #$50        	; end of the palete values
 	bcs clear_palindex
 	bne next_pal
 clear_palindex:	
@@ -183,5 +186,5 @@ next_pal:
 
 	.bank 2
 	.org $0000
-	.incbin "test.chr"  ;gotta be 8192 bytes long
+	.incbin "test.chr"  ; must be 8192 bytes long
 

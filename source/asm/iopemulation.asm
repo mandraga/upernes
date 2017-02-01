@@ -1,9 +1,8 @@
-	;; IO ports are not identical (except compatibility for the paddles)
+	;; IO ports are not identical between the nes and snes (except compatibility for the paddles)
 	;; In order to recompile a nes game for the super nes, the instructions
-	;; using io ports must be replaced by code doing the equivalent thing 
-	;; on the super nes.
+	;; using io ports must be replaced by code doing the equivalent thing on the super nes.
 	;;
-	;; Documentation for io ports taken from the "Nintendo Entertainment System
+	;; The documentation for io ports taken from the "Nintendo Entertainment System
 	;; Architecture" version 2.6 (01/24/2005) by Marat Fayzullin
 
 .include "snesregisters.inc"
@@ -23,7 +22,7 @@
 .ORG 0
 .SECTION "IOemulation"
 
-;; Write ports, this is an array of routine addresses
+;; Write ports, this is an array of write port routines addresses
 IOWroutinestable:
 .DW	WPPUC1				; $2000
 .DW	WPPUC2				; $2001
@@ -129,20 +128,20 @@ IORroutinestable:
 
 WPPUC1:
 	sep #$30		; All 8 bit
-	sta PPUcontrolreg1
+	sta PPUcontrolreg1      ; Save the written value
 	;; ------------------------------------------
 	;; Test Nametable @ bits
 	;; Mirroring is the default value. FIXME add cartridge nametables?
 	and #$01
 	beq firstnametableaddress  ; If zero flag then it it the first nametable
-        lda #$74                ; (1k word segment $7400 / $400)=$1D << 2
+    lda #$74                ; (1k word segment $7400 / $400)=$1D << 2
 	ora #$01                ; Right screen following the first one
-        sta BG1SC
+    sta BG1SC
 	jmp endnametableaddress
 firstnametableaddress:	
-        lda #$70                ; (1k word segment $7000 / $400)=$1C << 2
+    lda #$70                ; (1k word segment $7000 / $400)=$1C << 2
 	ora #$01                ; Right screen following the first one
-        sta BG1SC
+    sta BG1SC
 endnametableaddress:
 	;; ------------------------------------------
 	;; Sprite pattern table address
@@ -187,8 +186,8 @@ BGbankend:
 
 	;; Test Vblank
 	;lda #$80
-	bit PPUcontrolreg1  	; Puts the 7th bit in the n flag
-	bpl novblank		; Therefore bpl branches if th 7th bit is not set
+	bit PPUcontrolreg1  ; Puts the 7th bit in the n flag
+	bpl novblank		; Therefore bpl branches if the 7th bit is not set
 	; Vblank interrupt enabled
 	lda NMITIMEN
 	ora #$80
@@ -256,7 +255,7 @@ RPPUSTATUS:
 	;lda HVBJOY
 	lda NMIFLAG 	; NMIFLAG has the same behaviour as the nes, and not HVBJOY flag
 	and #$80
-	;; TODO sprite 0
+	;; TODO: sprite 0 maybe use a horizontal interrupt or something
 
 	;; Flags must be kept like it was a real lda
 ; 	???????????????? TODO Flags ??
@@ -281,8 +280,9 @@ WSPRADDR:
 	; a buffer it will be in order to keep Byte addressing.
 	sta SpriteMemoryAddress
 	lsr A          		; Word address on the snes
-	sta OAMADDL             ; OAM address set to Acc
-	stz OAMADDH             ; OAM address set to $00
+	sta OAMADDL         ; OAM address Low   set to Acc
+	stz OAMADDH         ; OAM address Hight set to $00
+	; OAM = $00 Acc
 	RETW
 
 ; ------+-----+---------------------------------------------------------------
@@ -314,7 +314,7 @@ WSPRDATA:
 	asl A			; x2 to get the routine index
 	tax
 	jmp (WR_OAMconversionroutines,X)
-	;; Writes the byte twice: first converts it and writes in the buffer and then write a word
+	;; Writes the byte twice: first converts it and writes in the buffer and then writes a word
 	;; in the coresponding OAM address to update it.
 sprwrdoneHi:
 	lda SpriteMemoryAddress
@@ -485,16 +485,16 @@ WSCROLOFFSET:
 vertical_scroll:
 	txa
 	sta BG1VOFS             ; This register must be written twice
-	stz BG1VOFS 		; High byte is 0
+	stz BG1VOFS 		    ; High byte is 0
 	jmp chgscrollregister
 horizontal_scroll:
 	txa
-	sta BG1HOFS		; This register must be written twice
-	stz BG1HOFS 		; High byte is 0
-ignorescrollvalue:              ; ignore the value but change the register state
+	sta BG1HOFS		        ; This register must be written twice
+	stz BG1HOFS 		    ; High byte is 0
+ignorescrollvalue:          ; ignore the value but change the register state
 chgscrollregister:
 	lda CurScrolRegister
-	eor #$01		; Change the acessed scroll register
+	eor #$01		        ; Change the acessed scroll register
 	sta CurScrolRegister
 	RETW
 
@@ -505,38 +505,40 @@ chgscrollregister:
 ;       |     | address bits. The second write will set 8 lower bits. The
 ;       |     | address will increment either by 1 or by 32 after each
 ;       |     | access to $2007 (see "PPU Memory").
-	;; Utilise des pointeurs sur routine en fonction de l'addresse
-	;; saisie ici.
+	;; This code section will update the PPU address and change the routines to be called during the access 
+	;; to $2007 wich is the PPU memory data.
+	;;
 	;; Name table, Attribute table, Palette, ou empty
 WPPUMEMADDR:
-	sep #$30                ; All 8b
-	ldy PPUmemaddrB
+	sep #$30            ; All 8b
+	ldy PPUmemaddrB     ; Get the adressed byte
 	sta PPUmemaddrL,Y	; Store the address in this byte
 	tya
 	eor #$01
-	sta PPUmemaddrB		; Change accessed byte (0 or 1)
-	ora #$00		; Test if address update is finished: 0
+	sta PPUmemaddrB		; Toggle the accessed byte (0 or 1)
+	ora #$00	        ; Test if address update is finished (byte 1) or not finished (byte 0). Return if not finished (0).
 	beq ppumaddret
-	;; Address write completed here
-	;; Select the routine for this address range
+	;; -----------------------------------------------
+	;; The address write is completed here
+	;; Select the routine for it's address range
 	lda PPUmemaddrH
 	;; Find the address range
-	cmp #$20		; On the nes, below $2000 is CHR data
-	bcc emptyrangej		; A < #$20
+	cmp #$20		     ; On the nes, below $2000, it is CHR data
+	bcc emptyrangej		 ; A < #$20, prepare an empty routine
 	cmp #$30
-	bcs afternametablesj	; A >= #$30  Past $3000 empty or palette
+	bcs afternametablesj ; A >= #$30  Past $3000 empty or palette
 	;; #$20 <= @ < #$30
 	;; $2000 to $23C0 = Nametables  $23C0 to $2400 = Attributes
 	jsr set_tilemap_addr
-	lda PPUmemaddrL         ; xxxx xx11 11xx xxxx means attribute table
-	and #$C0		; Lo bits $C0 11xx.  Keep only bits 6-7
+	lda PPUmemaddrL      ; xxxx xx11 11xx xxxx means attribute table
+	and #$C0		     ; Lo bits $C0 11xx.  Keep only bits 6-7
 	sta tmp_addr
 	lda PPUmemaddrH
-	and #$03                ; Hi bits $03 xx11
-        ora tmp_addr
-	cmp #$C3                ; Test if all 4 bits are set
-	beq attributetables	; == it is an attribute table: above $x3C00
-	jmp nametables          ; else it is a nametable
+	and #$03             ; Hi bits $03 xx11
+    ora tmp_addr
+	cmp #$C3             ; Test if all 4 bits are set
+	beq attributetables	 ; == it is an attribute table: above $x3C00
+	jmp nametables       ; else it is a nametable
 ppumaddret:
 	RETW
 emptyrangej:
@@ -546,33 +548,40 @@ afternametablesj:
 ;; -------------------------------------------------------------------------
 attributetables:
 	; attribute table addresses are not directly equivalent
-	; $100 - $0C0 = $40 = 64 for 1024 tiles = 16 tiles color upper bits per byte
+	; For a given attribute address the line and column of the first tile of a 4x4 group is:
+	; line   = 4 * ((attr@ - base@) / 8)
+	; column = 4 * ((attr@ - base@) % 8) = 4 * ((attr@ - base) & $03)
+	;
 	; 32/4 = 8 blocks per line, 8 blocks vertically
 	; writing at 0 4 8 12 16 20 24 28 ; and then 32 * 4 + 32, + 36...
 	; First tile = ((offset / 8) * 128) + ((offset % 8) * 4)
 	;            = ((offset >> 3) << 7) + ((offset & $07) << 2)
 	;
-	; line = (@ / 8) * 128 = (@ >> 3) << 7) = (@ & $F8) << 4
-	; row  = (@ & 0x07) << 2
-	; c = @ << 2; addr = ((c & 0x00E0) << 2) + (c & 0x1C)
+	; A row of nes attributes (8bytes) covers 128 tiles (4 rows of 32 tiles = 128 tiles)
+	; line = (nesAttr@ / 8) * 128 = (@ >> 3) << 7) = (nesAttr@ & $F8) << 4
+	; row  = (nesAttr@ % 8) * 4 = (nesAttr@ & 0x07) << 2
 	rep #$20		; A 16bits
 	lda PPUmemaddrL		; Load the ppu memory address suposed to be in the attribute range: $23C0 to $2400 or 27C0 to 2800
+	; Do not optimise so it is easy to debug it. Optimised result? c = @ << 2; addr = ((c & 0x03E0) << 2) + (c & 0x1C)
+	; line:
+	and #$00F8
 	asl A
-	asl A			; << 2
-	pha
-	and #$00E0		; Lower address value
 	asl A
 	asl A
-	sta tmp_addr		; (c & 0x00E0) << 2
-	pla
-	and #$001C		; (c & 0x1C)
-	clc
-	adc tmp_addr		; ((c & 0x00E0) << 2) + (c & 0x1C)
+	asl A			; << 4
 	sta tmp_addr
-	tya         		; y is VRAM base @ set by set_tilemap_addr
+	; Colum
+	lda PPUmemaddrL
+	and #$0007
+	asl A
+	asl A
 	clc
-	adc tmp_addr		; snes VRAM segment + Addr
-	; Store the address
+	adc tmp_addr	; line offset + row
+	sta tmp_addr
+	tya         	; y is the VRAM base @ set by set_tilemap_addr
+	clc
+	adc tmp_addr	; snes VRAM segment + Addr
+	; Store the nametable address
 	sta attributeaddr
 	; Set the address in snes register
 	sep #$20		; A 8bits
@@ -596,7 +605,7 @@ nametables:
 	lda PPUmemaddrL
 	and #$03FF		; Lower address value
 	sta tmp_addr
-	tya                     ; y is VRAM base @ set by set_tilemap_addr
+	tya             ; y is VRAM base @ set by set_tilemap_addr
 	clc
 	adc tmp_addr
 	; Set the address in snes register
@@ -629,10 +638,10 @@ set_nametables_routines:
 afternametables:
 	sep #$30		; 8bit total
 	cmp #$3F
-	bcc emptyrange		; empty area before palette data
+	bcc emptyrange	; empty area before palette data
 	lda PPUmemaddrL
 	cmp #$20		; End of the palette area
-	bcs emptyrange		; if greater then it is an empty area
+	bcs emptyrange	; if greater than $20, then it is an empty area
 	rep #$30		; All 16bits
 	;; palette routines
 	lda #paletteW
@@ -654,8 +663,8 @@ emptyrange:
 set_tilemap_addr
 ;.8BIT
 	sep #$30		; A 8bit
-	rep #$10                ; X Y are 16bits
-	lda PPUmemaddrH		; address hight byte
+	rep #$10        ; X Y are 16bits
+	lda PPUmemaddrH	; address hight byte
 	and #$04		; bit 11: 0 = Tables 0 & 2; 1 = Tables 1 & 3 (TODO not always mirror???)
 	cmp #$04
 	beq Tables1_3
@@ -682,7 +691,7 @@ emptyR:
 ;       |     |	16 colors Background and Sprites Palettes
 
 WPPUMEMDATA:
-	jmp (PPUW_RAM_routineAddr)
+	jmp (PPUW_RAM_routineAddr)   ; Indirect jump to the routine for the address.
 
 	;; -------------------------------------------------------------------------	
 	;; Attribute tables
@@ -691,19 +700,19 @@ WPPUMEMDATA:
 	;;
 AttrtableW:
 	;; Attribute byte: 33|22|11|00
-	;; Tiles:		00 00 | 11 11
-	;;			00 00 | 11 11
-	;;			-------------
-	;;			22 22 | 33 33
-	;;			22 22 | 33 33
+	;; Tiles:   00 00 | 11 11
+	;;          00 00 | 11 11
+	;;          -------------
+	;;          22 22 | 33 33
+	;;          22 22 | 33 33
 	;; Therefore 4 writes + 3 * 4 writes at @+28
 
 	;; SNES
 	; vhopppcc cccccccc
 	; v/h        = Vertical/Horizontal flip this tile.
-	; o	     = Tile priority.
+	; o          = Tile priority.
 	; ppp        = Tile palette. The number of entries in the palette depends on the Mode and the BG.
-	; cccccccccc = Tile number.
+	; cccccccccc = Tile number. Do ont care for the higher cc
 	sep #$30		; All 8bits
 	tax
 	rep #$20		; Acc 16bits
@@ -712,7 +721,7 @@ AttrtableW:
 	sep #$20		; Acc 8bits
 	txa
 	and #$03		; 00
-	asl A			; Attibute palette are at bits 2 3 4 on snes
+	asl A			; Attibute palette are at bits 2 3 4 on snes, so shift the data.
 	asl A
 	tay
 	sta VMDATAH
