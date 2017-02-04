@@ -9,6 +9,7 @@
 PPU0      equ  $2000
 PPU1      equ  $2001
 PPUSTATUS equ  $2002
+PPUSCROLL equ  $2005
 PPUADDRR  equ  $2006
 PPURWR    equ  $2007
 
@@ -18,9 +19,9 @@ PPURWR    equ  $2007
 Init:
 	cld			; Clear decimal mode flag
 	lda #%00010000     	; Background patern able address = $1000 VRAM
-        sta PPU0          	; PPU control 1
-        lda #%00011110
-        sta PPU1		; PPU control 2 No cliping BG & Sprites visible
+    sta PPU0          	; PPU control 1
+    lda #%00011110
+    sta PPU1		; PPU control 2 No cliping BG & Sprites visible
 
 	; Palete
 	lda #$3F		; 
@@ -45,16 +46,18 @@ paletec:
 	jsr waitvblank
 	jsr STOPPPU
 
+	; 'Clear' the screen to tile 0
 	; Static name table dislay a tile in the middle of the screen
 	lda #$20        	; name table in vram at $2000
 	sta PPUADDRR
 	lda #$00
 	sta PPUADDRR
-	lda #$1E
-	sta $0A	  		; Line counter in ram
+	lda #$1E        ; 30
+	sta $0A	  		; Line counter in ram set to 30
 re:
-	lda #$24
-	ldx #$20
+	lda #$00        ; default tile
+	;lda #$A0        ; default tile
+	ldx #$20        ; x32
 quarth:
 	sta PPURWR
 	dex
@@ -70,7 +73,7 @@ quarth:
 
 	; 16, 15 <- tile
 	lda #$21        	; name table in vram at $2000
-	sta PPUADDRR            ; Drawing tiles at $21CE
+	sta PPUADDRR        ; Drawing tiles at $21CE
 	lda #$CE
 	sta PPUADDRR
 	; Write tile data
@@ -80,6 +83,7 @@ quarth:
 	sta PPURWR
 	sta PPURWR
 
+	jsr REFRESHPPUSCROL ; Must be done after every acces to VRAM write
 	jsr STARTPPU	
 
 iloop:
@@ -96,6 +100,14 @@ STARTPPU:
         lda #%00011110 
         sta PPU1
 	rts
+	
+REFRESHPPUSCROL:
+		; Scrolling to  0, 0
+		lda #$00
+		sta PPUSCROLL
+		sta PPUSCROLL
+	rts
+
 
 waitvblank:
 	lda PPUSTATUS
