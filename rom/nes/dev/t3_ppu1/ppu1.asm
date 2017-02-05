@@ -9,6 +9,7 @@
 PPU0      equ  $2000
 PPU1      equ  $2001
 PPUSTATUS equ  $2002
+PPUSCROLL equ  $2005
 PPUADDRR  equ  $2006
 PPURWR    equ  $2007
 	
@@ -33,10 +34,10 @@ ENABLEDMA equ $0003
 
 Init:
 	cld			; Clear decimal mode flag
-	lda #%00010000     	; Background patern able address = $1000 VRAM
-        sta PPU0          	; PPU control 1
-        lda #%00011110 
-        sta PPU1		; PPU control 2 No cliping BG & Sprites visible
+	lda #%00010000   ; Background patern able address = $1000 VRAM
+    sta PPU0         ; PPU control 1
+    lda #%00011110 
+    sta PPU1         ; PPU control 2 No cliping BG & Sprites visible
 
 	; Palete
 	lda #$3F		; 
@@ -72,6 +73,7 @@ paleted:
 	jsr STOPPPU
 
 	;; ----------------------------------------------------------------
+	; Background
 	; Static name table dislay a tile in the middle of the screen
 	lda #$20        	; name table in vram at $2000
 	sta PPUADDRR
@@ -80,7 +82,7 @@ paleted:
 	lda #$1E
 	sta $0A	  		; Line counter in ram
 re:
-	lda #$24
+	lda #$00        ; default tile
 	ldx #$20
 quarth:
 	sta PPURWR
@@ -105,8 +107,14 @@ quarth:
 	sta PPURWR
 	sta PPURWR
 	sta PPURWR
+	jsr REFRESHPPUSCROL ; Must be done after every acces to VRAM write
 
-	;; Clear sprite memory
+	;; ----------------------------------------------------------------
+	; Sprites
+	; Clear sprite memory
+	
+	sta YPOS
+	
 	ldx #0
 	lda #0
 	sta SPRADDR
@@ -118,13 +126,14 @@ resetsprites:
 	;; Load sprites
 	lda #$00
 	sta SPRADDR
-	sta ENABLEDMA
+	;sta ENABLEDMA
 	;; First sprite
 	lda #20
 	sta YPOS
 	lda YPOS		; Y position
 	sta SPRDATA
-	lda #$01		; Sprite tile
+	lda #$01		; Sprite tile 1
+	;lda #$00		; Sprite tile 0
 	sta TILE
 	sta SPRDATA
 	lda #%00000010		; palete 2, no flip
@@ -132,48 +141,56 @@ resetsprites:
 	sta SPRDATA
 	lda #$08
 	sta XPOS
-	lda XPOS		; X position
 	sta SPRDATA
 
 	jsr STARTPPU
 
 testtmp:
 	jsr waitvblank
-
+	jmp testtmp     ; Stay here to tes tif the sprite is seen
 
 	lda #$02		; Sprite table at 512 (2 * $100)
-	sta DMAACCESS		; start the transfert
+	sta DMAACCESS	; start the transfert
 
 iloop:
-	jsr waitvblank
+	;;jsr waitvblank
+waitvblankhere:
+	lda PPUSTATUS
+	bpl waitvblankhere
+	
 	;; latch paddle 1
-	lda #1
-	sta PAD0
-	lda #0
-	sta PAD0
+	;lda #1
+	;sta PAD0
+	;lda #0
+	;sta PAD0
 	;; Read A
-	lda PAD0
-	and #$01
-	eor ENABLEDMA
-	sta ENABLEDMA
+	;lda PAD0
+	;and #$01
+	;eor ENABLEDMA
+	;sta ENABLEDMA
 	;; move sprites using dma
-	lda ENABLEDMA
-	cmp #0
-	bne noinc
-	jsr movespritesDMA
-	inc $00
-	lda $00
-	cmp $1E
-	bne noinc
+	;lda ENABLEDMA
+	;cmp #0
+	;bne noinc
+		
+	;inc $00
+	;lda $00
+	;cmp $07
+	;bne noinc
 	inc YPOS
 	inc XPOS
 	inc XPOS
-	lda XPOS
-	cmp #$80
-	bcs noinc
+	;lda XPOS
+	;cmp #$80
+	;bcs noinc
 	lda ATTR
-	eor #%10100010		; palete chg, flip
+	eor #%10000010		; palete chg, flip, front
 	sta ATTR
+
+	;jsr movespritesDMA	
+	lda #$02		; Sprite table at 512 (2 * $100)
+	sta DMAACCESS	; start the transfert
+
 noinc:
 	jmp iloop
 
@@ -189,6 +206,13 @@ STARTPPU:
         sta PPU1
 	rts
 
+REFRESHPPUSCROL:
+	; Scrolling to  0, 0
+	lda #$00
+	sta PPUSCROLL
+	sta PPUSCROLL
+rts
+	
 waitvblank:
 	lda PPUSTATUS
 	bpl waitvblank
@@ -196,7 +220,7 @@ waitvblank:
 
 movespritesDMA:
 	lda #$02		; Sprite table at 512 (2 * $100)
-	sta DMAACCESS		; start the transfert
+	sta DMAACCESS	; start the transfert
 	rts
 
 

@@ -291,45 +291,81 @@ WSPRADDR:
 ;       |     | $2003 and increments by 1 after each access. Sprite Memory 
 ;       |     | contains coordinates, colors, and other sprite attributes
 ;       |     | sprites (see "Sprites").
-        ; Writes directly in OAM but because the sprite format is
-        ; not the same, a lot of address changes occur.
+; Writes directly in OAM but because the sprite format is
+; not the same, a lot of address changes occur.
+;
 WR_OAMconversionroutines:
 	.DW WRITE_SPR_Y
 	.DW WRITE_SPR_TILE
 	.DW WRITE_SPR_FLAGS
 	.DW WRITE_SPR_X
-
-; 0 yyyyyyyy -> 1
-; 1 cccccccc -> 2
-; 2 vho--ppp -> 3 + conversion
-; 3 xxxxxxxx -> 0
-
+; Byte          Byte
+; 0 yyyyyyyy -> 1                y pos
+; 1 cccccccc -> 2                tile number
+; 2 vho--ppp -> 3 + conversion   flipv fliph priority palete
+; 3 xxxxxxxx -> 0                x pos
 WSPRDATA:
 	sep #$30		; All 8bits
-	tay
+	tay             ; save the byte in Y
 	ldx #$00
-	lda SpriteMemoryAddress
+	lda SpriteMemoryAddress ; Read the address written in OAMADDR
 	;; Test which of the 4 bytes is to be written
 	and #$03
-	asl A			; x2 to get the routine index
+	asl A			; x2 to get the routine index address (+ 0 2 4 6 in WR_OAMconversionroutines)
 	tax
-	jmp (WR_OAMconversionroutines,X)
+	jmp (WR_OAMconversionroutines,X) ; Jump to the routine for the selected address
+	; The sprite information will be stored in ram in snes format, therefore, converted to snes format.
+WRITE_SPR_Y:
+	lda SpriteMemoryAddress  ; Y offset 0 to 1
+	and #$FC
+	ora #01
+	tax
+	tya
+	sta SpriteMemoryBase,X   ; Store it
+	jmp sprwrdoneLo          ; Update in video ram lower word
+WRITE_SPR_TILE:
+	lda SpriteMemoryAddress  ; TileNumber offset 1 to 2
+	and #$FC
+	ora #02
+	tax
+	tya
+	sta SpriteMemoryBase,X   ; Store it
+	jmp sprwrdoneHi          ; Update in video ram highter word
+WRITE_SPR_FLAGS:
+	lda SpriteMemoryAddress
+	and #$FC
+	ora #03
+	tax
+	tya
+	jsr convert_sprflags_to_snes ; Acc converted from NES vhoxxxpp to SNES vhoopppN
+	tay
+	sta SpriteMemoryBase,X
+	jmp sprwrdoneHi
+WRITE_SPR_X:
+	lda SpriteMemoryAddress  ; X offset 3 to 0
+	and #$FC
+	tax
+	tya
+	sta SpriteMemoryBase,X
+	jmp sprwrdoneLo
+
 	;; Writes the byte twice: first converts it and writes in the buffer and then writes a word
 	;; in the coresponding OAM address to update it.
 sprwrdoneHi:
 	lda SpriteMemoryAddress
-	and #$FC
-	ora #$02
+	and #$FC  ; The address is a multiple of 4bytes
+	ora #$02  ; Take the last 2 bytes (Hi)
 	jmp updateOAM
-
 sprwrdoneLo:
 	lda SpriteMemoryAddress
-	and #$FC
+	and #$FC  ; Take the first 2 bytes
+	; Just update the 4 bytes
 updateOAM:
 	tax
-	lsr A
-	sta OAMADDL
-	lda SpriteMemoryBase,X
+	lsr A                       ; Word address
+	sta OAMADDL                 ; Destination address in OAM memory, words
+	; Copy the word to be updated into the OAM memory
+	lda SpriteMemoryBase,X      ; Source address from the buffer used to store the nes OAM
 	sta OAMDATA
 	lda SpriteMemoryBase + 1,X
 	sta OAMDATA
@@ -340,58 +376,27 @@ IncSprAddr:
 	cmp #$FF		; If 256 do not loop od what? FIXME TODO
 	beq endWSPRDATA
 	iny
-	sty SpriteMemoryAddress
+	sty SpriteMemoryAddress ; Incrementd by one
 endWSPRDATA:
 	RETW
 
-WRITE_SPR_Y:
-	lda SpriteMemoryAddress
-	and #$FC
-	ora #01
-	tax
-	tya
-	sta SpriteMemoryBase,X
-	jmp sprwrdoneLo
-WRITE_SPR_TILE:
-	lda SpriteMemoryAddress
-	and #$FC
-	ora #02
-	tax
-	tya
-	sta SpriteMemoryBase,X
-	jmp sprwrdoneHi
-WRITE_SPR_FLAGS:
-	lda SpriteMemoryAddress
-	and #$FC
-	ora #03
-	tax
-	tya
-	jsr convert_sprflags_to_snes
-	tay
-	sta SpriteMemoryBase,X
-	jmp sprwrdoneHi
-WRITE_SPR_X:
-	lda SpriteMemoryAddress
-	and #$FC
-	tax
-	tya
-	sta SpriteMemoryBase,X
-	jmp sprwrdoneLo
-
+; Acc contains the byte
 ; NES vhoxxxpp   SNES vhoopppN
 convert_sprflags_to_snes:
 	; pp
+	tay
 	and #$03
 	asl
+	;lda #$00 ; Force to palete 0
 	sta PPTMP
 	tya
 	; vh
-	and #$D0		; Keep vh
+	and #$E0		; Keep vh and 0
+	;lda #$30 ; Force to max priority
 	ora PPTMP		; Add pp
-	;; Test o (priority flag)
-	;; TODO use bit instruction or a mask
-	;; maximum priority: 3
-	ora #$30
+	;; o (priority flag) will be 2 or 0. If 1 the sprite will be above BG3 and 4
+	;; maximum priority: 3 = over everything but the printf BG must be on top, so use 2
+	; force priority lda #$34
 	rts
 
 ;; --------------------------------------------------------------------
@@ -823,8 +828,17 @@ paletteW:
 	bcs paladdr_add_128
 	jmp setcgaddr
 paladdr_add_128:
-	ora #$80		; Add 128 and remove the $10
-	and #$EF
+	pha
+	;and #$EF        ; remove the $10
+	and #$EC        ; remove the 2 lower bits
+	asl             ; Shift right twice because the paletes on the snes contain 16 colors and not 4.
+	asl
+	ora #$80		; Add 128
+	sta tmp_dat
+	pla
+	and #$03
+	ora tmp_dat
+	
 setcgaddr:
 	sta CGADD               ; Set the palette address register
 	phb
@@ -960,57 +974,40 @@ paletteR:
 ; $4014 | W   | DMA Access to the Sprite Memory
 ;       |     | Writing a value N into this port causes an area of CPU memory
 ;       |     | at address $100*N to be transferred into the Sprite Memory.
-
+; Makes a copy of 256 bytes form the memory at $100*N (typically $0200-$02FF)
+; to the OAM data memory.
 WDMASPRITEMEMACCESS:
 	;; Point the direct page register on the indicated page
 	phd			; pushes the D 16bit register
-	sep #$20		; A 8b
+	sep #$20    ; A 8b
 	swa			; clear the upper byte of A
 	lda #0
 	swa
-	rep #$20		; A 16b
-	pha			; push the page of the sprite data
-	pld			; Here every zero page read is in the indicated page
-	;; Convert the 256 bytes of the memory area to 256bytes of snes oam data
-	sep #$30		; all 8b
-	stz OAMADDL             ; OAM address set to $00
-	stz OAMADDH             ; OAM address set to $00
+	rep #$20	; A 16b
+	;pha			; push the page of the sprite data
+	;pld			; Here every zero page read is in the indicated page
+	;;------------------------------------------------------------------------------
+	;; First convert the 256 bytes of the memory area to 256bytes of snes oam data
 	ldx #0
-sprconversionloop:
-	lda $03,X			; sprite X position
-	sta SpriteMemoryBase + 0,X
-	sta OAMDATA
-	lda $00,X			; sprite Y position
-	sta SpriteMemoryBase + 1,X
-	sta OAMDATA
-	lda $01,X			; sprite tile number
-	sta SpriteMemoryBase + 2,X
-	sta OAMDATA
-	lda $02,X			; sprite flags
-	;; Convert the flags to the snes sprite flags
-	jsr convert_sprflags_to_nes
-	sta SpriteMemoryBase + 3,X
-	sta OAMDATA
+sprconversionloop:	
+	lda SpriteMemoryAddress + 0,X	  ; Read Y
+	sta SpriteMemoryBase + 1,X    ; Store it
+	lda SpriteMemoryAddress + 1,X	  ; Read cccccc (tile index)
+	sta SpriteMemoryBase + 2,X    ; Store it
+	lda SpriteMemoryAddress + 2,X	  ; Read the flags
+	jsr convert_sprflags_to_snes  ; Acc converted from NES vhoxxxpp to SNES vhoopppN
+	sta SpriteMemoryBase + 3,X    ; Store them
+	lda SpriteMemoryAddress + 3,X	  ; Read X
+	sta SpriteMemoryBase + 0,X    ; Store it	
 	inx
 	inx
 	inx
 	inx
-	bne sprconversionloop	; loop if not zero
-	pld			; restore the direct page register
-	RETW
-/*	
-	;; Loop transfert
-
-	ldx #0
-looptransfert:
-	lda SpriteMemoryBase,X	; sprite X position
-	sta OAMDATA
-	inx
-	bne looptransfert	; loop if not zero
-	pld			; restore the direct page register
-	RETW
-
-	;; TODO DMA use seems stupid because a loop has been already executed...
+	bne sprconversionloop	; loop if not zero	(passed 256)	
+	;;------------------------------------------------------------------------------
+	;; Then copy the 256 bytes into the OAM memory
+;;.DEFINE USEDMA
+.IFDEF USEDMA
 	;; Transfer the 256 bytes to the OAM memory port via DMA 1
 	;; -------------------------------------------------------------
 	;; Writes to OAMDATA from 0 to 256
@@ -1033,7 +1030,20 @@ looptransfert:
 	lda #$02
 	sta MDMAEN
 	RETW
-*/
+.ELSE
+	; A loop instead of a dma transfert
+	sep #$30		; all 8b
+	stz OAMADDL     ; OAM address set to $00
+	stz OAMADDH     ; OAM address set to $00	
+	ldx #0
+sprtransfertloop:
+	lda SpriteMemoryBase,X  ; Copy the 256 bytes
+	sta OAMDATA
+	inx
+	bne sprtransfertloop	; loop if not zero
+	pld			; restore the direct page register
+	RETW
+.ENDIF
 
 ;; NES
 ; Sprite Attribute RAM:
