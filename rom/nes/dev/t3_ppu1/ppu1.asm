@@ -122,7 +122,7 @@ resetsprites:
 	sta SPRDATA
 	dex
 	bne resetsprites
-
+	
 	;; Load sprites
 	lda #$00
 	sta SPRADDR

@@ -136,4 +136,30 @@ ClearPaletteLoop:
    plx
    rts
 
+   
+;----------------------------------------------------------------------------
+; ClearOAMHposMSB -- Set the hight OAM bits to 00 (small sprites, Hpos MSB to 0)
+; In: None
+; Out: None
+; Modifies: flags
+;----------------------------------------------------------------------------
+ClearOAMHposMSB:
+   phx
+   php
+   sep #$30		; mem/A = 8 bit, X/Y = 8 bit   
+   ; Sprite Size and H position msb
+   lda #$FF
+   sta OAMADDL
+   lda #$00
+   sta OAMADDH
+   ldx #$0F
+ClearOAMH:
+   sta OAMDATA
+   dex
+   bne ClearOAMH
+   plp
+   plx
+   rts
+
+   
 .ENDS

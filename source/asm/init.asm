@@ -36,6 +36,7 @@ Reset:
 	jsr ClearRegisters
 	jsr ClearVRAM
 	jsr ClearCGRam
+	jsr ClearOAMHposMSB
 
 	; Load the APU simulator into the SPC700
 	;; -----------------------------------------------
