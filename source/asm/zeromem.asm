@@ -148,11 +148,12 @@ ClearOAMHposMSB:
    php
    sep #$30		; mem/A = 8 bit, X/Y = 8 bit   
    ; Sprite Size and H position msb
-   lda #$FF
-   sta OAMADDL
    lda #$00
+   sta OAMADDL  ; Word address
+   lda #$01
    sta OAMADDH
-   ldx #$0F
+   ldx #$20     ; 16 words
+   lda #$00
 ClearOAMH:
    sta OAMDATA
    dex

@@ -1012,6 +1012,7 @@ sprconversionloop:
 	;; -------------------------------------------------------------
 	;; Writes to OAMDATA from 0 to 256
 	stz OAMADDL
+	stz OAMADDH
 	lda #$04		; OAMDATA register low byte ($2104)
 	sta DMA1BDEST
 	;; Size = $100 = 256
