@@ -36,7 +36,12 @@ Reset:
 	jsr ClearRegisters
 	jsr ClearVRAM
 	jsr ClearCGRam
+	; Sprite init
+	;; -----------------------------------------------
 	jsr ClearOAMHposMSB
+	sep #$30		; All 8bit
+	lda #$01        ; 8kW
+	sta OBSEL       ; Sprite base address for object data at 8kw (1 * 8k), OBJ size 8/16
 
 	; Load the APU simulator into the SPC700
 	;; -----------------------------------------------
