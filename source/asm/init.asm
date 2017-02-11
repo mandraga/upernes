@@ -81,7 +81,9 @@ Reset:
 	stz PPUmemaddrH
 	stz CurScrolRegister
 	stz PPUcontrolreg2
-
+    stz	SpriteMemoryAddress
+	stz attributeaddr
+	
 ; 	lda #$80
 ; 	sta NMITIMEN
 
@@ -104,6 +106,7 @@ Reset:
 	nop
 	nop
 	nop
+	BREAK ; break at $0918
 	; Go to the start of the nes routine
 	jmp NESReset
 

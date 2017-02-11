@@ -32,8 +32,8 @@
 .DEFINE PPUmemaddrH				IOBASE + 5
 .DEFINE PPUmemaddrB				IOBASE + 6	; Low/Hight byte write
 
-.DEFINE tmp_addr				IOBASE + 7	; Word, tmp address storage
-.DEFINE tmp_dat 				IOBASE + 9	; Word, tmp data storage
+.DEFINE tmp_addr				IOBASE + 8	; Word, tmp address storage
+.DEFINE tmp_dat 				IOBASE + 10	; Word, tmp data storage
 
 .DEFINE PPUcontrolreg1			IOBASE + 12
 .DEFINE PPUcontrolreg2			IOBASE + 14
@@ -41,9 +41,24 @@
 .DEFINE	SpriteMemoryAddress		IOBASE + 16
 .DEFINE PPTMP                   IOBASE + 17
 
-.DEFINE CurScrolRegister        IOBASE + 20     ; 0 or 1 selects the vertical scroll register
+.DEFINE CurScrolRegister        IOBASE + 20 ; 0 or 1 selects the vertical scroll register
 
 .DEFINE attributeaddr           IOBASE + 22	; Used as the nes attribute table
+
+.DEFINE BreakPointAddr          IOBASE + 24 ; Used to break in the debugger, look for $918
+.DEFINE BreakPointAddr2         IOBASE + 25 ; Used to break in the debugger, look for $919
+
+.MACRO BREAK
+	pha
+	lda $0918
+	pla
+.ENDM
+
+.MACRO BREAK2
+	pha
+	lda $0919
+	pla
+.ENDM
 
 ;--------------------------------------------------------------------
 .DEFINE SpriteMemoryBase		$0A00       ; 256 bytes

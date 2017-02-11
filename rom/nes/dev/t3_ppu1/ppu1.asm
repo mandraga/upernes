@@ -112,12 +112,13 @@ quarth:
 	;; ----------------------------------------------------------------
 	; Sprites
 	; Clear sprite memory
-	
-	sta YPOS
-	
-	ldx #0
 	lda #0
-	sta SPRADDR
+	sta YPOS
+
+	lda #0
+	sta SPRADDR	
+	ldx #0
+	dex
 resetsprites:
 	sta SPRDATA
 	dex

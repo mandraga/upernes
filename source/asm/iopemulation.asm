@@ -274,15 +274,18 @@ RPPUSTATUS:
 ;       |     | each access to $2004. Sprite Memory contains coordinates,
 ;       |     | colors, and other sprite attributes (see "Sprites").
 WSPRADDR:
-	; OAM direct address conversion: 4bytes on nes, 4bytes on snes
+	; OAM direct address conversion: addresses 4bytes on nes, and 4bytes on snes
 	; but OAM is a word address and can be updated by dma
 	; and therefore a buffer in ram could be nice and therefore
 	; a buffer it will be in order to keep Byte addressing.
 	sta SpriteMemoryAddress
-	lsr A          		; Word address on the snes
-	sta OAMADDL         ; OAM address Low   set to Acc
-	stz OAMADDH         ; OAM address Hight set to $00
+	;##############
+	; Useless, will be configured later
+	;lsr A          		; Word address on the snes
+	;sta OAMADDL         ; OAM address Low   set to Acc
+	;stz OAMADDH         ; OAM address Hight set to $00
 	; OAM = $00 Acc
+	;##############
 	RETW
 
 ; ------+-----+---------------------------------------------------------------
@@ -305,6 +308,7 @@ WR_OAMconversionroutines:
 ; 2 vho--ppp -> 3 + conversion   flipv fliph priority palete
 ; 3 xxxxxxxx -> 0                x pos
 WSPRDATA:
+	BREAK ; break at $0918
 	sep #$30		; All 8bits
 	tay             ; save the byte in Y
 	ldx #$00
@@ -363,12 +367,13 @@ sprwrdoneLo:
 updateOAM:
 	tax
 	lsr A                       ; Word address
-	sta OAMADDL                 ; Destination address in OAM memory, words
+	;sta OAMADDL                 ; Destination address in OAM memory, words
+	;stz OAMADDH
 	; Copy the word to be updated into the OAM memory
 	lda SpriteMemoryBase,X      ; Source address from the buffer used to store the nes OAM
-	sta OAMDATA
+	;sta OAMDATA
 	lda SpriteMemoryBase + 1,X
-	sta OAMDATA
+	;sta OAMDATA               ;; FIXME TODO it is a bug here, the data is written at the end of OAM, maybe because of vblank, do not update?
 IncSprAddr:
 	;; Increment the buffer's byte address
 	ldy SpriteMemoryAddress
@@ -378,6 +383,7 @@ IncSprAddr:
 	iny
 	sty SpriteMemoryAddress ; Incrementd by one
 endWSPRDATA:
+	BREAK2 ;
 	RETW
 
 ; Acc contains the byte
@@ -980,26 +986,31 @@ WDMASPRITEMEMACCESS:
 	;;------------------------------------------------------------------------------
 	;; Point the direct page register on the indicated page
 	phd			; pushes the D 16bit register
+	;BREAK ; break at $0918
 	sep #$20    ; A 8b
 	swa			; clear the upper byte of A
 	lda #0
-	swa
+	;swa kept in the higher byte because when not in emulation @ = [0 DH $Byte] + Y 
+	;    Like if D = 2 Byte = 3 then @ = $000203
 	rep #$20	; A 16b
-	pha			; push the page of the sprite data
-	pld			; Here every zero page read is in the indicated page
+	;pha			; push the page of the sprite data
+	;pld			; Here every zero page read is in the indicated page
+	tcd
 	;;------------------------------------------------------------------------------
 	;; First convert the 256 bytes of the memory area to 256bytes of snes oam data
 	sep #$30    ; All 8b
 	ldx #0
+	;;;;ldy SpriteMemoryAddress ; Origin of the data OAMADDR not in use here 256 bytes
+	; It uses a direct page indexed address, meaning it reads from the 256Bytes page with X as index.
 sprconversionloop:	
-	lda SpriteMemoryAddress + 0,X	  ; Read Y
+	lda $00,X	  ; Read Y, direct page  *(DP + $00 + X)
 	sta SpriteMemoryBase + 1,X    ; Store it
-	lda SpriteMemoryAddress + 1,X	  ; Read cccccc (tile index)
+	lda $01,X	  ; Read cccccc (tile index)
 	sta SpriteMemoryBase + 2,X    ; Store it
-	lda SpriteMemoryAddress + 2,X	  ; Read the flags
+	lda $02,X	  ; Read the flags
 	jsr convert_sprflags_to_snes  ; Acc converted from NES vhoxxxpp to SNES vhoopppN
 	sta SpriteMemoryBase + 3,X    ; Store them
-	lda SpriteMemoryAddress + 3,X	  ; Read X
+	lda $03,X	  ; Read X
 	sta SpriteMemoryBase + 0,X    ; Store it	
 	inx
 	inx
@@ -1008,19 +1019,22 @@ sprconversionloop:
 	bne sprconversionloop	; loop if not zero	(passed 256)	
 	;;------------------------------------------------------------------------------
 	;; Then copy the 256 bytes into the OAM memory
-.DEFINE USEDMA
+wait_for_vblank:
+	lda HVBJOY		;check the vblank flag
+	bpl wait_for_vblank
+;.DEFINE USEDMA
 .IFDEF USEDMA
 	;; Transfer the 256 bytes to the OAM memory port via DMA 1
 	;; -------------------------------------------------------------
 	;; Writes to OAMDATA from 0 to 256
 	stz OAMADDL
 	stz OAMADDH
-	lda #$04		; OAMDATA register low byte ($2104)
+	lda #$04		; OAMDATA register, byte ($2104)
 	sta DMA1BDEST
 	;; Size = $100 = 256
-	lda #$01
-	sta DMA1SZH
-	stz DMA1SZL
+	rep #$20		; A 16b
+	lda #$0100
+	sta DMA1SZL
 	;; Source address (in RAM)
 	rep #$20		; A 16b
 	lda SpriteMemoryBase
@@ -1030,9 +1044,9 @@ sprconversionloop:
 	lda #%00000000
 	sta DMA1CTL
 	;; Start the transfert
-	lda #$02
+	lda #$02    ; channel 1
 	sta MDMAEN
-	pld
+	pld			; restore the direct page register
 	RETW
 .ELSE
 	; A loop instead of a dma transfert
@@ -1048,7 +1062,7 @@ sprtransfertloop:
 	pld			; restore the direct page register
 	RETW
 .ENDIF
-
+	
 ;; NES
 ; Sprite Attribute RAM:
 ; | Sprite#0 | Sprite#1 | ... | Sprite#62 | Sprite#63 |
