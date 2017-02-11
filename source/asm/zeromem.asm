@@ -75,7 +75,8 @@ ClearRegisters:
 	stz $4200
 	lda #$FF
 	sta $4201
-	CLRMEM  $4202 $0C
+	stz $4202 ; Multiplier L
+	stz $4203 ; Multiplier H
 	plp
 	plx
 	pla

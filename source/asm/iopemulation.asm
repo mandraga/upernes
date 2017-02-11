@@ -977,6 +977,7 @@ paletteR:
 ; Makes a copy of 256 bytes form the memory at $100*N (typically $0200-$02FF)
 ; to the OAM data memory.
 WDMASPRITEMEMACCESS:
+	;;------------------------------------------------------------------------------
 	;; Point the direct page register on the indicated page
 	phd			; pushes the D 16bit register
 	sep #$20    ; A 8b
@@ -984,10 +985,11 @@ WDMASPRITEMEMACCESS:
 	lda #0
 	swa
 	rep #$20	; A 16b
-	;pha			; push the page of the sprite data
-	;pld			; Here every zero page read is in the indicated page
+	pha			; push the page of the sprite data
+	pld			; Here every zero page read is in the indicated page
 	;;------------------------------------------------------------------------------
 	;; First convert the 256 bytes of the memory area to 256bytes of snes oam data
+	sep #$30    ; All 8b
 	ldx #0
 sprconversionloop:	
 	lda SpriteMemoryAddress + 0,X	  ; Read Y
@@ -1006,7 +1008,7 @@ sprconversionloop:
 	bne sprconversionloop	; loop if not zero	(passed 256)	
 	;;------------------------------------------------------------------------------
 	;; Then copy the 256 bytes into the OAM memory
-;;.DEFINE USEDMA
+.DEFINE USEDMA
 .IFDEF USEDMA
 	;; Transfer the 256 bytes to the OAM memory port via DMA 1
 	;; -------------------------------------------------------------
@@ -1030,6 +1032,7 @@ sprconversionloop:
 	;; Start the transfert
 	lda #$02
 	sta MDMAEN
+	pld
 	RETW
 .ELSE
 	; A loop instead of a dma transfert

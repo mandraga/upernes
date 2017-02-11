@@ -39,6 +39,7 @@
 .EQU HVBJOY   $4212	;; V-Blank flag
 
 .EQU MDMAEN   $420B
+.EQU HDMAEN   $420C
 
 ;------------ DMA1 ---------------
 .EQU DMA1CTL     $4310

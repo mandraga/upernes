@@ -145,9 +145,9 @@ resetsprites:
 
 	jsr STARTPPU
 
-testtmp:
-	jsr waitvblank
-	jmp testtmp     ; Stay here to tes tif the sprite is seen
+;testtmp:
+	;jsr waitvblank
+	;jmp testtmp     ; Stay here to tes tif the sprite is seen
 
 	lda #$02		; Sprite table at 512 (2 * $100)
 	sta DMAACCESS	; start the transfert
@@ -157,40 +157,16 @@ iloop:
 waitvblankhere:
 	lda PPUSTATUS
 	bpl waitvblankhere
-	
-	;; latch paddle 1
-	;lda #1
-	;sta PAD0
-	;lda #0
-	;sta PAD0
-	;; Read A
-	;lda PAD0
-	;and #$01
-	;eor ENABLEDMA
-	;sta ENABLEDMA
-	;; move sprites using dma
-	;lda ENABLEDMA
-	;cmp #0
-	;bne noinc
-		
-	;inc $00
-	;lda $00
-	;cmp $07
-	;bne noinc
+
 	inc YPOS
-	inc XPOS
-	inc XPOS
-	;lda XPOS
-	;cmp #$80
-	;bcs noinc
+	;inc XPOS
+	;inc XPOS
 	lda ATTR
 	eor #%10000010		; palete chg, flip, front
 	sta ATTR
 
-	;jsr movespritesDMA	
-	lda #$02		; Sprite table at 512 (2 * $100)
+	lda #$02		; Sprite table at 512 (2 * $100 = $200)
 	sta DMAACCESS	; start the transfert
-
 noinc:
 	jmp iloop
 
