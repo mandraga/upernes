@@ -118,9 +118,9 @@ DMA_WRAMtoVRAM_sprite_bank:
 
         stz MDMAEN		; Clear the DMA control register, all channels are disabled
 	ldy #WMDATA
-        sty DMA1ASRCL		; A bus data offset into DMA source offset.
+        sty DMA1A1SRCL		; A bus data offset into DMA source offset.
 	lda #$00		; any bank given the WMDATA register is accessed
-        sta DMA1ASRCBNK	        ; Stores the A bus data bank of the source data
+        sta DMA1A1SRCBNK	        ; Stores the A bus data bank of the source data
 	ldy #$2000
 	sty DMA1SZL		; Stores the size in bytes of the data block, always 8KB
 

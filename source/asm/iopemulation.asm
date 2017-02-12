@@ -308,7 +308,7 @@ WR_OAMconversionroutines:
 ; 2 vho--ppp -> 3 + conversion   flipv fliph priority palete
 ; 3 xxxxxxxx -> 0                x pos
 WSPRDATA:
-	BREAK ; break at $0918
+	;BREAK ; break at $0918
 	sep #$30		; All 8bits
 	tay             ; save the byte in Y
 	ldx #$00
@@ -383,7 +383,7 @@ IncSprAddr:
 	iny
 	sty SpriteMemoryAddress ; Incrementd by one
 endWSPRDATA:
-	BREAK2 ;
+	;BREAK2 ;
 	RETW
 
 ; Acc contains the byte
@@ -986,7 +986,7 @@ WDMASPRITEMEMACCESS:
 	;;------------------------------------------------------------------------------
 	;; Point the direct page register on the indicated page
 	phd			; pushes the D 16bit register
-	;BREAK ; break at $0918
+	BREAK ; break at $0918
 	sep #$20    ; A 8b
 	swa			; clear the upper byte of A
 	lda #0
@@ -1022,28 +1022,35 @@ sprconversionloop:
 wait_for_vblank:
 	lda HVBJOY		;check the vblank flag
 	bpl wait_for_vblank
-;.DEFINE USEDMA
+.DEFINE USEDMA
 .IFDEF USEDMA
 	;; Transfer the 256 bytes to the OAM memory port via DMA 1
 	;; -------------------------------------------------------------
+	stz MDMAEN      ; disable any dma channel
 	;; Writes to OAMDATA from 0 to 256
 	stz OAMADDL
 	stz OAMADDH
+	;; DMA mode:   CPU RAM to PPU RAM 0, x, x, 00 automatic increment, 00 one address per byte
+	sep #$20		; A 8b
+	lda #%00000000
+	sta DMA1CTL     ; Write the mode before everything else
 	lda #$04		; OAMDATA register, byte ($2104)
 	sta DMA1BDEST
 	;; Size = $100 = 256
 	rep #$20		; A 16b
 	lda #$0100
 	sta DMA1SZL
+	BREAK2 ; break at $0919
 	;; Source address (in RAM)
 	rep #$20		; A 16b
-	lda SpriteMemoryBase
-	sta DMA1RAMSRCL
+	lda #SpriteMemoryBase
+	sta DMA1A1SRCL
 	sep #$20		; A 8b
-	;; DMA mode:   CPU RAM to PPU RAM 0, x, x, 00 automatic increment, 00 one address per byte
-	lda #%00000000
-	sta DMA1CTL
+	phb
+	pla
+	sta DMA1A1SRCBNK ; bank
 	;; Start the transfert
+	sep #$20	; A 8b
 	lda #$02    ; channel 1
 	sta MDMAEN
 	pld			; restore the direct page register

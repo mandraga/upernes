@@ -30,7 +30,8 @@ ROM_NAME=$(echo $ROM_NAME | sed "s/nes/fig/")
 echo "Rom name = " $ROM_NAME
 # Put it in the environment for the Makefile
 export ROM_NAME
-
+# Delete the previous one if any
+rm $ROM_NAME
 # Build the snes rom using the makefile
 make all
 
