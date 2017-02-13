@@ -27,7 +27,8 @@ NesBackgroundCHRtoVram:
 	sta VMADDL		; Word address $2000 (= $4000 bytes)
 	lda #$20
 	sta VMADDH
-	jsr copyBGchr
+	;jsr copyBGchr
+	jsr copySPRchr
 	; --------------------------
 	; Second 4k (nes chr bank 1 @ $1000 in nes ppu address space)
 	; --------------------------
@@ -114,7 +115,7 @@ NesSpriteCHRtoVram:
 	; --------------------------
 	plb			; Restore data bank
 	rts
-
+*/
 copySPRchr:
 Stileloop:
 	phy
@@ -145,7 +146,7 @@ clr16loop:
 	dey
 	bne Stileloop		; > 0 then branch
 	rts
-*/
+
 ;; --------------------------------------------------------------------------
 
 	;; Y is the nes Rom bank number

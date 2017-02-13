@@ -58,13 +58,13 @@ Reset:
 	; display
 	;; -----------------------------------------------
 	jsr init_BG3_and_textbuffer
-
+		
 	; Load the nes cartridge's CHR data in the snes VRAM at $2000
 	; 4KB
 	;; -----------------------------------------------
 	rep #$30		; All 16bits
 	jsr NesBackgroundCHRtoVram
-
+		
 	; Tilemap fixed addresses
 	;; -----------------------------------------------
 	; BG1 tilemap (fusion of the "nes name table + attibute tables")
@@ -106,7 +106,6 @@ Reset:
 	nop
 	nop
 	nop
-	BREAK ; break at $0918
 	; Go to the start of the nes routine
 	jmp NESReset
 

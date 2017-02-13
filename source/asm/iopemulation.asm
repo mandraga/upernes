@@ -398,7 +398,7 @@ convert_sprflags_to_snes:
 	tya
 	; vh
 	and #$E0		; Keep vh and 0
-	;lda #$30 ; Force to max priority
+	ora #$30 ; Force to max priority
 	ora PPTMP		; Add pp
 	;; o (priority flag) will be 2 or 0. If 1 the sprite will be above BG3 and 4
 	;; maximum priority: 3 = over everything but the printf BG must be on top, so use 2
