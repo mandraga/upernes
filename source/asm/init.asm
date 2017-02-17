@@ -7,6 +7,7 @@
 .include "rom.asm"
 .include "romprg.asm"
 .include "CHR.asm"
+.include "DMABGUpdate.asm"
 .include "intvectors.asm"
 .include "LoadGraphics.asm"
 .include "zeromem.asm"
@@ -33,6 +34,7 @@ Reset:
 	txs
 
 	; Clear memory
+	jsr ClearBGBuffer
 	jsr ClearRegisters
 	jsr ClearVRAM
 	jsr ClearCGRam
@@ -83,6 +85,8 @@ Reset:
 	stz PPUcontrolreg2
     stz	SpriteMemoryAddress
 	stz attributeaddr
+	stz VideoIncrementL
+	stz VideoIncrementH
 	
 ; 	lda #$80
 ; 	sta NMITIMEN

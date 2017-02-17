@@ -165,7 +165,7 @@ Snes SRAM:
 8kB sram at 0x0000:
 first 2KB is the nes ram
 next 2KB begining at 0x0800 are used for emulation, storing apu ppu states.
-next 4KB begining at 0x1000 can be used as a work buffer.
+next 4KB begining at 0x1000 is used as a the nes nametable buffer (transfered with HDMA).
 
 Snes WRAM:
 

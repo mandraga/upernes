@@ -137,6 +137,28 @@ ClearPaletteLoop:
    plx
    rts
 
+;----------------------------------------------------------------------------
+; ClearBGBuffer -- Clears the background emulation buffer
+; In: None
+; Out: None
+; Modifies: flags
+;----------------------------------------------------------------------------
+ClearBGBuffer:
+   phx
+   php
+   rep #$30             ; mem/A, X/Y = 16 bit
+   ldx #$2000
+   lda #$00
+   dex
+   dex
+ClearBGmem:
+   sta NametableBaseBank1,X
+   dex
+   dex
+   bne ClearBGmem
+   plp
+   plx
+   rts
    
 ;----------------------------------------------------------------------------
 ; ClearOAMHposMSB -- Set the hight OAM bits to 00 (small sprites, Hpos MSB to 0)

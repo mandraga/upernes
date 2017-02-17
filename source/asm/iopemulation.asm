@@ -383,7 +383,6 @@ IncSprAddr:
 	iny
 	sty SpriteMemoryAddress ; Incrementd by one
 endWSPRDATA:
-	;BREAK2 ;
 	RETW
 
 ; Acc contains the byte
@@ -540,7 +539,7 @@ WPPUMEMADDR:
 	bcs afternametablesj ; A >= #$30  Past $3000 empty or palette
 	;; #$20 <= @ < #$30
 	;; $2000 to $23C0 = Nametables  $23C0 to $2400 = Attributes
-	jsr set_tilemap_addr
+	;jsr set_tilemap_addr
 	lda PPUmemaddrL      ; xxxx xx11 11xx xxxx means attribute table
 	and #$C0		     ; Lo bits $C0 11xx.  Keep only bits 6-7
 	sta tmp_addr
@@ -569,40 +568,36 @@ attributetables:
 	;            = ((offset >> 3) << 7) + ((offset & $07) << 2)
 	;
 	; A row of nes attributes (8bytes) covers 128 tiles (4 rows of 32 tiles = 128 tiles)
-	; line = (nesAttr@ / 8) * 128 = (@ >> 3) << 7) = (nesAttr@ & $F8) << 4
-	; row  = (nesAttr@ % 8) * 4 = (nesAttr@ & 0x07) << 2
+	; line is (@ / 8)  row is (@ & $07)
+	; Snes @ = line * 32 * 4 * 2 + row * 4 * 2
+	; So first of, @ * 8, then masks, then add
+	BREAK2 ; break at $0919
+	;RETW
 	rep #$20		; A 16bits
-	lda PPUmemaddrL		; Load the ppu memory address suposed to be in the attribute range: $23C0 to $2400 or 27C0 to 2800
-	; Do not optimise so it is easy to debug it. Optimised result? c = @ << 2; addr = ((c & 0x03E0) << 2) + (c & 0x1C)
+	lda PPUmemaddrL	; Load the ppu memory address suposed to be in the attribute range: $23C0 to $2400 or 27C0 to 2800
+	and #$FBFF      ; Get an @ in $23C0 to $2400
+	; Do not optimise, it is easier to debug.
+	clc
+	sbc #$3C00 ; Substract the base @
 	; line:
-	and #$00F8
+	asl A
+	asl A
+	asl A			; << 3  x8
+	tay
 	asl A
 	asl A
 	asl A
-	asl A			; << 4
+	asl A
+	asl A			; << 5  x32
+	and #$3800
 	sta tmp_addr
 	; Colum
-	lda PPUmemaddrL
-	and #$0007
-	asl A
-	asl A
+	tya
+	and #$0038
 	clc
-	adc tmp_addr	; line offset + row
-	sta tmp_addr
-	tya         	; y is the VRAM base @ set by set_tilemap_addr
-	clc
-	adc tmp_addr	; snes VRAM segment + Addr
+	adc #$0001      ; The palette is in the upper bytes of the words
 	; Store the nametable address
 	sta attributeaddr
-	; Set the address in snes register
-	sep #$20		; A 8bits
-	; The adress is in word count (should be $(3/7)000 to $(3/7)003F)
-	sta VMADDL
-	xba
-	sta VMADDH
-	; Vram increments 1 by 1 after VMDATAH write
-	lda #$80
-	sta VMAINC
 	;; Attributes routines
 	rep #$20
 	lda #AttrtableW
@@ -614,28 +609,33 @@ attributetables:
 nametables:
 	rep #$20		; A 16bits
 	lda PPUmemaddrL
-	and #$03FF		; Lower address value
-	sta tmp_addr
-	tya             ; y is VRAM base @ set by set_tilemap_addr
-	clc
-	adc tmp_addr
+	and #$07FF		; Lower address value
+	asl             ; word adress
+	;sta tmp_addr
+	;tya             ; y is VRAM base @ set by set_tilemap_addr
+	;clc
+	;adc tmp_addr
 	; Set the address in snes register
 	sep #$20		; A 8bits
 	; The adress is in word count (should be $(3/7)000 to $(3/7)003F)
-	sta VMADDL
+	sta NameAddresL
 	xba
-	sta VMADDH
+	sta NameAddresH
 	; Test bit 2 of PPUCTRL: 1 or 32 nametable increment
 	lda #$04
 	bit PPUcontrolreg1	; test bit 2, zero if not set ("bit and" result)
 	bne name_incr_32
-	; Vram increments 1 by 1 after VMDATAL write
-	lda #$00 		; after VMDATAL wr
-	sta VMAINC
+	; Vram increments 1 by 1 after VMDATAL write, 2bytes on the snes because nametables are words name + palette
+	lda #$02
+	sta VideoIncrementL
+	;lda VideoIncrement 		; after VMDATAL w;
+	;sta VMAINC
 	jmp set_nametables_routines
 name_incr_32:
-	; Vram increments 32 by 32 after VMDATAL write
-	lda #$01
+	; Vram increments 32 by 32 after VMDATAL write (words on the snes)
+	lda #$40
+	sta VideoIncrementL
+	;lda VideoIncrement 		; after VMDATAL wr
 	sta VMAINC
 set_nametables_routines:
 	;; Tile map routines
@@ -671,19 +671,19 @@ emptyrange:
 
 ;; -------------------------------------------------------------------------
 ; Select where goes the name table data in VRAM
-set_tilemap_addr
+;set_tilemap_addr
 ;.8BIT
-	sep #$30		; A 8bit
-	rep #$10        ; X Y are 16bits
-	lda PPUmemaddrH	; address hight byte
-	and #$04		; bit 11: 0 = Tables 0 & 2; 1 = Tables 1 & 3 (TODO not always mirror???)
-	cmp #$04
-	beq Tables1_3
-	ldy #NAMETABLE1BASE	; snes BG1 names/attributes VRAM address: $7000 (Word addres)
-	rts
-Tables1_3:
-	ldy #NAMETABLE2BASE	; snes BG1 names/attributes VRAM address: $7400 (Word addres)
-	rts
+;	sep #$20		; A 8bit
+;	rep #$10        ; X Y are 16bits
+;	lda PPUmemaddrH	; address hight byte
+;	and #$04		; bit 11: 0 = Tables 0 & 2; 1 = Tables 1 & 3 (TODO not always mirror???)
+;	cmp #$04
+;	beq Tables1_3
+;	ldy #NAMETABLE1BASE	; snes BG1 names/attributes VRAM address: $7000 (Word addres)
+;	rts
+;Tables1_3:
+;	ldy #NAMETABLE2BASE	; snes BG1 names/attributes VRAM address: $7400 (Word addres)
+;	rts
 
 emptyW:
 	RETW
@@ -724,91 +724,60 @@ AttrtableW:
 	; o          = Tile priority.
 	; ppp        = Tile palette. The number of entries in the palette depends on the Mode and the BG.
 	; cccccccccc = Tile number. Do ont care for the higher cc
-	sep #$30		; All 8bits
-	tax
-	rep #$20		; Acc 16bits
-	lda attributeaddr
-	sta VMADDL
+	;RETW
+	BREAK ; break at $0918
 	sep #$20		; Acc 8bits
-	txa
+	tay
+	rep #$10        ; X Y are 16bits	
+	;txa
 	and #$03		; 00
 	asl A			; Attibute palette are at bits 2 3 4 on snes, so shift the data.
 	asl A
-	tay
-	sta VMDATAH
-	sta VMDATAH
-	txa
-	and #$0C		; 11
-	pha
-	sta VMDATAH
-	sta VMDATAH
-	;; Add 32 to the @
-	rep #$20		; Acc 16bits
-	lda attributeaddr
-	clc
-	adc #32			; Next line
- 	sta VMADDL
-	;; 
-	sep #$20		; Acc 8bits
+	ldx attributeaddr
+	sta NametableBaseBank1,X    ; Store the value in the ram buffer
+	sta NametableBaseBank1+2,X
+	sta NametableBaseBank1+64,X ; The line below
+	sta NametableBaseBank1+66,X
 	tya
-	sta VMDATAH
-	sta VMDATAH
-	pla			; 11
-	sta VMDATAH
-	sta VMDATAH
+	and #$0C		; 11
+	sta NametableBaseBank1+4,X  ; Store the value in the ram buffer
+	sta NametableBaseBank1+6,X
+	sta NametableBaseBank1+68,X
+	sta NametableBaseBank1+70,X
 	;; Lower 2 x 4 tiles
-	txa
+	tya
 	ror A
 	ror A
 	tay
 	ror A
 	ror A
 	and #$0C		; 33
-	tax
-	;; Add 64 to the @
-	rep #$20		; Acc 16bits
-	lda attributeaddr
-	clc
-	adc #64			; Next line
- 	sta VMADDL
-	;;
-	sep #$20		; Acc 8bits
+	sta NametableBaseBank1+132,X  ; Store the value in the ram buffer
+	sta NametableBaseBank1+134,X
+	sta NametableBaseBank1+196,X
+	sta NametableBaseBank1+198,X
 	tya
-	and #$03		; 22
-	tay
-	sta VMDATAH
-	sta VMDATAH
-	txa
-	sta VMDATAH
-	sta VMDATAH
-	;; Add 96 to the @
-	rep #$20		; Acc 16bits
-	lda attributeaddr
-	clc
-	adc #96			; Next line
- 	sta VMADDL
-	;;
-	sep #$20		; Acc 8bits
-	tya
-	sta VMDATAH
-	sta VMDATAH
-	txa
-	sta VMDATAH
-	sta VMDATAH
+	and #$0C		; 22
+	sta NametableBaseBank1+128,X   ; Store the value in the ram buffer
+	sta NametableBaseBank1+130,X
+	sta NametableBaseBank1+192,X
+	sta NametableBaseBank1+194,X
+	;; Add the updated tile data to the tiles to be updated by dma
+
 	;; Increment the Attribute address
 	rep #$20		; Acc 16bits
 	lda attributeaddr
 	clc
-	adc #$0004
+	adc #$0010
 	sta attributeaddr
-	and #$001F		; addr % 32 = 0?
-	beq add128		; If 0 the it is on the begining of the line
+	and #$003F		; addr % 64 = 0?
+	beq add256		; If 0 then it is on the begining of the line
 	;; Done
 	RETW
-add128:
+add256:
 	lda attributeaddr
 	clc
-	adc #128
+	adc #$0100
 	sta attributeaddr
 	;; Done
 	RETW
@@ -816,8 +785,29 @@ add128:
 	;; -------------------------------------------------------------------------
 	;; Name tables
 NametableW:
-	sep #$20		; Acc Mem 8bits
-	sta VMDATAL             ; Write to VRAM. This is the lower nametable byte, the character code number.
+	sep #$20		; A 8bit
+	rep #$10        ; X Y are 16bits
+	; Store the byte
+	ldx NameAddresL
+	sta NametableBaseBank1,X   ; Write to VRAM. This is the lower nametable byte, the character code number.
+	; If room is available for a HDMA transfer, store the word to be updated
+	;tay
+	;lda NamesBank1UpdateCounter
+	;sbc MaxNameHDMAUpdates
+	;beq NoMoreUpdates
+	; Add the word to be updated to the HDMA table
+	;tya ; Restore Acc
+	
+	;clc
+	;adc #$0001	
+	;sta NamesBank1UpdateCounter
+NoMoreUpdates:
+	; Increment
+	rep #$20		; A 16bit
+	lda NameAddresL
+	clc
+	adc VideoIncrementL
+	sta NameAddresL
 	RETW
 
 	;; ---------------------------------------------------------------
@@ -986,7 +976,6 @@ WDMASPRITEMEMACCESS:
 	;;------------------------------------------------------------------------------
 	;; Point the direct page register on the indicated page
 	phd			; pushes the D 16bit register
-	BREAK ; break at $0918
 	sep #$20    ; A 8b
 	swa			; clear the upper byte of A
 	lda #0
@@ -1040,7 +1029,6 @@ wait_for_vblank:
 	rep #$20		; A 16b
 	lda #$0100
 	sta DMA1SZL
-	BREAK2 ; break at $0919
 	;; Source address (in RAM)
 	rep #$20		; A 16b
 	lda #SpriteMemoryBase

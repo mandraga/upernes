@@ -60,8 +60,21 @@
 	pla
 .ENDM
 
+.DEFINE VideoIncrementL         IOBASE + 26 ; Video increment value
+.DEFINE VideoIncrementH         IOBASE + 27 ; Video increment value
+
+.DEFINE NamesBank1UpdateCounter IOBASE + 28 ; Counts the updated tiles in the background bank 1
+.DEFINE NamesBank2UpdateCounter IOBASE + 29 ; Counts the updated tiles in the background bank 2
+.DEFINE NameAddresL             IOBASE + 30 ; Address in the ametable
+.DEFINE NameAddresH             IOBASE + 31
+.DEFINE MaxNameHDMAUpdates      128         ; Up to 128 updated tiles, otherwise it will be a full update
+
 ;--------------------------------------------------------------------
 .DEFINE SpriteMemoryBase		$0A00       ; 256 bytes
+
+.DEFINE NametableChanges        $0B00       ; 256 bytes, the changed bytes in the nametables, up to 128 names.
+.DEFINE NametableBaseBank1      $1000       ; 4KB nes nametable, updated with HDMA or DMA if more than 128 updates.
+.DEFINE NametableBaseBank2      $1800       ;
 
 ;--------------------------------------------------------------------
 ; String buffer
@@ -78,5 +91,4 @@
 ;--------------------------------------------------------------------
 .DEFINE NAMETABLE1BASE          $7000
 .DEFINE NAMETABLE2BASE          $7400
-
 
