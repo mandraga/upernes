@@ -1,0 +1,21 @@
+## Add here the indirect jump addresses given during converted rom
+## execution or deduced. At runtime, any unknonw indirect address
+## will halt the recompiled rom and display the address.
+#
+# IndirectJump: $06
+# addr  $3201
+# addr  $324E
+#
+# jmp ($06): $06 is the direct page address of the 16bit address to jump.
+# $3201 and $324E are two addresses where it has jumped during
+# the execution or deduced looking at the disassembled program.
+#
+##########################################
+# indjmp.nes
+
+crc32:	$73353599
+
+
+IndirectJump: $08
+
+

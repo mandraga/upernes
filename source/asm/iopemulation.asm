@@ -533,6 +533,7 @@ WPPUMEMADDR:
 	;; Select the routine for it's address range
 	lda PPUmemaddrH
 	;; Find the address range
+	BREAK
 	cmp #$20		     ; On the nes, below $2000, it is CHR data
 	bcc emptyrangej		 ; A < #$20, prepare an empty routine
 	cmp #$30
@@ -573,43 +574,49 @@ attributetables:
 	; So first of, @ * 8, then masks, then add
 	BREAK2 ; break at $0919
 	;RETW
-	rep #$20		; A 16bits
-	lda PPUmemaddrL	; Load the ppu memory address suposed to be in the attribute range: $23C0 to $2400 or 27C0 to 2800
-	and #$FBFF      ; Get an @ in $23C0 to $2400
-	; Do not optimise, it is easier to debug.
-	sec        ; Set carry otherwise the result of sbc will be a two's complement.
-	sbc #$23C0 ; Substract the base @
-	; line:
-	asl A
-	asl A
-	asl A			; << 3  x8
-	tay
-	asl A
-	asl A
-	asl A
-	asl A
-	asl A			; << 5  x32
-	and #$3800
-	sta tmp_addr
-	; Colum
-	tya
-	and #$0038
-	clc
-	adc #$0001      ; The palette is in the upper bytes of the words
-	; Store the nametable address
-	sta attributeaddr
+	jsr ppuAddToVram
 	;; Attributes routines
-	rep #$20
+	rep #$20 ; A 16bits
 	lda #AttrtableW
 	sta PPUW_RAM_routineAddr
 	lda #AttrtableR
 	sta PPUR_RAM_routineAddr
 	RETW
+	
+ppuAddToVram:
+	rep #$30		; A 16bits XY 16bits
+	lda PPUmemaddrL	; Load the ppu memory address suposed to be in the attribute range: $23C0 to $2400 or 27C0 to 2800
+	and #$FBFF      ; Get an @ in $23C0 to $2400
+	; Do not optimise, it is easier to debug.
+	sec        ; Set carry otherwise the result of sbc will be a two's complement.
+	sbc #$23C0 ; Substract the base @
+	tay
+	; Colum
+	and #$0007 ; 8 Blocks of 4 per line
+	asl A
+	asl A
+	asl A			; << 3  x8
+	sta tmp_addr
+	; line:
+	tya
+	and #$0038 ; line * 16 * 8 * 2 = 32 * 8 (already shifted 3 = * 8) -> *32
+	asl A
+	asl A
+	asl A
+	asl A
+	asl A			; << 5  x32
+	clc
+	adc tmp_addr
+	; Store the nametable address
+	sta attributeaddr
+	rts
+
 ;; -------------------------------------------------------------------------
 nametables:
 	rep #$20		; A 16bits
 	lda PPUmemaddrL
 	and #$07FF		; Lower address value
+	;BREAK
 	asl             ; word adress
 	;sta tmp_addr
 	;tya             ; y is VRAM base @ set by set_tilemap_addr
@@ -725,46 +732,51 @@ AttrtableW:
 	; ppp        = Tile palette. The number of entries in the palette depends on the Mode and the BG.
 	; cccccccccc = Tile number. Do ont care for the higher cc
 	;RETW
-	BREAK ; break at $0918
+	;BREAK ; break at $0918
 	sep #$20		; Acc 8bits
 	tay
 	rep #$10        ; X Y are 16bits	
 	;txa
-	and #$03		; 00
 	asl A			; Attibute palette are at bits 2 3 4 on snes, so shift the data.
 	asl A
+	and #$0C		; 00
 	ldx attributeaddr
-	sta NametableBaseBank1,X    ; Store the value in the ram buffer
-	sta NametableBaseBank1+2,X
-	sta NametableBaseBank1+64,X ; The line below
-	sta NametableBaseBank1+66,X
+	sta NametableBaseBank1+1,X    ; Store the value in the ram buffer
+	sta NametableBaseBank1+3,X
+	sta NametableBaseBank1+65,X ; The line below
+	sta NametableBaseBank1+67,X
 	tya
 	and #$0C		; 11
-	sta NametableBaseBank1+4,X  ; Store the value in the ram buffer
-	sta NametableBaseBank1+6,X
-	sta NametableBaseBank1+68,X
-	sta NametableBaseBank1+70,X
+	sta NametableBaseBank1+5,X  ; Store the value in the ram buffer
+	sta NametableBaseBank1+7,X
+	sta NametableBaseBank1+69,X
+	sta NametableBaseBank1+71,X
 	;; Lower 2 x 4 tiles
 	tya
+	clc
 	ror A
 	ror A
 	tay
 	ror A
 	ror A
 	and #$0C		; 33
-	sta NametableBaseBank1+132,X  ; Store the value in the ram buffer
-	sta NametableBaseBank1+134,X
-	sta NametableBaseBank1+196,X
-	sta NametableBaseBank1+198,X
+	sta NametableBaseBank1+133,X  ; Store the value in the ram buffer
+	sta NametableBaseBank1+135,X
+	sta NametableBaseBank1+197,X
+	sta NametableBaseBank1+199,X
 	tya
 	and #$0C		; 22
-	sta NametableBaseBank1+128,X   ; Store the value in the ram buffer
-	sta NametableBaseBank1+130,X
-	sta NametableBaseBank1+192,X
-	sta NametableBaseBank1+194,X
+	sta NametableBaseBank1+129,X   ; Store the value in the ram buffer
+	sta NametableBaseBank1+131,X
+	sta NametableBaseBank1+193,X
+	sta NametableBaseBank1+195,X
 	;; Add the updated tile data to the tiles to be updated by dma
 
 	;; Increment the Attribute address
+	lda PPUmemaddrL	; Load the ppu memory address
+	clc
+	adc #$0001      ; increment it and store it
+	sta PPUmemaddrL
 	rep #$20		; Acc 16bits
 	lda attributeaddr
 	clc

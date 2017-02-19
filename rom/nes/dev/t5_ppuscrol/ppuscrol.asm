@@ -21,7 +21,7 @@ SCROLLY   equ $000F
 
 Init:
 	cld			; Clear decimal mode flag
-	lda #%00010000     	; Background patern able address = $1000 VRAM
+	lda #%10010000     	; Background patern able address = $1000 VRAM    NMI enabled
         sta PPU0          	; PPU control 1
         lda #%00011110
         sta PPU1		; PPU control 2 No cliping BG & Sprites visible
@@ -118,11 +118,14 @@ waitvblank:
 	lda PPUSTATUS
 	bpl waitvblank
 	rts
-			
+
+NMI
+	rti
+	
 	;  Vector table
 	.bank 1			
 	.org    $FFFA
-	.dw     0        ; NMI (NMI_Routine)
+	.dw     NMI      ; NMI (NMI_Routine)
 	.dw     Init     ; RESET (Reset_Routine)
 	.dw     0        ; IRQ (IRQ_Routine)
 
