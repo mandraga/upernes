@@ -494,6 +494,8 @@ WSCROLOFFSET:
 	beq horizontal_scroll   ; 0 horizontal, 1 vertical
 vertical_scroll:
 	txa
+	clc
+	adc #$08                ; Add 8 because the first row is not visible on nes boot.
 	sta BG1VOFS             ; This register must be written twice
 	stz BG1VOFS 		    ; High byte is 0
 	jmp chgscrollregister
@@ -533,7 +535,6 @@ WPPUMEMADDR:
 	;; Select the routine for it's address range
 	lda PPUmemaddrH
 	;; Find the address range
-	BREAK
 	cmp #$20		     ; On the nes, below $2000, it is CHR data
 	bcc emptyrangej		 ; A < #$20, prepare an empty routine
 	cmp #$30
@@ -735,6 +736,15 @@ AttrtableW:
 	;BREAK ; break at $0918
 	sep #$20		; Acc 8bits
 	tay
+	; First save the value for a read
+	lda PPUmemaddrL
+	sec
+	sbc #$C0
+	and #$3F        ; Protect against overflow
+	tax
+	tya
+	sta Attributebuffer,X
+	; Copy the values in the name tables
 	rep #$10        ; X Y are 16bits	
 	;txa
 	asl A			; Attibute palette are at bits 2 3 4 on snes, so shift the data.
@@ -829,6 +839,13 @@ NoMoreUpdates:
 paletteW:
 	tax
 	sep #$30		; mem/A = 8 bit, X/Y = 8 bit
+	; CG ram address to (PPUmemaddr - $3F00), in fact ommit the $3F
+	lda PPUmemaddrL
+	; Save the byte in sram for the next read
+	and #$1F
+	tay
+	txa
+	sta Palettebuffer,Y
 	; CG ram address to (PPUmemaddr - $3F00), in fact ommit the $3F
 	lda PPUmemaddrL
 	; Test if it is a sprite address
@@ -934,19 +951,55 @@ colormirroring:
 	sty CGDATA
 	jmp endwpumem
 
-
+;----------------------------------------------------------------------
+; 
 RPPUMEMDATA:
-	;; TODO
-	RETR
-
+	jmp (PPUW_RAM_routineAddr)   ; Indirect jump to the routine for the address.
 
 AttrtableR:
+	; Read it from the sram buffer
+	sep #$30		; All 8bit
+	lda PPUmemaddrL
+	sec
+	sbc #$C0
+	and #$3F
+	tax
+	tya
+	lda Attributebuffer,X
+	; Increment
+	rep #$30		; 16bit XY and A
+	ldx PPUmemaddrL
+	inx
+	stx PPUmemaddrL
 	RETR
 
 NametableR:
+	; Read it from the sram buffer
+	sep #$20		; A 8bit
+	rep #$10        ; X Y are 16bits
+	; Store the byte
+	ldx NameAddresL
+	lda NametableBaseBank1,X 
+	; Increment the address
+	rep #$20		; A 16bit
+	lda NameAddresL
+	clc
+	adc VideoIncrementL
+	sta NameAddresL
 	RETR
 
 paletteR:
+	; Read it from the CG buffer in sram
+	sep #$30		; All 8bit
+	lda PPUmemaddrL
+	and #$1F
+	tax
+	lda Palettebuffer,X
+	; Increment
+	rep #$30		; 16bit XY and A
+	ldx PPUmemaddrL
+	inx
+	stx PPUmemaddrL
 	RETR
 
 ; ------+-----+---------------------------------------------------------------
@@ -1005,6 +1058,8 @@ WDMASPRITEMEMACCESS:
 	; It uses a direct page indexed address, meaning it reads from the 256Bytes page with X as index.
 sprconversionloop:	
 	lda $00,X	  ; Read Y, direct page  *(DP + $00 + X)
+	sec
+	sbc #$08      ; Sub 8 because the first line is not seen
 	sta SpriteMemoryBase + 1,X    ; Store it
 	lda $01,X	  ; Read cccccc (tile index)
 	sta SpriteMemoryBase + 2,X    ; Store it

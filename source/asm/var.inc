@@ -60,17 +60,23 @@
 	pla
 .ENDM
 
-.DEFINE VideoIncrementL         IOBASE + 26 ; Video increment value
-.DEFINE VideoIncrementH         IOBASE + 27 ; Video increment value
+.DEFINE VideoIncrementL         IOBASE + 26  ; Video increment value
+.DEFINE VideoIncrementH         IOBASE + 27  ; Video increment value
 
-.DEFINE NamesBank1UpdateCounter IOBASE + 28 ; Counts the updated tiles in the background bank 1
-.DEFINE NamesBank2UpdateCounter IOBASE + 29 ; Counts the updated tiles in the background bank 2
-.DEFINE NameAddresL             IOBASE + 30 ; Address in the ametable
+.DEFINE NamesBank1UpdateCounter IOBASE + 28  ; Counts the updated tiles in the background bank 1
+.DEFINE NamesBank2UpdateCounter IOBASE + 29  ; Counts the updated tiles in the background bank 2
+.DEFINE NameAddresL             IOBASE + 30  ; Address in the ametable
 .DEFINE NameAddresH             IOBASE + 31
-.DEFINE MaxNameHDMAUpdates      128         ; Up to 128 updated tiles, otherwise it will be a full update
+.DEFINE MaxNameHDMAUpdates      128          ; Up to 128 updated tiles, otherwise it will be a full update
 
-.DEFINE Printfbuffer            IOBASE + 32 ; 16bytes for the printf parameters
+.DEFINE Printfbuffer            IOBASE + 32  ; 16bytes for the printf parameters
 .DEFINE PrintfbufferSz          16
+
+.DEFINE Attributebuffer         IOBASE + 48  ; 64bytes to store the attributes to do the reads
+.DEFINE AttributebufferSz       64
+
+.DEFINE Palettebuffer           IOBASE + 112 ; 16bytes to store the palete to do the reads
+.DEFINE PalettebufferSz         16
 
 ;--------------------------------------------------------------------
 .DEFINE SpriteMemoryBase		$0A00       ; 256 bytes

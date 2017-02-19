@@ -159,7 +159,43 @@ ClearBGmem:
    plp
    plx
    rts
+ 
+;----------------------------------------------------------------------------
+; ClearPPUEmuBuffer -- Clears the buffers used to store the read values
+; In: None
+; Out: None
+; Modifies: flags
+;----------------------------------------------------------------------------
+ClearPPUEmuBuffer:
+   phx
+   php
+   rep #$30             ; mem/A, X/Y = 16 bit
+   ; Attributes
+   ldx #AttributebufferSz
+   lda #$00
+   dex
+   dex
+ClearAttrmem:
+   sta Attributebuffer,X
+   dex
+   dex
+   bne ClearAttrmem
+   ; Palette
+   ldx #PalettebufferSz
+   lda #$00
+   dex
+   dex
+ClearPalmem:
+   sta Palettebuffer,X
+   dex
+   dex
+   bne ClearPalmem
+   ;
+   plp
+   plx
+   rts
    
+
 ;----------------------------------------------------------------------------
 ; ClearOAMHposMSB -- Set the hight OAM bits to 00 (small sprites, Hpos MSB to 0)
 ; In: None

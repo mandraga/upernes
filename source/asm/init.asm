@@ -35,6 +35,7 @@ Reset:
 
 	; Clear memory
 	jsr ClearBGBuffer
+	jsr ClearPPUEmuBuffer
 	jsr ClearRegisters
 	jsr ClearVRAM
 	jsr ClearCGRam

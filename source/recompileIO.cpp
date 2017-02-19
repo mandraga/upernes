@@ -157,7 +157,7 @@ void Crecompilateur::routineSTXiop(FILE *fp, int iopaddr, Copcodes *popcode_list
   fprintf(fp, "\tsta Acc\n");
   fprintf(fp, "\ttxa\n");
   fprintf(fp, "\tldx #$%02X\n", 2 * PORT2INDEX(iopaddr));
-  fprintf(fp, "\tjsr ldaioportroutine\n");
+  fprintf(fp, "\tjsr staioportroutine\n");
   fprintf(fp, "\tlda Acc\n");
   print_restore(fp);
   fprintf(fp, "\trts\n");
@@ -172,7 +172,7 @@ void Crecompilateur::routineSTYiop(FILE *fp, int iopaddr, Copcodes *popcode_list
   fprintf(fp, "\ttya\n");
   // Y is saved in the call
   fprintf(fp, "\tldx #$%02X\n", 2 * PORT2INDEX(iopaddr));
-  fprintf(fp, "\tjsr ldaioportroutine\n");
+  fprintf(fp, "\tjsr staioportroutine\n");
   fprintf(fp, "\tlda Acc\n");
   print_restore(fp);
   fprintf(fp, "\trts\n");

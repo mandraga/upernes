@@ -49,26 +49,26 @@ init_BG3_and_textbuffer:
 	plb			; A -> Datat Bank Register
 palconv3:
 	lda BG3palette.w,X
-        asl                     ; word index
-        tay
-        lda nes2snespalette,Y
-        ; Send it to CG ram
-        sta CGDATA
-        iny
-        lda nes2snespalette,Y
-        sta CGDATA
-        inx
-        txa
-        cmp #$20
-        bne palconv3
-        plb
+	asl                     ; word index
+	tay
+	lda nes2snespalette,Y
+	; Send it to CG ram
+	sta CGDATA
+	iny
+	lda nes2snespalette,Y
+	sta CGDATA
+	inx
+	txa
+	cmp #$20
+	bne palconv3
+	plb
 	
 	; BG3 Tilemap fixed addresses
-        ;; -----------------------------------------------
-        ; BG3 tilemap (nes name table + attibute tables)
-        ; Set tile map address
-        lda #$18             
-        sta BG3SC
+	;; -----------------------------------------------
+	; BG3 tilemap (nes name table + attibute tables)
+	; Set tile map address
+	lda #$18             
+	sta BG3SC
 
 	rts
 

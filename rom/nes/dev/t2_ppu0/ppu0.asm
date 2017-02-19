@@ -181,6 +181,16 @@ quarth:
 	sta PPURWR
 	sta PPURWR
 
+	; Put a tile at the end of the screen which is not the last row, first and last row not being seen.
+	lda #$23        	; name table in vram at $2000
+	sta PPUADDRR        ; Drawing tiles at the en of the nametables - 33
+	lda #$9F
+	sta PPUADDRR
+	; Write tile data
+	lda #$A0
+	sta PPURWR
+
+	
 	jsr REFRESHPPUSCROL ; Must be done after every acces to VRAM write
 	jsr STARTPPU	
 

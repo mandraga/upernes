@@ -7,7 +7,7 @@
 
 UpdateBackgrounds:
 
-	phb
+	;phb
 	php		;Preserve registers
 	pha
 	phx
@@ -52,7 +52,7 @@ labs:
 	plx
 	pla
 	plp		;Restore registers
-	plb
+	;plb
 	rts		;Return to caller
 rts
 
