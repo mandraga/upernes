@@ -69,6 +69,9 @@
 .DEFINE NameAddresH             IOBASE + 31
 .DEFINE MaxNameHDMAUpdates      128         ; Up to 128 updated tiles, otherwise it will be a full update
 
+.DEFINE Printfbuffer            IOBASE + 32 ; 16bytes for the printf parameters
+.DEFINE PrintfbufferSz          16
+
 ;--------------------------------------------------------------------
 .DEFINE SpriteMemoryBase		$0A00       ; 256 bytes
 
@@ -78,17 +81,25 @@
 
 ;--------------------------------------------------------------------
 ; String buffer
-.DEFINE Printfbuffer            $0C00       ; 16bytes for the printf parameters
-.DEFINE TextBuffer	        	$0C10	    ; 512B for the text buffer
-; $0C00 $0D00
-
-.DEFINE SPRITEFLAGSCONVTABLE    $0E00       ; Precalculated sprite flags nes to super nes, 256 bytes
-; $0F00 not used
+.DEFINE TextBuffer	        	$0C00	    ; 1024B for the text buffer tiles (512 tiles)
+.DEFINE TextBufferSize          1024
+; up to $0FFF
 
 
 ;--------------------------------------------------------------------
 ;               SNES VRAM defines (WORD addresses)
 ;--------------------------------------------------------------------
+; Memory maping
+.DEFINE TEXTCHRBASE             $1000
+.DEFINE TEXTNAMEBASE            $1800
+.DEFINE SPRITECHRBASE           $2000  ; OBSEL has 8K granularity
+.DEFINE BGCHRBASE               $3000
+
 .DEFINE NAMETABLE1BASE          $7000
 .DEFINE NAMETABLE2BASE          $7400
+
+
+
+
+
 

@@ -61,7 +61,7 @@ Reset:
 	;; -----------------------------------------------
 	jsr init_BG3_and_textbuffer
 		
-	; Load the nes cartridge's CHR data in the snes VRAM at $2000
+	; Load the nes cartridge's CHR data in the snes VRAM
 	; 4KB
 	;; -----------------------------------------------
 	rep #$30		; All 16bits

@@ -26,9 +26,9 @@ init_BG3_and_textbuffer:
 
 	; Load the 2KB ASCII table CHR data at VRAM $1000W ($2000B)
 	;; -----------------------------------------------
-	rep #$10	        ; X/Y=16bit
+	rep #$10	    ; X/Y=16bit
 	sep #$20		; A/mem=8bit
-	LoadBlockToVRAM ASCIITiles, $1000, $0800	;128 tiles * (2bit color = 2 planes) --> 2048 bytes
+	LoadBlockToVRAM ASCIITiles, TEXTCHRBASE, $0800	;128 tiles * (2bit color = 2 planes) --> 2048 bytes
 
 	; BG3 CHR address
 	; Ascii CHR data is constitued of 128 tiles at $2000B
@@ -66,9 +66,8 @@ palconv3:
 	; BG3 Tilemap fixed addresses
         ;; -----------------------------------------------
         ; BG3 tilemap (nes name table + attibute tables)
-        ; Set tile map address (Addr >> 11) << 2
-	; $1800 >> 11 << 2= $18
-        lda #$18                ; (1800 / $400 = 6 << 2 = $18)
+        ; Set tile map address
+        lda #$18             
         sta BG3SC
 
 	rts

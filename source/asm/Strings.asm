@@ -52,8 +52,27 @@ END_STRlabel\@:
 	;============================================================================
 	;; Routine to copy text tile data to BG3 vram
 textcpy:
+	lda $092A
 	rep #$10		; X/Y = 16 bit
 	sep #$20		; mem/A = 8 bit
+.DEFINE USEDMA4TEXT
+.IFDEF USEDMA4TEXT
+	lda #$80
+	sta INIDISP       ; Turn off screen, otherwise this will not work on bsnes
+	
+    stz MDMAEN	      ;Clear the DMA control register
+	ldx #TextBuffer
+    stx DMA1A1SRCL	  ;Store the data offset into DMA source offset
+	ldy #$0400        ; 1k
+	sty DMA1SZL 	  ;Store the size of the data block
+	lda #$00
+    sta DMA1A1SRCBNK  ;Store the data bank of the source data
+
+    lda #$01	;Set the DMA mode (word, normal increment)
+    sta DMA1CTL
+    lda #$18	;Set the destination register (VRAM gate)
+    sta DMA1BDEST
+
 	; Vram increments 1 by 1 after VMDATAH write
 	lda #$80
 	sta VMAINC
@@ -62,17 +81,33 @@ textcpy:
 	sta VMADDL		; Word address
 	lda #$18
 	sta VMADDH
+
+    lda #$02	;Initiate the DMA1 transfer
+    sta MDMAEN
+	
+	lda #$0F		; Turn on screen, 100% brightness
+	sta INIDISP
+.ELSE
+	; Vram increments 1 by 1 after VMDATAH write
+	lda #$80
+	sta VMAINC
+	; Tile map is at $1800W (CHR data is at $1000W)
+	lda #$00
+	sta VMADDL		; Word address
+	lda #$14
+	sta VMADDH
 	; Counters
 	ldy #$0400		; Total number of tiles 32x32, 1024 tiles for a screen
 	ldx #$0000
 BG3strloop:
 	lda TextBuffer.w,X	; Ascii tile number
 	sta VMDATAL		; Flip tile & palette selection: 0
-	lda #$00		; Palette 0 low priority
-	sta VMDATAH		; tile attributes high byte
+	;lda #$00		; Palette 0 low priority
+	;sta VMDATAH		; tile attributes high byte
 	inx
 	dey
 	bne BG3strloop
+.ENDIF
 	rts
 	;============================================================================
 
@@ -86,7 +121,7 @@ textclr:
 	rep #$10		; X/Y = 16 bit
 	sep #$20		; mem/A = 8 bit
 	; Counters
-	ldy #$0400		; Total number of tiles/chars for a screen  (32x32 = 1024)
+	ldy #TextBufferSize	; Total number of tiles/chars for a screen / 2 (32x32 = 1024)/2 = 512
 	ldx #$0000
 	lda #$FF
 strclrloop:
@@ -118,13 +153,20 @@ Print:
 	sep #$20
 
 	; ASCII CHR is at $1000W = $2000B, first tile is at +?????
-	
+
 	; textclr routine and 128 is set here as the ORA $80
 	;;  FIXME what is the offset????
 	;ORA #$00		;
-	
+
 	LDX Cursor
+	pha
+	txa
+	asl
+	tax
+	pla
 	STA TextBuffer, X	; Output character
+	STZ TextBuffer+1, X ; Palette to 0
+	LDX Cursor
 	INX
 	STX Cursor
 

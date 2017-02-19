@@ -125,18 +125,17 @@ The sprite bank switches less often and not all the bank.
 A DMA transfer from WRAM could be interesting for simulating the sprite CHR bank switching.
 
 Snes VRAM, 64kB - 32kW:
-------------------------
+------------------------    Word address
 $0000
-  SPRITE 4bpp CHR 8KB 4KW
-  Ascii tiles     4KB 2KW
-  Ascii nametable 4KB 2KW
+  - Empty -       4KB 2KW
+  - Empty -       4KB 2KW
+  Ascii tiles     4KB 2KW   $0000 ascii table CHR 2K
+  Ascii nametable 4KB 2KW   $0800
 ------------------------
-$2000 Word @  8KW
-  BG CHR          4KB 2kW   tmp nes bank 0
+$2000 Word @  8KW           $2000
+  SPRITE 4bpp CHR 16KB 8KW
+  BG CHR          4KB 2kW
   - Empty -       4KB 2KW
-  BG CHR          4KB 2kW   tmp nes bank 1 (fixme, use the tile index most significant bit to regroup the 2 banks?)
-  - Empty -       4KB 2KW
-ascii table CHR 2K $3800
 ------------------------
 $4000 Word @ 16KW
   BG CHR          4KB 2kW
@@ -146,6 +145,7 @@ $4000 Word @ 16KW
 ------------------------
 $6000 Word @ 24KW
   - Empty -       8KB 4KW
+$7000
   BG Nametable    8KB 4KW  Starts at $7000, and $7400, $7800, $7C00
      4 nametables of 2KB each
 $7FFF

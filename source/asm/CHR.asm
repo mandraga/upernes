@@ -21,23 +21,18 @@ NesBackgroundCHRtoVram:
 	; --------------------------
 	; First 4k
 	; --------------------------
+	ldx #SPRITECHRBASE
+	stx VMADDL		; Word address $1000 (= $2000 bytes)
 	ldx #$0000
 	ldy #$0100		; 256 8x8 tiles
-	lda #$00
-	sta VMADDL		; Word address $2000 (= $4000 bytes)
-	lda #$20
-	sta VMADDH
-	;jsr copyBGchr
 	jsr copySPRchr
 	; --------------------------
 	; Second 4k (nes chr bank 1 @ $1000 in nes ppu address space)
 	; --------------------------
+	ldx #BGCHRBASE
+	stx VMADDL		; Word address $3000 (= $6000 bytes)
 	ldx #$1000		; Offset in CHR data
 	ldy #$0100		; 256 8x8 tiles
-	lda #$00
-	sta VMADDL		; Word address $3000 (= $6000 bytes)
-	lda #$30
-	sta VMADDH
 	jsr copyBGchr	
 	
 	; --------------------------
@@ -73,49 +68,7 @@ charloop:
 	rts
 
 ;; --------------------------------------------------------------------------
-/*
-NesSpriteCHRtoVram:
-	;; -----------------------------------------------------
-	; Copy nes CHR to VRAM for sprites. Needs another function
-	; because on the snes sprites are 4bits per pixel instead
-	; of 2.
-	; Same copy but a group of 16bytes is set to 0 between 2
-	; tiles (color bits 2 and 3 set to 0).
-	rep #$30		; All 16bit
-	rep #$10		; X/Y = 16 bit
-	sep #$20		; mem/A = 8 bit
-	phb
-	lda #:NESCHR		; Bank of the CHR data
-	pha
-	plb			; A -> Data Bank Register
-	; Vram increments 1 by 1 after VMDATAH write
-	lda #$80
-	sta VMAINC
-	; --------------------------
-	; First 4k -> $0000 4kW
-	; --------------------------
-	ldx #$0000
-	ldy #$0100		; 256 8x8 tiles
-	lda #$00
-	sta VMADDL		; Word address
-	lda #$00
-	sta VMADDH
-	jsr copySPRchr
-	; --------------------------
-	; Second 4k -> $4000 4kW
-	; (nes chr bank 1 @ $1000 in nes ppu address space)
-	; --------------------------
-	;ldx #$1000		; Offset in CHR data
-	;ldy #$0100		; 256 8x8 tiles
-	;lda #$00
-	;sta VMADDL		; Word address
-	;lda #$20
-	;sta VMADDH
-	;jsr copySPRchr
-	; --------------------------
-	plb			; Restore data bank
-	rts
-*/
+
 copySPRchr:
 Stileloop:
 	phy

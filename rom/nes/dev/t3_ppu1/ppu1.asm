@@ -81,6 +81,7 @@ paleted:
 	sta PPUADDRR
 	lda #$1E
 	sta $0A	  		; Line counter in ram
+	
 re:
 	lda #$00        ; default tile
 	ldx #$20
@@ -92,10 +93,6 @@ quarth:
 	dec $0A
 	cmp $0A
 	bne re
-
-	jsr STARTPPU
-	jsr waitvblank
-	jsr STOPPPU
 	
 	; 16, 15 <- tile
 	lda #$21        	; name table in vram at $2000

@@ -18,7 +18,7 @@ PPURWR    equ  $2007
 
 Init:
 	cld			; Clear decimal mode flag
-	lda #%00010000     	; Background patern able address = $1000 VRAM
+	lda #%10010000     	; Background patern able address = $1000 VRAM, NMI enabled
     sta PPU0          	; PPU control 1
     lda #%00011110
     sta PPU1		; PPU control 2 No cliping BG & Sprites visible
@@ -46,6 +46,18 @@ paletec:
 	jsr waitvblank
 	jsr STOPPPU
 
+	;-----------------------------------------------------------------
+	; Background
+	;jmp passAttributes
+	lda #$23        	; Attribute table in vram at $23C0
+	sta PPUADDRR
+	lda #$C0
+	sta PPUADDRR	
+	lda #$E4            ; 00 11 22 33
+	sta PPURWR
+	sta PPURWR
+passAttributes:
+	
 	; 'Clear' the screen to tile 0
 	; Static name table dislay a tile in the middle of the screen
 	lda #$20        	; name table in vram at $2000
@@ -71,6 +83,92 @@ quarth:
 	jsr waitvblank
 	jsr STOPPPU
 
+	; First block of 16 tiles
+	lda #$20        	; name table in vram at $2000
+	sta PPUADDRR
+	lda #$00
+	sta PPUADDRR
+	lda #$A0
+	sta PPURWR
+	sta PPURWR
+	sta PPURWR
+	sta PPURWR
+	; +32
+	lda #$20        	; name table in vram at $2020
+	sta PPUADDRR
+	lda #$20
+	sta PPUADDRR
+	lda #$A0
+	sta PPURWR
+	sta PPURWR
+	sta PPURWR
+	sta PPURWR
+	; +32
+	lda #$20        	; name table in vram at $2040
+	sta PPUADDRR
+	lda #$40
+	sta PPUADDRR
+	lda #$A0
+	sta PPURWR
+	sta PPURWR
+	sta PPURWR
+	sta PPURWR
+	; +32
+	lda #$20        	; name table in vram at $2060
+	sta PPUADDRR
+	lda #$60
+	sta PPUADDRR
+	lda #$A0
+	sta PPURWR
+	sta PPURWR
+	sta PPURWR
+	sta PPURWR	
+
+	; Second block of 16 tiles
+	lda #$20        	; name table in vram at $2004
+	sta PPUADDRR
+	lda #$04
+	sta PPUADDRR
+	lda #$A0
+	sta PPURWR
+	sta PPURWR
+	sta PPURWR
+	sta PPURWR
+	; +32
+	lda #$20        	; name table in vram at $2024
+	sta PPUADDRR
+	lda #$24
+	sta PPUADDRR
+	lda #$A0
+	sta PPURWR
+	sta PPURWR
+	sta PPURWR
+	sta PPURWR
+	; +32
+	lda #$20        	; name table in vram at $2044
+	sta PPUADDRR
+	lda #$44
+	sta PPUADDRR
+	lda #$A0
+	sta PPURWR
+	sta PPURWR
+	sta PPURWR
+	sta PPURWR
+	; +32
+	lda #$20        	; name table in vram at $2064
+	sta PPUADDRR
+	lda #$64
+	sta PPUADDRR
+	lda #$A0
+	sta PPURWR
+	sta PPURWR
+	sta PPURWR
+	sta PPURWR	
+	
+	jsr STARTPPU
+	jsr waitvblank
+	jsr STOPPPU
+	
 	; 16, 15 <- tile
 	lda #$21        	; name table in vram at $2000
 	sta PPUADDRR        ; Drawing tiles at $21CE
@@ -114,10 +212,13 @@ waitvblank:
 	bpl waitvblank
 	rts
 			
+NMI:
+	rti
+
 	;  Vector table
 	.bank 1			
 	.org    $FFFA
-	.dw     0        ; NMI (NMI_Routine)
+	.dw     NMI      ; NMI (NMI_Routine)
 	.dw     Init     ; RESET (Reset_Routine)
 	.dw     0        ; IRQ (IRQ_Routine)
 

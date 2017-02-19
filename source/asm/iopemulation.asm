@@ -577,8 +577,8 @@ attributetables:
 	lda PPUmemaddrL	; Load the ppu memory address suposed to be in the attribute range: $23C0 to $2400 or 27C0 to 2800
 	and #$FBFF      ; Get an @ in $23C0 to $2400
 	; Do not optimise, it is easier to debug.
-	clc
-	sbc #$3C00 ; Substract the base @
+	sec        ; Set carry otherwise the result of sbc will be a two's complement.
+	sbc #$23C0 ; Substract the base @
 	; line:
 	asl A
 	asl A
@@ -768,7 +768,7 @@ AttrtableW:
 	rep #$20		; Acc 16bits
 	lda attributeaddr
 	clc
-	adc #$0010
+	adc #$0008
 	sta attributeaddr
 	and #$003F		; addr % 64 = 0?
 	beq add256		; If 0 then it is on the begining of the line
