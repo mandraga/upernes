@@ -98,20 +98,11 @@ endindjmp:
 	ldy #Printfbuffer
 	SetCursorPos  1, 1
 	PrintString "Unknown indirect jump:\n jmp ($%x%x) to @ $%x%x"  ; higher byte of A
-	;PrintString "%x) to @ $"			; lower byte of A
-	/*
-	txa
-	;swa
-	ldy #Printfbuffer
-	sta $0000, Y
-	PrintString "%x%x"
-	;PrintString "%x"
-	*/
 	;; Enable BG3 and BG1
 	lda #%00000101	        ; Turn on BG1 and BG3
 	sta TM
-        lda #$18
-        sta BG3SC
+    lda #$18
+    sta BG3SC
 	;; Send all the string buffer to the BG3 VRAM name table
 	jsr textcpy
 	lda #$0F		; Turn on screen, 100% brightness

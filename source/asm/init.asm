@@ -29,6 +29,27 @@ Reset:
 	pea $0000
 	pld
 
+	;----------------------------------------------------------------------------
+	; Clears the 8KB of ram (even the stack so this is not a routine)
+	; Uses the pattern FFFFFFFF00000000 like fceux
+	ldx #$2000      ; 8k
+eraseRamLoop:
+	dex
+	dex
+	lda #$FFFF
+	sta $0000,X
+	dex
+	dex
+	sta $0000,X
+	dex
+	dex
+	lda #$0000
+	sta $0000,X
+	dex
+	dex
+	sta $0000,X
+	bne eraseRamLoop
+		
 	; Stack pointer initial value
 	ldx #$01FF
 	txs

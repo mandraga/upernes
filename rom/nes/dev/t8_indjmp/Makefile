@@ -1,15 +1,32 @@
+#
+#
+# Makefile for nes roms
+#
+#
 
-ASM= nesasm
+ifeq ($(OS), Windows_NT)
+OPERATINGON=__WINDOWS
+else
+OPERATINGON=__LINUX
+endif
 
-default: all
+ifeq ($(OPERATINGON),__LINUX)
+	ASM=nesasm
+else
+	ASM=NESASM3.EXE
+endif
 
-source = indjmp.asm
-
-all: $(source)
-	$(ASM) $(source)
+PROJECT=indjmp
 
 clean:
-	-rm *.obj
-	-rm *.o
-	-rm *~
+	rm -f *.o
+	rm -f *.nes
+	rm -f *.fns
+	rm -f *~
+	rm -f $(COMMONSRCDIR)/*~
+	rm -f $(OUTPUT_DIR)$(EXE_NAME)
+
+
+all: 
+	$(ASM) $(PROJECT).asm
 

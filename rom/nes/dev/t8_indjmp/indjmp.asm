@@ -24,12 +24,12 @@ Init:
         lda #%00011110 
         sta PPU1		; PPU control 2 No cliping BG & Sprites visible
 
-	;; Stores the label address in memory
+	;; Stores the label address in memory ($C020 @ $0008)
 	lda #$20
 	sta INDADDR
 	lda #$C0
 	sta INDADDR + 1
-	;; Jumps to the address specified in RAM
+	;; Jumps to the address specified
 	; jmp ($0008)
 	;; nesasm fails on the indirect jump and translates it to a static jump
 	;; Therefore entered manually

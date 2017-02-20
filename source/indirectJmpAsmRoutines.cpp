@@ -43,10 +43,10 @@ IndJmp0006:
 	rep #$20		; A to 16bits
 	lda $0006		; Loads the indirect address
 	;; ------------------------------
-	cmp addr1		; Is it address 1
-	bne testaddr2		; no then test the next possible address
+	cmp addr1		; Is it address 1?
+	bne testaddr2		; no, then test the next possible address
 	sep #$20		; A to 8bits
-	sec			; yes then return to emulation mode
+	sec			; yes, then return to emulation mode
 	xce			; 
 	lda Acc			; restore Acc
 	jmp labeladdr2		; Goto the indirect address

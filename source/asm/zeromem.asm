@@ -30,6 +30,8 @@ clrmem16\@:
 .ORG 0
 .SECTION "InitSNES" FORCE
 
+
+	
 ;----------------------------------------------------------------------------
 ; Clears the ram as specified in the snes official manual
 ; In: None
@@ -37,8 +39,8 @@ clrmem16\@:
 ; Modifies: flags
 ;----------------------------------------------------------------------------
 ClearRegisters:
-        pha
-        phx
+    pha
+    phx
 	php
 
 	sep #$30		; All 8bit
@@ -49,11 +51,12 @@ ClearRegisters:
 	CLRMEM  $2105 $08
 	CLRMEM16 $210D $08	; 16bit 2 writes words
 	lda #$80
-	sta $2115
-	stz $2116
-	stz $2117
+	sta VMAINC
+	stz VMADDL
+	stz VMADDH
 	;; $2118 VRAM data
 	;; $2119 VRAM data
+	; Mode 7 shit
 	stz $211A
 	stz $211B
 	sta $01
@@ -147,14 +150,12 @@ ClearBGBuffer:
    phx
    php
    rep #$30             ; mem/A, X/Y = 16 bit
-   ldx #$2000
-   lda #$00
-   dex
-   dex
+   ldx #$1000           ; 8k
+   lda #$0000
 ClearBGmem:
+   dex
+   dex
    sta NametableBaseBank1,X
-   dex
-   dex
    bne ClearBGmem
    plp
    plx
@@ -173,22 +174,18 @@ ClearPPUEmuBuffer:
    ; Attributes
    ldx #AttributebufferSz
    lda #$00
-   dex
-   dex
 ClearAttrmem:
+   dex
+   dex
    sta Attributebuffer,X
-   dex
-   dex
    bne ClearAttrmem
    ; Palette
    ldx #PalettebufferSz
    lda #$00
-   dex
-   dex
 ClearPalmem:
+   dex
+   dex
    sta Palettebuffer,X
-   dex
-   dex
    bne ClearPalmem
    ;
    plp
