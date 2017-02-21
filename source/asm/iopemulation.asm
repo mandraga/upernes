@@ -251,7 +251,9 @@ RPPUC2:
 RPPUSTATUS:
 	sep #$20
 	;; vblank
-	
+	lda #$01
+	cmp StarPPUStatus
+	beq PowerUp     ; If 1, then it is power up (always here, even on reset)
 	;lda HVBJOY
 	lda NMIFLAG 	; NMIFLAG has the same behaviour as the nes, and not HVBJOY flag
 	and #$80
@@ -265,6 +267,10 @@ RPPUSTATUS:
 ; 	and #$82		; keep N and Z flags like the lda function
 ; 	sta Flags
 ; 	txa			; restore a
+	RETR
+PowerUp:
+	stz StarPPUStatus ; Boot passed
+	lda #$80          ; return boot PPUSTATUS
 	RETR
 
 ; ------+-----+---------------------------------------------------------------

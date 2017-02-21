@@ -30,10 +30,18 @@ Reset:
 	pld
 
 	;----------------------------------------------------------------------------
-	; Clears the 8KB of ram (even the stack so this is not a routine)
+	; Clear the sram from 8KB down to 2KB (mirrored on the nes but used as variables & buffers on the snes)s
+	ldx #$1800      ; 6k 
+eraseSnesRamLoop:
+	dex
+	dex
+	sta $0800,X
+	bne eraseSnesRamLoop
+	;----------------------------------------------------------------------------
+	; Clears the 2KB of ram (even the stack so this is not a routine)
 	; Uses the pattern FFFFFFFF00000000 like fceux
-	ldx #$2000      ; 8k
-eraseRamLoop:
+	ldx #$0800      ; 2k
+eraseNesRamLoop:
 	dex
 	dex
 	lda #$FFFF
@@ -48,10 +56,10 @@ eraseRamLoop:
 	dex
 	dex
 	sta $0000,X
-	bne eraseRamLoop
+	bne eraseNesRamLoop
 		
 	; Stack pointer initial value
-	ldx #$01FF
+	ldx #STACKTOP
 	txs
 
 	; Clear memory
@@ -101,6 +109,8 @@ eraseRamLoop:
 	;; -----------------------------------------------
 	stz PPUmemaddrB
 	inc PPUmemaddrB   ; The first adressed PPU adresse byte is the most significant byte.
+	stz StarPPUStatus
+	inc StarPPUStatus ; Boot state in vblank flag of PPUSTATUS
 	stz PPUmemaddrL
 	stz PPUmemaddrH
 	stz CurScrolRegister
@@ -133,6 +143,7 @@ eraseRamLoop:
 	nop
 	nop
 	; Go to the start of the nes routine
+	BREAK
 	jmp NESReset
 
 .ENDS

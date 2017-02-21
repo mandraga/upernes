@@ -3,7 +3,9 @@
 	;; Located in sram $0800 just above the nes 2KB memory
 
 ;--------------------------------------------------------------------
-.DEFINE	RAMBASE	$0800		; 2kB
+.DEFINE	RAMBASE	 $0800		; 2kB
+
+.DEFINE STACKTOP $01FF
 
 ;; Theese variables are used to avoid using the stack when emulating I/O ports
 .DEFINE Acc	        	RAMBASE
@@ -19,6 +21,9 @@
 
 ; String Functions
 .DEFINE Cursor			RAMBASE + 14    ; Holds the 16-bit position on screen
+
+.DEFINE EmulationStackPtr  RAMBASE + 16 ; The emulation stack pointer backup
+.DEFINE NativeStackPtr     RAMBASE + 18 ; Native mode stack
 
 ;--------------------------------------------------------------------
 ; 
@@ -41,6 +46,7 @@
 .DEFINE	SpriteMemoryAddress		IOBASE + 16
 .DEFINE PPTMP                   IOBASE + 17
 
+.DEFINE StarPPUStatus           IOBASE + 19 ; 1 on start
 .DEFINE CurScrolRegister        IOBASE + 20 ; 0 or 1 selects the vertical scroll register
 
 .DEFINE attributeaddr           IOBASE + 22	; Used as the nes attribute table
