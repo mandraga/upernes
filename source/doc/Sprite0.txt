@@ -1,0 +1,19 @@
+
+Sprite zero emulation:
+
+Sprite 0 is used to detect the position of a line being drawn, in theory when a non transparent background pixel
+is overlaping a non transparent pixel of the sprite it sets bit 6 to one in PPUSTATUS.
+
+; $2002 | R   | PPU Status Register
+;       | 0-5 | Unknown (???)
+;       |   6 | Hit Flag, 1 = Sprite refresh has hit sprite #0.
+;       |     | This flag resets to 0 when screen refresh starts
+;       |     | (see "PPU Details").
+
+This is used in super mario to sync with the end of Vblank.
+And therefore it must at least do this, it could be done with an HDMA channel.
+The HDMA will make a copy to an emulation variable on the sprite top line, regardless of the background.
+And when a read to the PPUSTATUS is performed it will return the bit from the meulaitn variable: 0 from
+the line of the transfer. It will be reset to 1 at the beining of the NMI if enabled.
+Super mario NMI writes to registers, then waits for Vblank using sprite Zero flag and then executes the state machine code.
+The full smb1 comented source code can be found on github.

@@ -1,0 +1,21 @@
+; sprite0.asm
+STARTPPU                         = $C15E
+STOPPPU                          = $C152
+Sprite0Clr                       = $C10A
+BGpalette                        = $C02B
+waitvblank                       = $C170
+SPRpalette                       = $C03B
+resetsprites                     = $C090
+ENABLENMI                        = $C146
+Init                             = $C000
+paltewr                          = $C04B
+loopLikeSuperMario               = $C0F9
+DISABLENMI                       = $C13A
+NMI                              = $C0FC
+re                               = $C071
+quarth                           = $C075
+Sprite0Hit                       = $C111
+paletec                          = $C04D
+paleted                          = $C05A
+REFRESHPPUSCROL                  = $C167
+movespritesDMA                   = $C176
