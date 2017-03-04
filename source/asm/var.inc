@@ -25,6 +25,12 @@
 .DEFINE EmulationStackPtr  RAMBASE + 16 ; The emulation stack pointer backup
 .DEFINE NativeStackPtr     RAMBASE + 18 ; Native mode stack
 
+.DEFINE SNESNMITMP         RAMBASE + 19 ; Saves the NMI/TIMER regiser
+
+.DEFINE SPRITE0FLAG        RAMBASE + 20 ; Sprite 0 hit flag
+.DEFINE SPRITE0FLGAG_VALUE %01000000
+
+
 ;--------------------------------------------------------------------
 ; 
 .DEFINE IOBASE	$0900

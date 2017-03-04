@@ -189,15 +189,17 @@ BGbankend:
 	bit PPUcontrolreg1  ; Puts the 7th bit in the n flag
 	bpl novblank		; Therefore bpl branches if the 7th bit is not set
 	; Vblank interrupt enabled
-	lda NMITIMEN
+	lda SNESNMITMP
 	ora #$80
 	sta NMITIMEN
+	sta SNESNMITMP
 	jmp vblankend
 novblank:
 	; Vblank interrupt disabled
-	lda NMITIMEN
+	lda SNESNMITMP
 	and #$7F
 	sta NMITIMEN
+	sta SNESNMITMP
 vblankend:
 	RETW
 
@@ -257,20 +259,13 @@ RPPUSTATUS:
 	;lda HVBJOY
 	lda NMIFLAG 	; NMIFLAG has the same behaviour as the nes, and not HVBJOY flag
 	and #$80
-	;; TODO: sprite 0 maybe use a horizontal interrupt or something
-
-	;; Flags must be kept like it was a real lda
-; 	???????????????? TODO Flags ??
-; 	tax			; save a
-; 	php			; push status register
-; 	pla			; pop status register
-; 	and #$82		; keep N and Z flags like the lda function
-; 	sta Flags
-; 	txa			; restore a
-	RETR
+	;; sprite 0
+	ora SPRITE0FLAG
+	jmp EndRPPUSTATUS
 PowerUp:
 	stz StarPPUStatus ; Boot passed
 	lda #$80          ; return boot PPUSTATUS
+EndRPPUSTATUS:
 	RETR
 
 ; ------+-----+---------------------------------------------------------------
@@ -579,7 +574,7 @@ attributetables:
 	; line is (@ / 8)  row is (@ & $07)
 	; Snes @ = line * 32 * 4 * 2 + row * 4 * 2
 	; So first of, @ * 8, then masks, then add
-	BREAK2 ; break at $0919
+	;BREAK2 ; break at $0919
 	;RETW
 	jsr ppuAddToVram
 	;; Attributes routines

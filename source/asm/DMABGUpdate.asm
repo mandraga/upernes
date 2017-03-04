@@ -54,6 +54,5 @@ labs:
 	plp		;Restore registers
 	;plb
 	rts		;Return to caller
-rts
 
 .ENDS

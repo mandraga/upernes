@@ -8,6 +8,7 @@
 .include "romprg.asm"
 .include "CHR.asm"
 .include "DMABGUpdate.asm"
+.include "sprite0.asm"
 .include "intvectors.asm"
 .include "LoadGraphics.asm"
 .include "zeromem.asm"
@@ -119,10 +120,24 @@ eraseNesRamLoop:
 	stz attributeaddr
 	stz VideoIncrementL
 	stz VideoIncrementH
-	
+	stz SNESNMITMP
+
 ; 	lda #$80
 ; 	sta NMITIMEN
-
+;	sta SNESNMITMP
+	;sei
+	lda SNESNMITMP
+	ora #%00100000 ; Enable V timer
+	;ora #%00010000 ; Enable H timer
+	sta NMITIMEN
+	sta SNESNMITMP	
+	;
+	;lda SpriteMemoryBase + 0 ; Get Y
+	lda #220
+	sta VTIMEL
+	stz VTIMEH
+	;cli
+	
 	; Return to emulation mode and jump to the
 	; recompiled nes reset routine.
 	;; -----------------------------------------------

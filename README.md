@@ -41,12 +41,12 @@ langage.
 Tests:
 T1 Palette   1 more or less
 T2 PPU       1
-T3 PPU       0 missing sprites and wrong background
-T4 PPU       0 missing sprites
-T5 PPUScrol  0 scrolling ok but wrong position
+T3 PPU       0
+T4 PPU       0
+T5 PPUScrol  0 scrolling ok
 T6 PPUSprtie 0 too much sprites
 T7 Pad0      0 color and backgorund error
-T8 indjump   0 not working
+T8 indjump   1 displays the adress
 
 
 Windows installation:

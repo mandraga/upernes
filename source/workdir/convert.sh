@@ -52,5 +52,6 @@ rm ./rom.asm
 rm ./Sound.asm
 rm ./Strings.asm
 rm ./zeromem.asm
+rm ./sprite0.asm
 rm ./*.inc
 rm ./opcodes.txt

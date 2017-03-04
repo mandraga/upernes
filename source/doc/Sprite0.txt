@@ -12,8 +12,11 @@ is overlaping a non transparent pixel of the sprite it sets bit 6 to one in PPUS
 
 This is used in super mario to sync with the end of Vblank.
 And therefore it must at least do this, it could be done with an HDMA channel.
-The HDMA will make a copy to an emulation variable on the sprite top line, regardless of the background.
-And when a read to the PPUSTATUS is performed it will return the bit from the meulaitn variable: 0 from
-the line of the transfer. It will be reset to 1 at the beining of the NMI if enabled.
+
+Upernes uses the Vertical counter irq to set a flag on the sprite top line, regardless of the background.
+We call this flag SPRITE0FLAG and it will be set to 0 at the beining of the NMI.
+
+And when a read to the PPUSTATUS is performed it will return the bit from the emulation variable in his sprite 0
+flag bit. It will be precise at least on Y.
 Super mario NMI writes to registers, then waits for Vblank using sprite Zero flag and then executes the state machine code.
 The full smb1 comented source code can be found on github.

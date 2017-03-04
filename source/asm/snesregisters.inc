@@ -33,11 +33,17 @@
 .EQU WMDATA   $2180 ;; WRAM Data Read/Write Register
 .EQU WMADDL   $2181 ;; WRAM Address Registers (Low)
 .EQU WMADDM   $2182 ;; WRAM Address Registers (Mid)
-.EQU WMADDH   $2183	;; WRAM Address Registers (High)
+.EQU WMADDH   $2183	;; WRAM Address Registers (High) 
 
-.EQU NMITIMEN $4200
+.EQU NMITIMEN $4200 ;; NMI / TIMERS register
 .EQU NMIFLAG  $4210	;; Blank Non Maskable Interrupt flag
 .EQU HVBJOY   $4212	;; V-Blank flag
+
+.EQU HTIMEL   $4207 ;; Horizontal timer value
+.EQU HTIMEH   $4208
+.EQU VTIMEL   $4209 ;; Vertical timer value
+.EQU VTIMEH   $420A ;; 
+.EQU HVTIME   $4211 ;; IRQ flag register
 
 .EQU MDMAEN   $420B
 .EQU HDMAEN   $420C
@@ -57,15 +63,29 @@
 .EQU DMA1A2SRCH $4319
 
 ;------------ DMA2 ---------------
-.EQU DMA2CTL     $4320
-.EQU DMA2BDEST   $4321
+.EQU DMA2CTL      $4320
+.EQU DMA2BDEST    $4321
 
 .EQU DMA2A1SRCL   $4322
 .EQU DMA2A1SRCH   $4323
 .EQU DMA2A1SRCBNK $4324	
 		
-.EQU DMA2SZL     $4325
-.EQU DMA2SZH     $4326
+.EQU DMA2SZL      $4325
+.EQU DMA2SZH      $4326
 
-.EQU DMA2A2SRCL $4328
-.EQU DMA2A2SRCH $4329
+.EQU DMA2A2SRCL   $4328
+.EQU DMA2A2SRCH   $4329
+
+;------------ DMA7 ---------------
+.EQU DMA7CTL      $4370
+.EQU DMA7BDEST    $4371
+
+.EQU DMA7A1SRCL   $4372
+.EQU DMA7A1SRCH   $4373
+.EQU DMA7A1SRCBNK $4374	
+		
+.EQU DMA7SZL      $4375
+.EQU DMA7SZH      $4376
+
+.EQU DMA7A2SRCL   $4378
+.EQU DMA7A2SRCH   $4379
