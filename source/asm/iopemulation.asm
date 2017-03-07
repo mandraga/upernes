@@ -256,7 +256,8 @@ RPPUSTATUS:
 	lda #$01
 	cmp StarPPUStatus
 	beq PowerUp     ; If 1, then it is power up (always here, even on reset)
-	;lda HVBJOY
+	jsr updateSprite0Flag
+	;
 	lda NMIFLAG 	; NMIFLAG has the same behaviour as the nes, and not HVBJOY flag
 	and #$80
 	;; sprite 0
@@ -495,8 +496,8 @@ WSCROLOFFSET:
 	beq horizontal_scroll   ; 0 horizontal, 1 vertical
 vertical_scroll:
 	txa
-	clc
-	adc #$08                ; Add 8 because the first row is not visible on nes boot.
+	;clc
+	;adc #$08                ; Add 8 because the first row is not visible on nes boot.
 	sta BG1VOFS             ; This register must be written twice
 	stz BG1VOFS 		    ; High byte is 0
 	jmp chgscrollregister
@@ -1059,8 +1060,8 @@ WDMASPRITEMEMACCESS:
 	; It uses a direct page indexed address, meaning it reads from the 256Bytes page with X as index.
 sprconversionloop:	
 	lda $00,X	  ; Read Y, direct page  *(DP + $00 + X)
-	sec
-	sbc #$08      ; Sub 8 because the first line is not seen
+	;sec
+	;sbc #$08      ; Sub 8 because the first line is not seen
 	sta SpriteMemoryBase + 1,X    ; Store it
 	lda $01,X	  ; Read cccccc (tile index)
 	sta SpriteMemoryBase + 2,X    ; Store it

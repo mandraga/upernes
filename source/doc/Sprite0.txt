@@ -14,9 +14,12 @@ This is used in super mario to sync with the end of Vblank.
 And therefore it must at least do this, it could be done with an HDMA channel.
 
 Upernes uses the Vertical counter irq to set a flag on the sprite top line, regardless of the background.
-We call this flag SPRITE0FLAG and it will be set to 0 at the beining of the NMI.
-
+It can be used to set and reset the value.
 And when a read to the PPUSTATUS is performed it will return the bit from the emulation variable in his sprite 0
 flag bit. It will be precise at least on Y.
+
+The other solution is to latch the current Horizontal/Verticla counters and set the value of the flag to 1
+if Y >= V and X >= V. It will have more precision and not mess with interrupts and won't be a state machine.
+
 Super mario NMI writes to registers, then waits for Vblank using sprite Zero flag and then executes the state machine code.
 The full smb1 comented source code can be found on github.

@@ -30,6 +30,10 @@
 .DEFINE SPRITE0FLAG        RAMBASE + 20 ; Sprite 0 hit flag
 .DEFINE SPRITE0FLGAG_VALUE %01000000
 
+.DEFINE HCOUNTERL          RAMBASE + 21
+.DEFINE HCOUNTERH          RAMBASE + 22
+.DEFINE TMPVCOUNTL         RAMBASE + 23
+.DEFINE TMPVCOUNTH         RAMBASE + 24
 
 ;--------------------------------------------------------------------
 ; 

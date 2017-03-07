@@ -140,7 +140,7 @@ resetsprites:
 	sta SPRADDR
 	;; First sprite will be used for sprite 0
 	;lda #239
-	lda #176
+	lda #116
 	sta YPOS		; Y position
 	sta SPRDATA
 	lda #$00		; Sprite tile 0	
@@ -178,16 +178,16 @@ loopLikeSuperMario:
 
 
 ;-------------------------------------------------------------------------------------------------
-; Nmi with sprite zero like in superz mario
+; Nmi with sprite zero like in super mario
 NMI:
 	jsr DISABLENMI
 
 	lda #$02		; Sprite table at 512 (2 * $100)
 	sta DMAACCESS	; start the transfert
-	
+
     ldx PPUSTATUS   ;reset flip-flop and reset scroll registers to zero
 	jsr REFRESHPPUSCROL
-	
+
 	; Code taken from the comented Super mario comprehensive disassembly.
 	; Wait for sprite 0 hit
 Sprite0Clr:

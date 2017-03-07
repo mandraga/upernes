@@ -83,6 +83,9 @@ eraseNesRamLoop:
 	; Video mode settings
 	;; -----------------------------------------------
 	sep #$20		; All 8bit
+	; Resolution: NMI occurs at 240
+	lda #%00000100
+	sta SETINI
 	; Mode 0 background
 	lda #$00
 	sta BGMODE
@@ -121,23 +124,30 @@ eraseNesRamLoop:
 	stz VideoIncrementL
 	stz VideoIncrementH
 	stz SNESNMITMP
+	stz HCOUNTERL
+	stz HCOUNTERH
 
 ; 	lda #$80
 ; 	sta NMITIMEN
 ;	sta SNESNMITMP
 	;sei
-	lda SNESNMITMP
-	ora #%00100000 ; Enable V timer
-	;ora #%00010000 ; Enable H timer
-	sta NMITIMEN
-	sta SNESNMITMP	
-	;
-	;lda SpriteMemoryBase + 0 ; Get Y
-	lda #220
-	sta VTIMEL
-	stz VTIMEH
-	;cli
 	
+	;lda SNESNMITMP
+	;ora #%00100000 ; Enable V timer
+	;;ora #%00010000 ; Enable H timer
+	;sta NMITIMEN
+	;sta SNESNMITMP	
+	;
+	; Set the first interrupt on line 261 which is the end of Vblank on the nes
+	;lda #$05
+	;sta VTIMEL
+	;sta HCOUNTERL
+	;lda #$01
+	;sta VTIMEH
+	;sta HCOUNTERH
+	
+	;cli
+
 	; Return to emulation mode and jump to the
 	; recompiled nes reset routine.
 	;; -----------------------------------------------

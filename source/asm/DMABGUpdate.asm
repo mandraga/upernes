@@ -6,7 +6,6 @@
 .SECTION "DmaBackgroundUpdate"
 
 UpdateBackgrounds:
-
 	;phb
 	php		;Preserve registers
 	pha

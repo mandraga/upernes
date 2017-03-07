@@ -35,6 +35,13 @@
 .EQU WMADDM   $2182 ;; WRAM Address Registers (Mid)
 .EQU WMADDH   $2183	;; WRAM Address Registers (High) 
 
+.EQU SETINI   $2133 ;; Screen resolutin parameters
+.EQU HVLATCH  $2137 ;; H/V counters latch
+.EQU STAT78   $213F ;; a status register
+.EQU OPHCT    $213C ;; Horizontal value
+.EQU OPVCT    $213D ;; Vertical value
+
+
 .EQU NMITIMEN $4200 ;; NMI / TIMERS register
 .EQU NMIFLAG  $4210	;; Blank Non Maskable Interrupt flag
 .EQU HVBJOY   $4212	;; V-Blank flag
