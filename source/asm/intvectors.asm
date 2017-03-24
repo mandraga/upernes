@@ -28,22 +28,23 @@ DMAUpdateHandler:
 	;jsr InitSprite0
 
 	; Read the V value
-	sep #$20    ; A 8bits	
+	;sep #$20    ; A 8bits	
 	; Low first
-	lda STAT78
+	;lda STAT78
 	; Latch the H and V counters
-	lda HVLATCH
+	;lda HVLATCH
 	;lda #$00
-	lda OPVCT   ; Low Byte
-	swa
-	lda HVLATCH
-	lda OPVCT
-	and #$01    ; Mask the open bus shit
-	swa
-	rep #$20    ; A 16bits
-	BREAK2
-	sta TMPVCOUNTL + 2
+	;lda OPVCT   ; Low Byte
+	;swa
+	;lda HVLATCH
+	;lda OPVCT
+	;and #$01    ; Mask the open bus shit
+	;swa
+	;rep #$20    ; A 16bits
+	;sta TMPVCOUNTL + 2
 	
+	BREAK2
+	jsr UpdatePalettes
 	jsr UpdateBackgrounds       ; Copy changed bytes to the VRAMdddfffgcxcvsfgggcxxxcv
 	;rti
 	jmp NESNonMaskableInterrupt ; Call the recompiled NMI vector
@@ -63,7 +64,7 @@ VCountHandler:
 	beq HCountFlagCleared ; If not set, do nothing
 	; Check the line of the interrupt
 	rep #$20		; A 16bits
-	BREAK2
+
 	lda HCOUNTERL
 	cmp #$0105      ; Is it line 261?
 	beq VBlankEnds

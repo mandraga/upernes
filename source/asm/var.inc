@@ -91,8 +91,10 @@
 .DEFINE Attributebuffer         IOBASE + 48  ; 64bytes to store the attributes to do the reads
 .DEFINE AttributebufferSz       64
 
-.DEFINE Palettebuffer           IOBASE + 112 ; 16bytes to store the palete to do the reads
-.DEFINE PalettebufferSz         16
+.DEFINE Palettebuffer           IOBASE + 112 ; 2 x 16bytes to store the palettes to do the reads and conversions during NMI
+.DEFINE PalettebufferSz         32
+.DEFINE UpdatePalette           IOBASE + 144 ; Update palette flags, one bit for each one of the 8 palettes
+.DEFINE UpdateFlags             IOBASE + 145 ; Used to build the flag (8 bytes)
 
 ;--------------------------------------------------------------------
 .DEFINE SpriteMemoryBase		$0A00       ; 256 bytes

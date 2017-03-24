@@ -44,7 +44,6 @@ EndInitSprite0
 
 ; Updates the sprite zero flag only by reading to the counter
 updateSprite0Flag:
-	BREAK2
 	rep #$20    ; A 16bits
 	lda TMPVCOUNTL
 	;lda TMPVCOUNTL + 2

@@ -184,7 +184,6 @@ ClearAttrmem:
    lda #$00
 ClearPalmem:
    dex
-   dex
    sta Palettebuffer,X
    bne ClearPalmem
    ;

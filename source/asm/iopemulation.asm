@@ -496,8 +496,6 @@ WSCROLOFFSET:
 	beq horizontal_scroll   ; 0 horizontal, 1 vertical
 vertical_scroll:
 	txa
-	;clc
-	;adc #$08                ; Add 8 because the first row is not visible on nes boot.
 	sta BG1VOFS             ; This register must be written twice
 	stz BG1VOFS 		    ; High byte is 0
 	jmp chgscrollregister
@@ -755,22 +753,22 @@ AttrtableW:
 	ldx attributeaddr
 	sta NametableBaseBank1+1,X    ; Store the value in the ram buffer
 	sta NametableBaseBank1+3,X
-	sta NametableBaseBank1+65,X ; The line below
+	sta NametableBaseBank1+65,X   ; The line below
 	sta NametableBaseBank1+67,X
 	tya
 	and #$0C		; 11
-	sta NametableBaseBank1+5,X  ; Store the value in the ram buffer
+	sta NametableBaseBank1+5,X    ; Store the value in the ram buffer
 	sta NametableBaseBank1+7,X
 	sta NametableBaseBank1+69,X
 	sta NametableBaseBank1+71,X
 	;; Lower 2 x 4 tiles
 	tya
 	clc
-	ror A
-	ror A
+	lsr A
+	lsr A
 	tay
-	ror A
-	ror A
+	lsr A
+	lsr A
 	and #$0C		; 33
 	sta NametableBaseBank1+133,X  ; Store the value in the ram buffer
 	sta NametableBaseBank1+135,X
@@ -778,7 +776,7 @@ AttrtableW:
 	sta NametableBaseBank1+199,X
 	tya
 	and #$0C		; 22
-	sta NametableBaseBank1+129,X   ; Store the value in the ram buffer
+	sta NametableBaseBank1+129,X  ; Store the value in the ram buffer
 	sta NametableBaseBank1+131,X
 	sta NametableBaseBank1+193,X
 	sta NametableBaseBank1+195,X
@@ -839,59 +837,25 @@ NoMoreUpdates:
 	;; Converts the nes color to snes BGR 555
 	;; Depending on the address it writes at BG0 palete or sprite palette
 paletteW:
+	BREAK
 	tax
 	sep #$30		; mem/A = 8 bit, X/Y = 8 bit
 	; CG ram address to (PPUmemaddr - $3F00), in fact ommit the $3F
 	lda PPUmemaddrL
-	; Save the byte in sram for the next read
+	; Save the byte in sram for the next read and for CGRAM transfer during VBlank
 	and #$1F
 	tay
 	txa
 	sta Palettebuffer,Y
-	; CG ram address to (PPUmemaddr - $3F00), in fact ommit the $3F
-	lda PPUmemaddrL
-	; Test if it is a sprite address
-	cmp #$10		; A >= $10
-	bcs paladdr_add_128
-	jmp setcgaddr
-paladdr_add_128:
-	pha
-	;and #$EF        ; remove the $10
-	and #$EC        ; remove the 2 lower bits
-	asl             ; Shift right twice because the paletes on the snes contain 16 colors and not 4.
-	asl
-	ora #$80		; Add 128
-	sta tmp_dat
-	pla
-	and #$03
-	ora tmp_dat
-	
-setcgaddr:
-	sta CGADD               ; Set the palette address register
-	phb
-	lda #:nes2snespalette	; Bank of the palette conversion table
-	pha
-	plb			; A -> Data Bank Register
-	txa			; X contains the color value
-	asl			; word index in the BGR 555 conversion values
+	; Indicate a change in this palette
+	tya
+	lsr A
+	lsr A
 	tay
-	lda nes2snespalette,Y   ; Load the palette conversion value
-	; Send it to CG ram
-	sta CGDATA
-	tax			; Save it in case of mirroring
-	iny
-	lda nes2snespalette,Y
-	tay			; Save it in case of mirroring
-	sta CGDATA
-	plb                     ; Restores the data bank register
-	;; Return if the color is already set
-	;; FIXME
-	;; If the address 2 lower bits are 0 then emulate mirroring
-	;; FIXME try to insert this before writing the first two bytes and branch
-	lda PPUmemaddrL
-	and #$03
-	cmp #0                  ; The first address is mirrored on all the palette, but not on the snes -> 2x4 writes
-	beq colormirroring
+	lda UpdateFlags,Y  ; Set the palette bit to one
+	ora UpdatePalette
+	sta UpdatePalette
+	; Adr
 endwpumem:
 	;; Increments the index equally as CGDATA
 	rep #$30		; 16bit XY and A
@@ -902,56 +866,10 @@ endwpumem:
 	txa
 	cmp #$3F20
 	beq changewrfunction
-	;; If the index equals $10 then set CGADD to 128 where the sprite palette is
-	cmp #$3F10
-	beq moveCGADDto128
-	RETW
-moveCGADDto128:
-	sep #$30		; mem/A = 8 bit, X/Y = 8 bit
-	lda #128
-	sta CGADD               ; FIXME this is set before each write, test if not neede here
 	RETW
 changewrfunction:
 	jmp emptyrange
 
-colormirroring:
-	sep #$30		; mem/A = 8 bit, X/Y = 8 bit
-	;; Copy the color at every b0000XX00 address
-	;; BG palette
-	lda #$00
-	sta CGADD
-	stx CGDATA
-	sty CGDATA
-	lda #$04
-	sta CGADD
-	stx CGDATA
-	sty CGDATA
-	lda #$08
-	sta CGADD
-	stx CGDATA
-	sty CGDATA
-	lda #$0C
-	sta CGADD
-	stx CGDATA
-	sty CGDATA
-	;; Sprite palette
-	lda #$80
-	sta CGADD
-	stx CGDATA
-	sty CGDATA	
-	lda #$84
-	sta CGADD
-	stx CGDATA
-	sty CGDATA
-	lda #$88
-	sta CGADD
-	stx CGDATA
-	sty CGDATA
-	lda #$8C
-	sta CGADD
-	stx CGDATA
-	sty CGDATA
-	jmp endwpumem
 
 ;----------------------------------------------------------------------
 ; 
@@ -1060,8 +978,6 @@ WDMASPRITEMEMACCESS:
 	; It uses a direct page indexed address, meaning it reads from the 256Bytes page with X as index.
 sprconversionloop:	
 	lda $00,X	  ; Read Y, direct page  *(DP + $00 + X)
-	;sec
-	;sbc #$08      ; Sub 8 because the first line is not seen
 	sta SpriteMemoryBase + 1,X    ; Store it
 	lda $01,X	  ; Read cccccc (tile index)
 	sta SpriteMemoryBase + 2,X    ; Store it

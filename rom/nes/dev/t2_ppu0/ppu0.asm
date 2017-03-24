@@ -165,6 +165,20 @@ quarth:
 	sta PPURWR
 	sta PPURWR	
 	
+	; Display the Background palete at (6, 0)
+	lda #$20        ; name table in vram at $20C1
+	sta PPUADDRR
+	lda #$C1
+	sta PPUADDRR
+	lda #$01        ; tile of color 1
+	sta PPURWR
+	lda #$02        ; tile of color 2
+	sta PPURWR
+	lda #$03        ; tile of color 3
+	sta PPURWR
+	lda #$04        ; tile of color 0
+	sta PPURWR
+	
 	jsr STARTPPU
 	jsr waitvblank
 	jsr STOPPPU

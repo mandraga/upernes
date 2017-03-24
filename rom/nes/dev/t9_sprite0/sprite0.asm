@@ -193,13 +193,13 @@ NMI:
 Sprite0Clr:
 	lda PPUSTATUS             ; wait for sprite 0 flag to clear, which will
 	and #%01000000            ; not happen until vblank has ended
-	bne Sprite0Clr            ; branch if not cleared
+	bne Sprite0Clr            ; branch if not cleared (waits for vblank)
 Sprite0Hit:
 	lda PPUSTATUS             ; do sprite #0 hit detection
 	and #%01000000
 	beq Sprite0Hit
 	; At this time, the PPU is drawing the first pixel of sprite 0, change X scrolling and sprite 1 position
-	
+
 	lda #$07
 	sta SPRADDR
 	lda XPOS + 4
@@ -208,7 +208,7 @@ Sprite0Hit:
 	and #$7F
 	sta SPRDATA
 	sta XPOS + 4
-	
+
 	; Scrolling to  XPOS, 0
 	;lda #$00
 	sta XPOS + 4

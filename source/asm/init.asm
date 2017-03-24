@@ -7,6 +7,7 @@
 .include "rom.asm"
 .include "romprg.asm"
 .include "CHR.asm"
+.include "PaletteUpdate.asm"
 .include "DMABGUpdate.asm"
 .include "sprite0.asm"
 .include "intvectors.asm"
@@ -126,6 +127,8 @@ eraseNesRamLoop:
 	stz SNESNMITMP
 	stz HCOUNTERL
 	stz HCOUNTERH
+	stz UpdatePalette
+	jsr InitUpdateFlags
 
 ; 	lda #$80
 ; 	sta NMITIMEN
