@@ -30,16 +30,15 @@ graphic data.
 (check source/asm/memap.txt for information on code and data remaping)
 
 Status:
-The disassembler and assembler coded in C++ is nearly finished since 2011.
-The emulated PPU is work in progress, it must be taken at once with a clear view of what is programmed.
+The disassembler, and instructions rewriting coded in C++ is more or less finished since 2011.
+The emulated PPU is work in progress, it needs a good knowledge of what's going on in the consoles.
 Any working contribution will be apreciated. Basically, the remaining work is: finish the PPU io emulation,
 integrate the NSF player for SNES by Memblers, add/fix interrupts. And finally add comon bank switching for
 bigger roms.
-The emulation part is very tricky because not everything is at his original place and because of the assembler
-langage.
+The emulation part is very tricky because not everything is at his original place.
 
 Tests:
-T1 Palette   1 more or less
+T1 Palette   1
 T2 PPU       1
 T3 PPU       0
 T4 PPU       0
@@ -61,7 +60,7 @@ You must install the following modules from the Msys module installer:
     Flex and Bison - Used to parse opcodes
 You need to install wla-65816 from the web site. Wla-65816 is one of the best assemblers for retro gaming.
 Add wla-65816 to your windows path (like adding C:\dev\snes\wladx_binaries_20040822\ to your $PATH)
-I use FCEUX for the nes roms and bsnes for the snes roms because they have a debugger.
+I use FCEUX for the nes roms and bsnes-plus for the snes roms because they have a debugger.
 
 How to use upernes:
 
@@ -72,6 +71,8 @@ Indirect jumps cannot be analysed until the jump adress is known. Therefore the 
 indirect jump adress and display the adress on a "crash" screen. You must add this address to romfilename.txt and call a new
 convertion until all the indirect jumps are known.
 
-Copyright 2015 Patrick Xavier Areny released under the GPL licence.
+my blog: http://www.blog.vreemdelabs.com/
+
+Copyright 2015 Patrick Xavier Areny, upernes is released under the GPL licence.
 
 

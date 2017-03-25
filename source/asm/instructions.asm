@@ -149,7 +149,7 @@ RetIOroutineR:
 ;;
 staioportroutine:
 	sty Yi
-	sta Acc
+	sta AccLevel1
 	;; Native mode
 	NATIVE
 	;; --------------------------------------------------------
@@ -161,7 +161,7 @@ RetIOroutineW:
 	;; Emulation mode
 	EMULATION
 	ldy Yi
-	lda Acc
+	lda AccLevel1
 	;; Done
 	rts
 

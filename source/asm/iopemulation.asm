@@ -189,17 +189,20 @@ BGbankend:
 	bit PPUcontrolreg1  ; Puts the 7th bit in the n flag
 	bpl novblank		; Therefore bpl branches if the 7th bit is not set
 	; Vblank interrupt enabled
-	lda SNESNMITMP
-	ora #$80
-	sta NMITIMEN
-	sta SNESNMITMP
+	lda #$01
+	sta NESNMIENABLED
+	;lda SNESNMITMP
+	;ora #$80
+	;sta NMITIMEN
+	;sta SNESNMITMP
 	jmp vblankend
 novblank:
 	; Vblank interrupt disabled
-	lda SNESNMITMP
-	and #$7F
-	sta NMITIMEN
-	sta SNESNMITMP
+	stz NESNMIENABLED	
+	;lda SNESNMITMP
+	;and #$7F
+	;sta NMITIMEN
+	;sta SNESNMITMP
 vblankend:
 	RETW
 
@@ -245,11 +248,10 @@ RPPUC2:
 ;       | 0-5 | Unknown (???)
 ;       |   6 | Hit Flag, 1 = Sprite refresh has hit sprite #0.
 ;       |     | This flag resets to 0 when screen refresh starts
-;       |     | (see "PPU Details").
+;       |     |
 ;       |   7 | VBlank Flag, 1 = PPU is in VBlank state.
 ;       |     | This flag resets to 0 when VBlank ends or CPU reads $2002
-;       |     | (see "PPU Details").
-
+;       |     |
 RPPUSTATUS:
 	sep #$20
 	;; vblank
@@ -257,9 +259,16 @@ RPPUSTATUS:
 	cmp StarPPUStatus
 	beq PowerUp     ; If 1, then it is power up (always here, even on reset)
 	jsr updateSprite0Flag
-	;
+	; If the nes NMI on Vblank is disabled then set this falg to 0
+	lda NESNMIENABLED
+	beq NesNMIDisabled
+	; Else return the flag from the snes
 	lda NMIFLAG 	; NMIFLAG has the same behaviour as the nes, and not HVBJOY flag
 	and #$80
+	jmp GetSprite0Flag
+NesNMIDisabled:
+	lda #$00
+GetSprite0Flag:
 	;; sprite 0
 	ora SPRITE0FLAG
 	jmp EndRPPUSTATUS
@@ -310,7 +319,6 @@ WR_OAMconversionroutines:
 ; 2 vho--ppp -> 3 + conversion   flipv fliph priority palete
 ; 3 xxxxxxxx -> 0                x pos
 WSPRDATA:
-	;BREAK ; break at $0918
 	sep #$30		; All 8bits
 	tay             ; save the byte in Y
 	ldx #$00
@@ -617,18 +625,13 @@ nametables:
 	rep #$20		; A 16bits
 	lda PPUmemaddrL
 	and #$07FF		; Lower address value
-	;BREAK
+	;BREAK2
 	asl             ; word adress
-	;sta tmp_addr
-	;tya             ; y is VRAM base @ set by set_tilemap_addr
-	;clc
-	;adc tmp_addr
-	; Set the address in snes register
-	sep #$20		; A 8bits
 	; The adress is in word count (should be $(3/7)000 to $(3/7)003F)
 	sta NameAddresL
-	xba
-	sta NameAddresH
+	;
+	; Set the address in snes register
+	sep #$20		; A 8bits
 	; Test bit 2 of PPUCTRL: 1 or 32 nametable increment
 	lda #$04
 	bit PPUcontrolreg1	; test bit 2, zero if not set ("bit and" result)
@@ -636,15 +639,13 @@ nametables:
 	; Vram increments 1 by 1 after VMDATAL write, 2bytes on the snes because nametables are words name + palette
 	lda #$02
 	sta VideoIncrementL
-	;lda VideoIncrement 		; after VMDATAL w;
-	;sta VMAINC
+	stz VideoIncrementH
 	jmp set_nametables_routines
 name_incr_32:
 	; Vram increments 32 by 32 after VMDATAL write (words on the snes)
-	lda #$40
+	lda #$40         ; 64
 	sta VideoIncrementL
-	;lda VideoIncrement 		; after VMDATAL wr
-	sta VMAINC
+	stz VideoIncrementH
 set_nametables_routines:
 	;; Tile map routines
 	rep #$20		; A 16bits
@@ -732,8 +733,9 @@ AttrtableW:
 	; o          = Tile priority.
 	; ppp        = Tile palette. The number of entries in the palette depends on the Mode and the BG.
 	; cccccccccc = Tile number. Do ont care for the higher cc
-	;RETW
+	
 	;BREAK ; break at $0918
+	;RETW
 	sep #$20		; Acc 8bits
 	tay
 	; First save the value for a read
@@ -744,6 +746,8 @@ AttrtableW:
 	tax
 	tya
 	sta Attributebuffer,X
+
+	
 	; Copy the values in the name tables
 	rep #$10        ; X Y are 16bits	
 	;txa
@@ -809,6 +813,7 @@ add256:
 NametableW:
 	sep #$20		; A 8bit
 	rep #$10        ; X Y are 16bits
+	BREAK
 	; Store the byte
 	ldx NameAddresL
 	sta NametableBaseBank1,X   ; Write to VRAM. This is the lower nametable byte, the character code number.
@@ -837,7 +842,6 @@ NoMoreUpdates:
 	;; Converts the nes color to snes BGR 555
 	;; Depending on the address it writes at BG0 palete or sprite palette
 paletteW:
-	BREAK
 	tax
 	sep #$30		; mem/A = 8 bit, X/Y = 8 bit
 	; CG ram address to (PPUmemaddr - $3F00), in fact ommit the $3F
@@ -874,7 +878,7 @@ changewrfunction:
 ;----------------------------------------------------------------------
 ; 
 RPPUMEMDATA:
-	jmp (PPUW_RAM_routineAddr)   ; Indirect jump to the routine for the address.
+	jmp (PPUR_RAM_routineAddr)   ; Indirect jump to the routine for the address.
 
 AttrtableR:
 	; Read it from the sram buffer
@@ -884,7 +888,6 @@ AttrtableR:
 	sbc #$C0
 	and #$3F
 	tax
-	tya
 	lda Attributebuffer,X
 	; Increment
 	rep #$30		; 16bit XY and A
@@ -895,17 +898,25 @@ AttrtableR:
 
 NametableR:
 	; Read it from the sram buffer
+	BREAK2
 	sep #$20		; A 8bit
 	rep #$10        ; X Y are 16bits
 	; Store the byte
 	ldx NameAddresL
-	lda NametableBaseBank1,X 
+	lda NametableBaseBank1,X
+	tax
 	; Increment the address
 	rep #$20		; A 16bit
 	lda NameAddresL
 	clc
 	adc VideoIncrementL
 	sta NameAddresL
+	; Increment the PPU address
+	lsr A
+	sta PPUmemaddrL
+	; Done
+	sep #$20		; A 8bit
+	txa
 	RETR
 
 paletteR:

@@ -15,17 +15,16 @@ UpdateBackgrounds:
 	;NATIVE
 	clc			; native 65816 mode
 	xce
-	
-	;BREAK2	
+
 	sep #$20	; A 8bits
 	rep #$10	; X/Y = 16 bit
 ;jmp labs
     stz MDMAEN	;Clear the DMA control register
 
 	ldx #$1000
-    stx DMA2A1SRCL	  ;Store the data offset into DMA source offset
+    stx DMA2A1SRCL	  ; Store the data offset into DMA source offset
 	ldy #$1000        ; 4k
-	sty DMA2SZL 	  ;Store the size of the data block
+	sty DMA2SZL 	  ; Store the size of the data block
 	lda #$00
     sta DMA2A1SRCBNK  ;Store the data bank of the source data
 

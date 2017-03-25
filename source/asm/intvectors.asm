@@ -7,7 +7,7 @@
 .DW     EmptyHandler	; ABORT
 .DW     EmptyVBlank		; NMI
 .DW     $0000			; (Unused)
-.DW     EmptyHandler	; IRQ, Why is it always in native mode???
+.DW     EmptyHandler	; IRQ, never used in native mode. The native mode is only used for the IO callbacks.
 
 .ORG    $7FF4				; = Emulation Mode = nes
 .DW     EmptyHandler		; COP
@@ -43,11 +43,18 @@ DMAUpdateHandler:
 	;rep #$20    ; A 16bits
 	;sta TMPVCOUNTL + 2
 	
-	BREAK2
+	;BREAK2 something is wrong if removed
 	jsr UpdatePalettes
 	jsr UpdateBackgrounds       ; Copy changed bytes to the VRAMdddfffgcxcvsfgggcxxxcv
-	;rti
+	; If the nes nmi is enables, call it
+	pha
+	lda NESNMIENABLED
+	beq QuitNMI
+	pla
 	jmp NESNonMaskableInterrupt ; Call the recompiled NMI vector
+QuitNMI:
+	pla
+	rti
 ;;; put this on vblank
 	
 ; Called by the Native IRQ handler
@@ -120,6 +127,8 @@ DebugHandler:
 EmptyHandler:
 		pha
 		lda $0917    ; use this to set a breakpoint
+		nop
+		nop
 		pla
         rti
 

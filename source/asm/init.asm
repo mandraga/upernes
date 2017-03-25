@@ -124,16 +124,13 @@ eraseNesRamLoop:
 	stz attributeaddr
 	stz VideoIncrementL
 	stz VideoIncrementH
-	stz SNESNMITMP
+	lda #$80
+	sta SNESNMITMP     ; NMI on Vblank always enabled
 	stz HCOUNTERL
 	stz HCOUNTERH
 	stz UpdatePalette
 	jsr InitUpdateFlags
 
-; 	lda #$80
-; 	sta NMITIMEN
-;	sta SNESNMITMP
-	;sei
 	
 	;lda SNESNMITMP
 	;ora #%00100000 ; Enable V timer
@@ -164,6 +161,12 @@ eraseNesRamLoop:
 	; Set 6502 emulation mode
 	sec
 	xce
+	
+	;; -----------------------------------------------
+	; NMI on Vblank always enable because used to update the palettes and backgrounds.
+	lda SNESNMITMP
+	sta NMITIMEN
+	sta SNESNMITMP
 	;; -----------------------------------------------
 	; Does nothing. Just here to help finding the end of the initialisation, and the call of the nes reset vector.
 	nop

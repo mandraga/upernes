@@ -42,6 +42,7 @@ set +vx
 rm ./CHR.asm
 rm ./indjmp.asm
 rm ./init.asm
+rm ./PaletteUpdate.asm
 rm ./DMABGUpdate.asm
 rm ./instructions.asm
 rm ./intvectors.asm

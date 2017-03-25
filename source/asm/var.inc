@@ -9,6 +9,7 @@
 
 ;; Theese variables are used to avoid using the stack when emulating I/O ports
 .DEFINE Acc	        	RAMBASE
+.DEFINE AccLevel1      	RAMBASE + 1
 .DEFINE Xi	        	RAMBASE + 2
 .DEFINE Yi	        	RAMBASE + 4
 .DEFINE SP	        	RAMBASE + 6
@@ -34,6 +35,8 @@
 .DEFINE HCOUNTERH          RAMBASE + 22
 .DEFINE TMPVCOUNTL         RAMBASE + 23
 .DEFINE TMPVCOUNTH         RAMBASE + 24
+
+.DEFINE NESNMIENABLED      RAMBASE + 25 ; Nes NMI enabled, the snes NMI should always be on, and call the nes NMI only when this flag is set.
 
 ;--------------------------------------------------------------------
 ; 
@@ -81,7 +84,7 @@
 
 .DEFINE NamesBank1UpdateCounter IOBASE + 28  ; Counts the updated tiles in the background bank 1
 .DEFINE NamesBank2UpdateCounter IOBASE + 29  ; Counts the updated tiles in the background bank 2
-.DEFINE NameAddresL             IOBASE + 30  ; Address in the ametable
+.DEFINE NameAddresL             IOBASE + 30  ; Address in the nametable
 .DEFINE NameAddresH             IOBASE + 31
 .DEFINE MaxNameHDMAUpdates      128          ; Up to 128 updated tiles, otherwise it will be a full update
 
