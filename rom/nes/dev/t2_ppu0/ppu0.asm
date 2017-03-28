@@ -204,6 +204,14 @@ quarth:
 	lda #$A0
 	sta PPURWR
 
+	; Set the attribute value of the last tile to something else
+	lda #$23        	; Attribute table in vram at $23C0
+	sta PPUADDRR
+	lda #$FF
+	sta PPUADDRR	
+	lda #$E4            ; 00 11 22 33
+	sta PPURWR
+	sta PPURWR
 	
 	jsr REFRESHPPUSCROL ; Must be done after every acces to VRAM write
 	jsr STARTPPU	

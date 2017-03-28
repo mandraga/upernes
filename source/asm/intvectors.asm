@@ -47,14 +47,14 @@ DMAUpdateHandler:
 	jsr UpdatePalettes
 	jsr UpdateBackgrounds       ; Copy changed bytes to the VRAMdddfffgcxcvsfgggcxxxcv
 	; If the nes nmi is enables, call it
-	pha
-	lda NESNMIENABLED
-	beq QuitNMI
-	pla
+	;pha
+	;lda NESNMIENABLED
+	;beq QuitNMI
+	;pla
 	jmp NESNonMaskableInterrupt ; Call the recompiled NMI vector
 QuitNMI:
-	pla
-	rti
+	;pla
+	;rti
 ;;; put this on vblank
 	
 ; Called by the Native IRQ handler

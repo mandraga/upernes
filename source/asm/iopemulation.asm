@@ -191,18 +191,18 @@ BGbankend:
 	; Vblank interrupt enabled
 	lda #$01
 	sta NESNMIENABLED
-	;lda SNESNMITMP
-	;ora #$80
-	;sta NMITIMEN
-	;sta SNESNMITMP
+	lda SNESNMITMP
+	ora #$80
+	sta NMITIMEN
+	sta SNESNMITMP
 	jmp vblankend
 novblank:
 	; Vblank interrupt disabled
 	stz NESNMIENABLED	
-	;lda SNESNMITMP
-	;and #$7F
-	;sta NMITIMEN
-	;sta SNESNMITMP
+	lda SNESNMITMP
+	and #$7F
+	sta NMITIMEN
+	sta SNESNMITMP
 vblankend:
 	RETW
 
@@ -377,13 +377,9 @@ sprwrdoneLo:
 updateOAM:
 	tax
 	lsr A                       ; Word address
-	;sta OAMADDL                 ; Destination address in OAM memory, words
-	;stz OAMADDH
 	; Copy the word to be updated into the OAM memory
 	lda SpriteMemoryBase,X      ; Source address from the buffer used to store the nes OAM
-	;sta OAMDATA
 	lda SpriteMemoryBase + 1,X
-	;sta OAMDATA               ;; FIXME TODO it is a bug here, the data is written at the end of OAM, maybe because of vblank, do not update?
 IncSprAddr:
 	;; Increment the buffer's byte address
 	ldy SpriteMemoryAddress
@@ -540,6 +536,9 @@ WPPUMEMADDR:
 	beq ppumaddret
 	;; -----------------------------------------------
 	;; The address write is completed here
+	; Set the latch for the next read operation
+	lda #$01
+	sta PPUReadLatch
 	;; Select the routine for it's address range
 	lda PPUmemaddrH
 	;; Find the address range
@@ -581,7 +580,6 @@ attributetables:
 	; line is (@ / 8)  row is (@ & $07)
 	; Snes @ = line * 32 * 4 * 2 + row * 4 * 2
 	; So first of, @ * 8, then masks, then add
-	;BREAK2 ; break at $0919
 	;RETW
 	jsr ppuAddToVram
 	;; Attributes routines
@@ -622,30 +620,8 @@ ppuAddToVram:
 
 ;; -------------------------------------------------------------------------
 nametables:
-	rep #$20		; A 16bits
-	lda PPUmemaddrL
-	and #$07FF		; Lower address value
-	;BREAK2
-	asl             ; word adress
-	; The adress is in word count (should be $(3/7)000 to $(3/7)003F)
-	sta NameAddresL
+	;jsr SetNametableOffset
 	;
-	; Set the address in snes register
-	sep #$20		; A 8bits
-	; Test bit 2 of PPUCTRL: 1 or 32 nametable increment
-	lda #$04
-	bit PPUcontrolreg1	; test bit 2, zero if not set ("bit and" result)
-	bne name_incr_32
-	; Vram increments 1 by 1 after VMDATAL write, 2bytes on the snes because nametables are words name + palette
-	lda #$02
-	sta VideoIncrementL
-	stz VideoIncrementH
-	jmp set_nametables_routines
-name_incr_32:
-	; Vram increments 32 by 32 after VMDATAL write (words on the snes)
-	lda #$40         ; 64
-	sta VideoIncrementL
-	stz VideoIncrementH
 set_nametables_routines:
 	;; Tile map routines
 	rep #$20		; A 16bits
@@ -654,6 +630,19 @@ set_nametables_routines:
 	lda #NametableR
 	sta PPUR_RAM_routineAddr
 	RETW
+	
+SetNametableOffset:
+	pha
+	rep #$20		; A 16bits
+	lda PPUmemaddrL
+	and #$07FF		; Lower address value
+	asl             ; word adress
+	; The adress is in word count (should be $(3/7)000 to $(3/7)003F)
+	sta NameAddresL
+	sep #$20		; A 8bits
+	pla
+	rts
+	
 ;; -------------------------------------------------------------------------
 afternametables:
 	sep #$30		; 8bit total
@@ -736,9 +725,9 @@ AttrtableW:
 	
 	;BREAK ; break at $0918
 	;RETW
-	sep #$20		; Acc 8bits
+	sep #$30		; Acc X Y 8bits
 	tay
-	; First save the value for a read
+	; First save the value for the next read in the table
 	lda PPUmemaddrL
 	sec
 	sbc #$C0
@@ -749,7 +738,7 @@ AttrtableW:
 
 	
 	; Copy the values in the name tables
-	rep #$10        ; X Y are 16bits	
+	rep #$10        ; X Y are 16bits
 	;txa
 	asl A			; Attibute palette are at bits 2 3 4 on snes, so shift the data.
 	asl A
@@ -787,10 +776,7 @@ AttrtableW:
 	;; Add the updated tile data to the tiles to be updated by dma
 
 	;; Increment the Attribute address
-	lda PPUmemaddrL	; Load the ppu memory address
-	clc
-	adc #$0001      ; increment it and store it
-	sta PPUmemaddrL
+	jsr IncPPUmemaddrL
 	rep #$20		; Acc 16bits
 	lda attributeaddr
 	clc
@@ -813,8 +799,10 @@ add256:
 NametableW:
 	sep #$20		; A 8bit
 	rep #$10        ; X Y are 16bits
-	BREAK
+	;BREAK
 	; Store the byte
+	
+	jsr SetNametableOffset
 	ldx NameAddresL
 	sta NametableBaseBank1,X   ; Write to VRAM. This is the lower nametable byte, the character code number.
 	; If room is available for a HDMA transfer, store the word to be updated
@@ -831,10 +819,7 @@ NametableW:
 NoMoreUpdates:
 	; Increment
 	rep #$20		; A 16bit
-	lda NameAddresL
-	clc
-	adc VideoIncrementL
-	sta NameAddresL
+	jsr IncPPUmemaddrL
 	RETW
 
 	;; ---------------------------------------------------------------
@@ -862,12 +847,10 @@ paletteW:
 	; Adr
 endwpumem:
 	;; Increments the index equally as CGDATA
-	rep #$30		; 16bit XY and A
-	ldx PPUmemaddrL
-	inx
-	stx PPUmemaddrL
+	jsr IncPPUmemaddrL
 	;; Test for address oveflow
-	txa
+	rep #$20		; 16bit A
+	lda PPUmemaddrL
 	cmp #$3F20
 	beq changewrfunction
 	RETW
@@ -883,40 +866,44 @@ RPPUMEMDATA:
 AttrtableR:
 	; Read it from the sram buffer
 	sep #$30		; All 8bit
+	lda PPUReadLatch
+	bne LatchedAttrValue
 	lda PPUmemaddrL
 	sec
 	sbc #$C0
 	and #$3F
 	tax
 	lda Attributebuffer,X
-	; Increment
-	rep #$30		; 16bit XY and A
-	ldx PPUmemaddrL
-	inx
-	stx PPUmemaddrL
+	jsr IncPPUmemaddrL
+	jmp AttrtableRend
+LatchedAttrValue:
+	lda #$00  ; Return zero at the first read after the write to $2006
+	sta PPUReadLatch
+AttrtableRend:
 	RETR
 
 NametableR:
 	; Read it from the sram buffer
-	BREAK2
 	sep #$20		; A 8bit
 	rep #$10        ; X Y are 16bits
+	lda PPUReadLatch
+	bne LatchedNameValue
 	; Store the byte
+	jsr SetNametableOffset
 	ldx NameAddresL
 	lda NametableBaseBank1,X
 	tax
-	; Increment the address
-	rep #$20		; A 16bit
-	lda NameAddresL
-	clc
-	adc VideoIncrementL
-	sta NameAddresL
 	; Increment the PPU address
-	lsr A
-	sta PPUmemaddrL
+	jsr IncPPUmemaddrL
 	; Done
 	sep #$20		; A 8bit
 	txa
+	jmp NametableRend
+LatchedNameValue:
+	lda #$00  ; Return zero at the first read after the write to $2006
+	sta PPUReadLatch
+NametableRend:
+	BREAK2
 	RETR
 
 paletteR:
@@ -926,13 +913,47 @@ paletteR:
 	and #$1F
 	tax
 	lda Palettebuffer,X
-	; Increment
-	rep #$30		; 16bit XY and A
-	ldx PPUmemaddrL
-	inx
-	stx PPUmemaddrL
+	jsr IncPPUmemaddrL
 	RETR
 
+;----------------------------------------------------------
+; Increments the adress register
+IncPPUmemaddrL:
+	sep #$20		; A 8bits
+	; Test bit 2 of PPUCTRL: 1 or 32 nametable increment
+	lda #$04
+	bit PPUcontrolreg1	; test bit 2, zero if not set ("bit and" result)
+	bne name_incr_32
+	; +1
+	rep #$20		; A 16bits
+	; Vram increments 1 by 1 after VMDATAL write, 2bytes on the snes because nametables are words name + palette
+	;lda NameAddresL
+	;clc
+	;adc #$0002
+	;sta NameAddresL
+	; Other than nametables
+	lda PPUmemaddrL
+	clc
+	adc #$0001
+	sta PPUmemaddrL
+	jmp IncPPUmemaddrLEnds
+name_incr_32:
+	; +32
+	; Vram increments 32 by 32 after VMDATAL write (words on the snes)
+	rep #$20		; A 16bits
+	;lda NameAddresL
+	;clc
+	;adc #$0040
+	;sta NameAddresL
+	; Other than nametables
+	lda PPUmemaddrL
+	clc
+	adc #$0020
+	sta PPUmemaddrL
+IncPPUmemaddrLEnds:
+	sep #$30		; All 8bit
+	rts
+	
 ; ------+-----+---------------------------------------------------------------
 ; $4000-$4013 | Sound Registers
 ;             | See "Sound".
