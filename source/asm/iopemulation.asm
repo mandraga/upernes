@@ -581,7 +581,7 @@ attributetables:
 	; Snes @ = line * 32 * 4 * 2 + row * 4 * 2
 	; So first of, @ * 8, then masks, then add
 	;RETW
-	jsr ppuAddToVram
+	;jsr ppuAddToVram
 	;; Attributes routines
 	rep #$20 ; A 16bits
 	lda #AttrtableW
@@ -591,6 +591,9 @@ attributetables:
 	RETW
 	
 ppuAddToVram:
+	sep #$30		; Acc X Y 8bits
+	pha
+	phy
 	rep #$30		; A 16bits XY 16bits
 	lda PPUmemaddrL	; Load the ppu memory address suposed to be in the attribute range: $23C0 to $2400 or 27C0 to 2800
 	and #$FBFF      ; Get an @ in $23C0 to $2400
@@ -598,6 +601,7 @@ ppuAddToVram:
 	sec        ; Set carry otherwise the result of sbc will be a two's complement.
 	sbc #$23C0 ; Substract the base @
 	tay
+	BREAK
 	; Colum
 	and #$0007 ; 8 Blocks of 4 per line
 	asl A
@@ -612,10 +616,14 @@ ppuAddToVram:
 	asl A
 	asl A
 	asl A			; << 5  x32
+	;
 	clc
 	adc tmp_addr
 	; Store the nametable address
 	sta attributeaddr
+	sep #$30		; Acc X Y 8bits
+	ply
+	pla
 	rts
 
 ;; -------------------------------------------------------------------------
@@ -735,18 +743,24 @@ AttrtableW:
 	tax
 	tya
 	sta Attributebuffer,X
-
+	; Translate the address using a table
+	;lda AttrAddressTranslation,X
+	;tax
+	;sta attributeaddr
+	;tya
+	jsr ppuAddToVram
 	
+	; 33|22|11|00
 	; Copy the values in the name tables
 	rep #$10        ; X Y are 16bits
-	;txa
+	tya
 	asl A			; Attibute palette are at bits 2 3 4 on snes, so shift the data.
 	asl A
 	and #$0C		; 00
 	ldx attributeaddr
 	sta NametableBaseBank1+1,X    ; Store the value in the ram buffer
 	sta NametableBaseBank1+3,X
-	sta NametableBaseBank1+65,X   ; The line below
+	sta NametableBaseBank1+65,X   ; the line below
 	sta NametableBaseBank1+67,X
 	tya
 	and #$0C		; 11
@@ -756,10 +770,19 @@ AttrtableW:
 	sta NametableBaseBank1+71,X
 	;; Lower 2 x 4 tiles
 	tya
-	clc
+	;clc
 	lsr A
 	lsr A
-	tay
+	and #$0C		; 22
+	sta NametableBaseBank1+129,X  ; Store the value in the ram buffer
+	sta NametableBaseBank1+131,X
+	sta NametableBaseBank1+193,X
+	sta NametableBaseBank1+195,X
+	;
+	tya
+	;clc
+	lsr A
+	lsr A
 	lsr A
 	lsr A
 	and #$0C		; 33
@@ -767,32 +790,26 @@ AttrtableW:
 	sta NametableBaseBank1+135,X
 	sta NametableBaseBank1+197,X
 	sta NametableBaseBank1+199,X
-	tya
-	and #$0C		; 22
-	sta NametableBaseBank1+129,X  ; Store the value in the ram buffer
-	sta NametableBaseBank1+131,X
-	sta NametableBaseBank1+193,X
-	sta NametableBaseBank1+195,X
 	;; Add the updated tile data to the tiles to be updated by dma
 
 	;; Increment the Attribute address
 	jsr IncPPUmemaddrL
-	rep #$20		; Acc 16bits
-	lda attributeaddr
-	clc
-	adc #$0008
-	sta attributeaddr
-	and #$003F		; addr % 64 = 0?
-	beq add256		; If 0 then it is on the begining of the line
+	;rep #$20		; Acc 16bits
+	;lda attributeaddr
+	;clc
+	;adc #$0008
+	;sta attributeaddr
+	;and #$003F		; addr % 64 = 0?
+	;beq add256		; If 0 then it is on the begining of the line
 	;; Done
 	RETW
-add256:
-	lda attributeaddr
-	clc
-	adc #$0100
-	sta attributeaddr
+;add256:
+	;lda attributeaddr
+	;clc
+	;adc #$0100
+	;sta attributeaddr
 	;; Done
-	RETW
+	;RETW
 
 	;; -------------------------------------------------------------------------
 	;; Name tables
