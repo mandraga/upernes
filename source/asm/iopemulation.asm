@@ -403,7 +403,8 @@ convert_sprflags_to_snes:
 	tya
 	; vh
 	and #$E0		; Keep vh and 0
-	ora #$30 ; Force to max priority
+	eor #$30  ; On the nes: 0 for front or 1 for back. On the Snes 2 or 3 for front or 0 for back of BG 1.  Reverse the value
+	;ora #$30 ; Force to max prior
 	ora PPTMP		; Add pp
 	;; o (priority flag) will be 2 or 0. If 1 the sprite will be above BG3 and 4
 	;; maximum priority: 3 = over everything but the printf BG must be on top, so use 2
@@ -967,8 +968,6 @@ name_incr_32:
 	sta PPUmemaddrL
 IncPPUmemaddrLEnds:
 	; Check if the adress is greater or equal to $23C0 in order to set the proper routines.
-	;jmp NametableSpace
-	BREAK
 	and #$F3FF      ; Get an @ in all the banks: $2000 $2400 $2800 $2C00
 	cmp #$23C0
 	bcc NametableSpace
