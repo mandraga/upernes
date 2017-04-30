@@ -601,7 +601,6 @@ ppuAddToVram:
 	sec        ; Set carry otherwise the result of sbc will be a two's complement.
 	sbc #$23C0 ; Substract the base @
 	tay
-	BREAK
 	; Colum
 	and #$0007 ; 8 Blocks of 4 per line
 	asl A
@@ -743,8 +742,8 @@ AttrtableW:
 	tax
 	tya
 	sta Attributebuffer,X
-	; Translate the address using a table
-	;lda AttrAddressTranslation,X
+	; Translate the address
+	;lda AttrAddressTranslation,X ; Could be quicker with a 128bit table in wram
 	;tax
 	;sta attributeaddr
 	;tya
@@ -917,10 +916,9 @@ NametableR:
 	txa
 	jmp NametableRend
 LatchedNameValue:
-	lda #$00  ; Return zero at the first read after the write to $2006
+	lda #$00  ; Return zero at the first read after the write to $2006, a ccorect read is mandatory to emulate balloonficght.nes background stars.
 	sta PPUReadLatch
 NametableRend:
-	BREAK2
 	RETR
 
 paletteR:
@@ -968,6 +966,22 @@ name_incr_32:
 	adc #$0020
 	sta PPUmemaddrL
 IncPPUmemaddrLEnds:
+	; Check if the adress is greater or equal to $23C0 in order to set the proper routines.
+	;jmp NametableSpace
+	BREAK
+	and #$F3FF      ; Get an @ in all the banks: $2000 $2400 $2800 $2C00
+	cmp #$23C0
+	bcc NametableSpace
+	;cmp $3F00
+	cmp #$3000
+	bcs PaletteSpace
+	; Change the address to attribute tables
+	lda #AttrtableW
+	sta PPUW_RAM_routineAddr
+	lda #AttrtableR
+	sta PPUR_RAM_routineAddr
+NametableSpace:
+PaletteSpace:
 	sep #$30		; All 8bit
 	rts
 	
