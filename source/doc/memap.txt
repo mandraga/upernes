@@ -94,7 +94,7 @@ They look the same in the 6502 emulation mode.
   Stored in the snes ppu VRAM at $1000
   The snes tile map can access 1024 tiles. The background granularity is 8KB While it is 4KB on the nes, thus
   the CHR select must be emulated or 4KB of vram space will be lost.
-  Using upper 2 bits of tile number to select the extra 2KB banks can work but would be slow.
+
   Total CHR memory in VRAM is 16kB. Is it used for background and sprites. The extra 8KB can be used to emulate
   CHR bank switching.
   Anyway, the snes VRAM is 64KB, 40KB can be used for CHR data (5x8KB CHR banks). And the 128K of work SRAM can also
@@ -170,7 +170,7 @@ next 4KB begining at 0x1000 is used as a the nes nametable buffer (transfered wi
 Snes WRAM:
 
 128K work ram: 64K in 7E:2000 and 64K in 7F:0000 (the first 8K bytes of the bank 7E are the mirroring of the sram at 00:0000).
-This 120KB memory is used as a cache to store converted CHR data and as DMA source data
+This 120KB memory can be used for caches or buffers, like address conversion buffers.
 56KB for 7 Sprites CHRs
 later 32k for the prg switching will be needed then only 2x5CHR banks will be stored here
 

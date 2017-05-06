@@ -544,7 +544,7 @@ WPPUMEMADDR:
 	lda PPUmemaddrH
 	;; Find the address range
 	cmp #$20		     ; On the nes, below $2000, it is CHR data
-	bcc emptyrangej		 ; A < #$20, prepare an empty routine
+	bcc CHRdata          ; A < #$20, prepare an empty routine
 	cmp #$30
 	bcs afternametablesj ; A >= #$30  Past $3000 empty or palette
 	;; #$20 <= @ < #$30
@@ -565,6 +565,15 @@ emptyrangej:
 	jmp emptyrange
 afternametablesj:
 	jmp afternametables
+CHRdata:
+;; -------------------------------------------------------------------------
+	; CHR data on the other bus can be read using the PPU port.
+	rep #$20 ; A 16bits
+	lda #emptyW ; This is assumed to be a ROM
+	sta PPUW_RAM_routineAddr
+	lda #CHRDataR
+	sta PPUR_RAM_routineAddr
+	RETW	
 ;; -------------------------------------------------------------------------
 attributetables:
 	; attribute table addresses are not directly equivalent
@@ -932,6 +941,31 @@ paletteR:
 	jsr IncPPUmemaddrL
 	RETR
 
+CHRDataR:
+	sep #$30		; All 8bit
+	BREAK
+	lda PPUReadLatch
+	bne LatchedCHRDataValue
+	sep #$20		; mem/A = 8 bit
+	; Change the bank to the CHR bank on the ROM
+	phb
+	lda #:NESCHR	; Bank of the CHR data
+	pha
+	plb			    ; Data Bank Register = A
+	rep #$10		; X/Y = 16 bit
+	ldx PPUmemaddrL ; Load the PPU bus address between $0000 and $2000
+	lda NESCHR.w,X  ; Load the value
+	plb			; Restore data bank	
+	; Increment the PPU address
+	jsr IncPPUmemaddrL
+	jmp CHRDataRend
+LatchedCHRDataValue:
+	lda #$00  ; Return zero at the first read after the write to $2006
+	sta PPUReadLatch
+CHRDataRend:
+	RETR
+
+
 ;----------------------------------------------------------
 ; Increments the adress register
 IncPPUmemaddrL:
@@ -941,17 +975,20 @@ IncPPUmemaddrL:
 	bit PPUcontrolreg1	; test bit 2, zero if not set ("bit and" result)
 	bne name_incr_32
 	; +1
-	rep #$20		; A 16bits
-	; Vram increments 1 by 1 after VMDATAL write, 2bytes on the snes because nametables are words name + palette
-	;lda NameAddresL
-	;clc
-	;adc #$0002
-	;sta NameAddresL
-	; Other than nametables
+	rep #$30		; All 16bits
 	lda PPUmemaddrL
+	;tax
 	clc
 	adc #$0001
 	sta PPUmemaddrL
+	; If only the lower bits changed, do nothing with the routines
+	;txa
+	;and #$FFC0
+	;sta tmp_addr
+	;lda PPUmemaddrL
+	;and #$FFC0
+	;cmp tmp_addr
+	;beq IncPPUmemaddrEnd
 	jmp IncPPUmemaddrLEnds
 name_incr_32:
 	; +32
@@ -967,6 +1004,9 @@ name_incr_32:
 	adc #$0020
 	sta PPUmemaddrL
 IncPPUmemaddrLEnds:
+	; Check if the adress is greater or equal to $2000
+	cmp #$2000
+	bcc CHRSpace
 	; Check if the adress is greater or equal to $23C0 in order to set the proper routines.
 	and #$F3FF      ; Get an @ in all the banks: $2000 $2400 $2800 $2C00
 	cmp #$23C0
@@ -979,8 +1019,21 @@ IncPPUmemaddrLEnds:
 	sta PPUW_RAM_routineAddr
 	lda #AttrtableR
 	sta PPUR_RAM_routineAddr
+	jmp IncPPUmemaddrEnd
+CHRSpace:
+	lda #emptyW ; This is assumed to be a ROM
+	sta PPUW_RAM_routineAddr
+	lda #CHRDataR
+	sta PPUR_RAM_routineAddr
+	jmp IncPPUmemaddrEnd
 NametableSpace:
+	lda #NametableW
+	sta PPUW_RAM_routineAddr
+	lda #NametableR
+	sta PPUR_RAM_routineAddr
+	jmp IncPPUmemaddrEnd
 PaletteSpace:
+IncPPUmemaddrEnd:
 	sep #$30		; All 8bit
 	rts
 	
