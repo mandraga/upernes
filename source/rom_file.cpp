@@ -291,3 +291,8 @@ int Crom_file::create_rom_headerfile(const char *file_name)
   return 0;
 }
 
+void Crom_file::GetPrgCopy(unsigned char *pBuffer)
+{
+  memcpy(pBuffer, m_pPRG, m_PRG_size);
+}
+

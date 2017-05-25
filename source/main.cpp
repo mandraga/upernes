@@ -14,6 +14,7 @@
 //     upernes Copyright 2015 Patrick Xavier Areny - "arenyp at yahoo.fr"
 
 #include <stdio.h>
+#include <vector>
 #include "opcode_6502.h"
 #include "opcodes.h"
 #include "rom_file.h"
@@ -39,6 +40,7 @@ int recompile(Cprogramlisting *plisting,
   CindirectJmpAsmRoutines asr;
   const int cstrsz = 4096;
   char      path[cstrsz];
+  char      pathAsm[cstrsz];
 
   snprintf(path, cstrsz, "%s/%s", outpath, "recomp.asm");
   if (recompilateur.re(path, plisting, popcode_list, prom))
@@ -50,6 +52,13 @@ int recompile(Cprogramlisting *plisting,
   if (asr.create_indjump_asm_routines(path, pindjmp, recompilateur.get_label_gen_info()))
     {
       printf("Error: %s\n", asr.m_error_str);
+      return 1;
+    }
+  snprintf(path, cstrsz, "%s/%s", outpath, "patchedPrg.bin");
+  snprintf(pathAsm, cstrsz, "%s/%s", outpath, "patchedPrg.asm");
+  if (recompilateur.patchPrgRom(path, pathAsm, plisting, popcode_list, pindjmp, prom))
+    {
+      printf("Error: %s\n", recompilateur.m_error_str);
       return 1;
     }
   snprintf(path, cstrsz, "%s/%s", outpath, "romprg.asm");

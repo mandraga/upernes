@@ -20,6 +20,7 @@ public:
   unsigned long crc();
   int getromname(char *str, unsigned int sz);
   int create_rom_headerfile(const char *file_name);
+  void GetPrgCopy(unsigned char *pBuffer);
 private:
   int read_mapper(unsigned char *header);
   int proces_header(unsigned char *header);

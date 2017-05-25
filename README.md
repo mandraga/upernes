@@ -71,8 +71,16 @@ Indirect jumps cannot be analysed until the jump adress is known. Therefore the 
 indirect jump adress and display the adress on a "crash" screen. You must add this address to romfilename.txt and call a new
 convertion until all the indirect jumps are known.
 
+Tools used, & authors:
+SPC700 APU emulator (c)2001-2003 Joey Parsell (Memblers http://www.parodius.com/~memblers/) w/ assistance from Kevin Horton, and others
+wla-65816 assembler by Ville Helin
+NESASM3
+the FCEUX comunity
+NES Screen Tool by Shiru
+Super Sleuth by Kris Bleakley (was the best emulator with debugger at the start of the project)
+"bsnes-plus" based on Byuu's bsnes with improved debugging added by devinacker, undisbeliever and others.
+
+
+upernes,(c)2015 Patrick Xavier Areny, upernes is released under the GPL licence.
 my blog: http://www.blog.vreemdelabs.com/
-
-Copyright 2015 Patrick Xavier Areny, upernes is released under the GPL licence.
-
 

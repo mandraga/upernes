@@ -18,8 +18,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <list>
+#include <vector>
 #include <assert.h>
-
 #include "opcode_6502.h"
 #include "opcodes.h"
 #include "rom_file.h"
@@ -27,9 +27,11 @@
 #include "nes.h"
 #include "instruction6502.h"
 #include "label.h"
-#include "recompilateur.h"
 #include "indirectJmp.h"
+#include "recompilateur.h"
 #include "indirectJmpAsmRoutines.h"
+
+using namespace std;
 
 /* Example: jmp ($0006)
 .BANK 0
@@ -113,19 +115,85 @@ bool CindirectJmpAsmRoutines::get_indirect_jump_labelnumber(t_label_list *plabel
   return false;
 }
 
-int  CindirectJmpAsmRoutines::create_indjump_asm_routines(const char *outname,
-							  CindirectJmpRuntimeLabels *pindjmp,
-							  t_label_list *plabel_gen_list)
+void CindirectJmpAsmRoutines::AddPRGPatch(int OpAddr, char *routineName, vector<t_PatchRoutine> &Patches)
 {
-  FILE         *fp;
+  t_PatchRoutine PatchR;
+
+  PatchR.opcode  = INDJUMPOPCODE;
+  PatchR.operand = OpAddr;
+  snprintf(PatchR.RoutineName, LABELSZ, "%s\n", routineName);
+  Patches.push_back(PatchR);
+}
+
+void CindirectJmpAsmRoutines::writeIndJumproutines(FILE *fp, CindirectJmpRuntimeLabels *pindjmp, t_label_list *plabel_gen_list, vector<t_PatchRoutine>& Patches)
+{
   bool         first;
   bool         firstadd;
   unsigned int jmpoperand;
   unsigned int addr;
-  //unsigned int prevjmpoperand;
   int          lcounter;
   int          indlabelnumber;
+  char         routine[LABELSZ];
 
+  first = true;
+  //prevjmpoperand = 0xFFFFFF; // starts with an impossible value for a nes address.
+  
+  if (pindjmp->next_operand(first, &jmpoperand) == false)
+    fprintf(fp, "\t; no indirect jump\n");
+  else
+    {
+      // FIXME case where no addres was found but an indirect jump occurs????
+      while (pindjmp->next_operand(first, &jmpoperand))
+	{
+	  first = false;
+	  fprintf(fp, "\n\n");
+	  fprintf(fp, ".ACCU 16\n");
+	  sprintf(routine, "IndJmp%04X", jmpoperand);
+	  fprintf(fp, "%s:\n", routine);
+	  fprintf(fp, "\tsta Acc                    ; save Acc\n");
+	  fprintf(fp, "\tclc                        ; To native mode\n");
+	  fprintf(fp, "\txce\n");
+	  AddPRGPatch(jmpoperand, routine, Patches);
+	    
+	  // Go through the possible known addresses
+	  firstadd = true;
+	  if (pindjmp->next_indaddr(firstadd, jmpoperand, &addr))
+	    {
+	      fprintf(fp, "\trep #$20                   ; A to 16bits\n");
+	      fprintf(fp, "\tlda $%04X                  ; load the indirect address\n", jmpoperand);
+	      fprintf(fp, "\t;; ------------------------------\n");
+	      lcounter = 1;
+	      while (pindjmp->next_indaddr(firstadd, jmpoperand, &addr))
+		{
+		  firstadd = false;
+		  // Compares A with all the known addresses
+		  fprintf(fp, ".ACCU 16\n");
+		  fprintf(fp, "\tcmp #$%04X                 ; Is it address $%04X?\n", addr, addr);
+		  fprintf(fp, "\tbne IndJmp%04Xtestaddr%04d ; no then test the next possible address\n", jmpoperand, lcounter);
+		  fprintf(fp, "\tsep #$20                   ; A to 8bits\n");
+		  fprintf(fp, "\tsec                        ; return to emulation mode\n");
+		  fprintf(fp, "\txce\n");
+		  fprintf(fp, "\tlda Acc                    ; restore the Accumulator\n");
+		  if (get_indirect_jump_labelnumber(plabel_gen_list, addr, &indlabelnumber))
+		    fprintf(fp, "\tjmp indirectlabel%04d   ; static jump to the indirect label\n", indlabelnumber);
+		  else
+		    assert(false);
+		  fprintf(fp, "IndJmp%04Xtestaddr%04d:\n", jmpoperand, lcounter);
+		  lcounter++;
+		}
+	    }
+	  write_asm_testfailcase(fp, addr, jmpoperand);
+	}
+    }
+}
+
+int  CindirectJmpAsmRoutines::create_indjump_asm_routines(const char *outname,
+							  CindirectJmpRuntimeLabels *pindjmp,
+							  t_label_list *plabel_gen_list)
+{
+  FILE                   *fp;
+  vector<t_PatchRoutine>  Patches;
+  
   try
     {
       fp = fopen(outname, "w");
@@ -138,53 +206,7 @@ int  CindirectJmpAsmRoutines::create_indjump_asm_routines(const char *outname,
       //      fp = stdout;
       write_asm_routines_header(fp);
       // For each indirect jump, creates a test routine
-      first = true;
-      //prevjmpoperand = 0xFFFFFF; // starts with an impossible value for a nes address.
-
-      if (pindjmp->next_operand(first, &jmpoperand) == false)
-	fprintf(fp, "\t; no indirect jump\n");
-      else
-	{
-	  // FIXME case where no addres was found but an indirect jump occurs????
-	  while (pindjmp->next_operand(first, &jmpoperand))
-	    {
-	      first = false;
-	      fprintf(fp, "\n\n");
-	      fprintf(fp, ".ACCU 16\n");
-	      fprintf(fp, "IndJmp%04X:\n", jmpoperand);
-	      fprintf(fp, "\tsta Acc                    ; save Acc\n");
-	      fprintf(fp, "\tclc                        ; To native mode\n");
-	      fprintf(fp, "\txce\n");
-	      // Go through the possible known addresses
-	      firstadd = true;
-	      if (pindjmp->next_indaddr(firstadd, jmpoperand, &addr))
-		{
-		  fprintf(fp, "\trep #$20                   ; A to 16bits\n");
-		  fprintf(fp, "\tlda $%04X                  ; load the indirect address\n", jmpoperand);
-		  fprintf(fp, "\t;; ------------------------------\n");
-		  lcounter = 1;
-		  while (pindjmp->next_indaddr(firstadd, jmpoperand, &addr))
-		    {
-		      firstadd = false;
-		      // Compares A with all the known addresses
-		      fprintf(fp, ".ACCU 16\n");
-		      fprintf(fp, "\tcmp #$%04X                 ; Is it address $%04X?\n", addr, addr);
-		      fprintf(fp, "\tbne IndJmp%04Xtestaddr%04d ; no then test the next possible address\n", jmpoperand, lcounter);
-		      fprintf(fp, "\tsep #$20                   ; A to 8bits\n");
-		      fprintf(fp, "\tsec                        ; return to emulation mode\n");
-		      fprintf(fp, "\txce\n");
-		      fprintf(fp, "\tlda Acc                    ; restore the Accumulator\n");
-		      if (get_indirect_jump_labelnumber(plabel_gen_list, addr, &indlabelnumber))
-			fprintf(fp, "\tjmp indirectlabel%04d   ; static jump to the indirect label\n", indlabelnumber);
-		      else
-			assert(false);
-		      fprintf(fp, "IndJmp%04Xtestaddr%04d:\n", jmpoperand, lcounter);
-		      lcounter++;
-		    }
-		}
-	      write_asm_testfailcase(fp, addr, jmpoperand);
-	    }
-	}
+      writeIndJumproutines(fp, pindjmp, plabel_gen_list, Patches);
       fprintf(fp, "\n.ENDS\n");
       fclose(fp);
     }
@@ -194,3 +216,4 @@ int  CindirectJmpAsmRoutines::create_indjump_asm_routines(const char *outname,
     }
   return 0;
 }
+

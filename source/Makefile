@@ -84,6 +84,7 @@ $(OBJDIR)/recompilesimple.o: recompilateur.h opcodes.h opcode_6502.h rom_file.h 
 $(OBJDIR)/recompileIO.o:     recompilateur.h opcodes.h opcode_6502.h rom_file.h cpu6502.h nes.h instruction6502.h
 $(OBJDIR)/recompileIndJmp.o: recompilateur.h opcodes.h opcode_6502.h rom_file.h cpu6502.h nes.h instruction6502.h
 $(OBJDIR)/indirectJmpAsmRoutines.o: recompilateur.h opcodes.h opcode_6502.h rom_file.h cpu6502.h nes.h instruction6502.h indirectJmp.h rom_file.h
+$(OBJDIR)/patchPrgRom.o:     opcode_6502.h opcodes.h rom_file.h cpu6502.h nes.h instruction6502.h label.h recompilateur.h
 $(OBJDIR)/img.o: img.h
 $(OBJDIR)/Ivideo.o: Ivideo.h img.h
 $(OBJDIR)/main.o: opcodes.h opcode_6502.h rom_file.h mapper.h Ivideo.h img.h
@@ -104,6 +105,7 @@ OBJS +=  $(OBJDIR)/recompileIndJmp.o
 OBJS +=  $(OBJDIR)/indirectJmp.o
 OBJS +=  $(OBJDIR)/indirectJmp_parse.o
 OBJS +=  $(OBJDIR)/indirectJmpAsmRoutines.o
+OBJS +=  $(OBJDIR)/patchPrgRom.o
 OBJS +=  $(OBJDIR)/img.o
 OBJS +=  $(OBJDIR)/Ivideo.o
 OBJS +=  $(OBJDIR)/main.o

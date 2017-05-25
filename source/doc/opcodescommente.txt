@@ -359,7 +359,7 @@ Description: Branch if equal
 
 Opcode: jmp
 Abs;  jmp $5597;   $4c; 3; 3     Recompiled, new program
-Ind;  jmp ($5597); $6C; 3; 5     Probleme
+Ind;  jmp ($5597); $6C; 3; 5     Problematic case
 Description: Jumps to a 16bit address, direct or indirect, must not be used on page boundary (256 Bytes boundary)
 
 Opcode: jsr

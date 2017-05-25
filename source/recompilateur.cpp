@@ -15,6 +15,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <vector>
 #include <assert.h>
 #include "opcode_6502.h"
 #include "opcodes.h"
@@ -23,6 +24,7 @@
 #include "nes.h"
 #include "instruction6502.h"
 #include "label.h"
+#include "indirectJmp.h"
 #include "recompilateur.h"
 
 
@@ -59,6 +61,7 @@ void Crecompilateur::create_label_list(Cprogramlisting *plisting,
   Instruction6502 *pinstr;
   bool            bstart = true;
 
+  m_label_gen_list.clear();
   pinstr = plisting->get_next(bstart);
   bstart = false;
   while (pinstr != NULL)
@@ -138,10 +141,11 @@ int Crecompilateur::isreplaced(t_pinstr pinstr, Copcodes *popcode_list)
 int Crecompilateur::re(const char *outname, Cprogramlisting *plisting,
 		       Copcodes *popcode_list, Crom_file *prom)
 {
-  FILE *fp;
-  Instruction6502 *pinstr;
-  bool            irqbrkvector = false;
-  bool            nmivector = false;
+  FILE                       *fp;
+  Instruction6502            *pinstr;
+  bool                        irqbrkvector = false;
+  bool                        nmivector = false;
+  std::vector<t_PatchRoutine> PatchRoutines;
 
   try
     {
@@ -211,7 +215,7 @@ int Crecompilateur::re(const char *outname, Cprogramlisting *plisting,
       fprintf(fp, "\n");
       // io port accesses are replaced by a jsr to a routine,
       // the routines are written here.
-      writeiop_routines(fp, plisting, popcode_list);
+      writeiop_routines(fp, plisting, popcode_list, PatchRoutines);
       fprintf(fp, "\n.ENDS\n");
       fclose(fp);
     }
@@ -221,3 +225,4 @@ int Crecompilateur::re(const char *outname, Cprogramlisting *plisting,
     }
   return 0;
 }
+

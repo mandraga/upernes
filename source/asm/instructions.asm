@@ -82,7 +82,7 @@
 .ENDM
 
 .MACRO EMULATION
-	sec			; 6502 mulation mode
+	sec			; 6502 emulation mode
 	xce
 	; Any call to sta lda sti will restore the status register and hence interrupt mask bit
 .ENDM

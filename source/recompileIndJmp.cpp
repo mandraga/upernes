@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <vector>
 #include "opcode_6502.h"
 #include "opcodes.h"
 #include "rom_file.h"
@@ -23,6 +24,7 @@
 #include "nes.h"
 #include "instruction6502.h"
 #include "label.h"
+#include "indirectJmp.h"
 #include "recompilateur.h"
 
 void Crecompilateur::outReplaceJumpIndirect(FILE *fp, t_pinstr pinstr,

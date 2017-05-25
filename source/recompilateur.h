@@ -7,6 +7,14 @@ enum
     replaceJumpIndirect
   };
 
+// Routine linked to and instruction and operand
+typedef struct     s_PatchRoutine
+{
+  int              opcode;
+  unsigned int     operand;
+  char             RoutineName[LABELSZ];  // Name of the routine to be insterted in the array
+}                  t_PatchRoutine;
+
 class Crecompilateur
 {
 public:
@@ -15,6 +23,7 @@ public:
   int re(const char *outname, Cprogramlisting *plisting,
 	 Copcodes *popcode_list, Crom_file *prom);
   t_label_list *get_label_gen_info();
+  int patchPrgRom(const char *outAsmName, const char *outPrgName, Cprogramlisting *plisting, Copcodes *popcode_list, CindirectJmpRuntimeLabels *pindjmp, Crom_file *prom);
 
 private:
   void labelgen(t_label *plabel);
@@ -30,23 +39,27 @@ private:
   // recompileIO.cpp
   void print_save(FILE *fp);
   void print_restore(FILE *fp);
-  void routineSTAiop(FILE *fp, int iopaddr, Copcodes *popcode_list);
-  void routineSTAAbsXiop(FILE *fp, int iopaddr, Copcodes *popcode_list);
-  void routineSTAAbsYiop(FILE *fp, int iopaddr, Copcodes *popcode_list);
-  void routineLDAiop(FILE *fp, int iopaddr, Copcodes *popcode_list);
-  void routineLDXiop(FILE *fp, int iopaddr, Copcodes *popcode_list);
-  void routineLDYiop(FILE *fp, int iopaddr, Copcodes *popcode_list);
-  void routineSTXiop(FILE *fp, int iopaddr, Copcodes *popcode_list);
-  void routineSTYiop(FILE *fp, int iopaddr, Copcodes *popcode_list);
+  void routineSTAiop(FILE *fp, int iopaddr, Copcodes *popcode_list, Instruction6502 *pinstr, std::vector<t_PatchRoutine> &PatchRoutines);
+  void routineSTAAbsXiop(FILE *fp, int iopaddr, Copcodes *popcode_list, Instruction6502 *pinstr, std::vector<t_PatchRoutine> &PatchRoutines);
+  void routineSTAAbsYiop(FILE *fp, int iopaddr, Copcodes *popcode_list, Instruction6502 *pinstr, std::vector<t_PatchRoutine> &PatchRoutines);
+  void routineLDAiop(FILE *fp, int iopaddr, Copcodes *popcode_list, Instruction6502 *pinstr, std::vector<t_PatchRoutine> &PatchRoutines);
+  void routineLDXiop(FILE *fp, int iopaddr, Copcodes *popcode_list, Instruction6502 *pinstr, std::vector<t_PatchRoutine> &PatchRoutines);
+  void routineLDYiop(FILE *fp, int iopaddr, Copcodes *popcode_list, Instruction6502 *pinstr, std::vector<t_PatchRoutine> &PatchRoutines);
+  void routineSTXiop(FILE *fp, int iopaddr, Copcodes *popcode_list, Instruction6502 *pinstr, std::vector<t_PatchRoutine> &PatchRoutines);
+  void routineSTYiop(FILE *fp, int iopaddr, Copcodes *popcode_list, Instruction6502 *pinstr, std::vector<t_PatchRoutine> &PatchRoutines);
   void ReplaceAbsAddressing(FILE *fp, t_pinstr pinstr, Copcodes *popcode_list, bool &replaced);
   void ReplaceAbsXAddressing(FILE *fp, t_pinstr pinstr, Copcodes *popcode_list, bool &replaced);
   void ReplaceAbsYAddressing(FILE *fp, t_pinstr pinstr, Copcodes *popcode_list, bool &replaced);
   void outReplaceIOport(FILE *fp, t_pinstr pinstr, Copcodes *popcode_list);
-  bool findinstr(const char *mnemonicstr, t_instrlist *plist, Copcodes *popcode_list, int &addressing);
-  void writeiop_routines(FILE *fp, Cprogramlisting *plisting, Copcodes *popcode_list);
+  bool findinstr(const char *mnemonicstr, t_instrlist *plist, Copcodes *popcode_list, int &addressing, Instruction6502 **pinstr);
+  void writeiop_routines(FILE *fp, Cprogramlisting *plisting, Copcodes *popcode_list, std::vector<t_PatchRoutine> &PatchRoutines);
+  void AddPRGPatch(int iopaddr, Copcodes *popcode_list, Instruction6502 *pinstr, char *routineName, std::vector<t_PatchRoutine> &PatchRoutines);
   // recompileIndJmp.cpp
   void outReplaceJumpIndirect(FILE *fp, t_pinstr pinstr, Copcodes *popcode_list);
-
+  // patchPrgRom.cpp
+  void patchBRK(t_pinstr pinstr, Copcodes *popcode_list, unsigned char *pPRG, unsigned int PRGSize, std::vector<t_PatchRoutine>& Routines);
+  void writeRoutineVector(FILE *fp, Copcodes *popcode_list, std::vector<t_PatchRoutine>& Patches);
+  
 public:
   char m_error_str[128];
 private:
