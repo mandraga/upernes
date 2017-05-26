@@ -39,6 +39,8 @@
 .DEFINE NESNMIENABLED      RAMBASE + 25 ; Nes NMI enabled, the snes NMI should always be on, and call the nes NMI only when this flag is set.
 .DEFINE PPUReadLatch       RAMBASE + 26 ; Set to One when the ppu addresse register is changed, 0 on the first read
 
+.DEFINE AccIt              RAMBASE + 27
+
 ;--------------------------------------------------------------------
 ; 
 .DEFINE IOBASE	$0900

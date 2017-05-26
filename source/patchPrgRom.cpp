@@ -22,6 +22,7 @@
 #include "rom_file.h"
 #include "cpu6502.h"
 #include "nes.h"
+#include "mapper.h"
 #include "instruction6502.h"
 #include "label.h"
 #include "indirectJmp.h"
@@ -62,20 +63,22 @@ cpy
  * - pinstr is the pointer to the instruction
  *
  */
-void Crecompilateur::patchBRK(t_pinstr pinstr, Copcodes *popcode_list, unsigned char *pPRG, unsigned int PRGSize, std::vector<t_PatchRoutine>& Routines)
+void Crecompilateur::patchBRK(t_pinstr pinstr, Copcodes *popcode_list, unsigned char *pPRG, unsigned int PRGSize, std::vector<t_PatchRoutine>& Routines, Cmapper *pmapper)
 {
   unsigned int i;
+  unsigned int PRGAddress;
 
-  printf("%02X replaced by %02X at %04X\n", pPRG[pinstr->addr], 0, pinstr->addr);
-  pPRG[pinstr->addr] = 0x00; // BRK is 0
+  PRGAddress = pmapper->cpu2prg(pinstr->addr);
+  printf("%02X replaced by %02X at %04X\n", pPRG[PRGAddress], 0, pinstr->addr);
+  pPRG[PRGAddress] = 0x00; // BRK is 0
   // the next 2 bytes are a code to find the proper routine.
   for (i = 0; i < Routines.size(); i++)
     {
       if (Routines[i].opcode == pinstr->opcode && Routines[i].operand == pinstr->operand)
 	{
 	  printf("Pointing to routine %s\n", Routines[i].RoutineName);
-	  pPRG[pinstr->addr + 1] = i & 0xFF;
-	  pPRG[pinstr->addr + 2] = (i >> 8) & 0xFF;
+	  pPRG[PRGAddress + 1] = i & 0xFF;
+	  pPRG[PRGAddress + 2] = (i >> 8) & 0xFF;
 	}
     }
 }
@@ -90,9 +93,8 @@ void Crecompilateur::writeRoutineVector(FILE *fp, Copcodes *popcode_list, std::v
   fprintf(fp, "BRKRoutinesTable:\n");
   for (i = 0; i < Patches.size(); i++)
     {
-      fprintf(fp, "%s\n", Patches[i].RoutineName);
+      fprintf(fp, ".DW %s\n", Patches[i].RoutineName);
     }
-  fprintf(fp, "\n");
 }
 
 /*
@@ -106,10 +108,12 @@ int Crecompilateur::patchPrgRom(const char *outAsmName, const char *outPrgName, 
   CindirectJmpAsmRoutines     IndJumpsRoutines;
   std::vector<t_PatchRoutine> PatchRoutines;
   int                         PRGSize;
+  Cmapper                     mapper;
 
   pPRG = NULL;
   try
     {
+      mapper.init(prom);
       PRGSize = prom->m_PRG_size;
       pPRG = new unsigned char[PRGSize];
       prom->GetPrgCopy(pPRG);
@@ -134,17 +138,18 @@ int Crecompilateur::patchPrgRom(const char *outAsmName, const char *outPrgName, 
 	  switch (pinstr->isvectorstart)
 	    {
 	    case resetstart:
-	      // Label of the first instruction executed on start/reset
-	      fprintf(fp, "\nDEFINE NESRESET %04X\n", pinstr->operand);
+	      // Label of the first instruction executed on start/reset. Bank 1
+	      fprintf(fp, "\n.DEFINE NESRESET   $01%04X", pinstr->addr);
 	      break;
 	    case nmistart:
 	      // Label of the non maskable interrupt routine
-	      fprintf(fp, "\nDEFINE NESNMI %04X\n", pinstr->operand);
+	      fprintf(fp, "\n.DEFINE NESNMI     $01%04X", pinstr->addr);
 	      break;
 	    case irqbrkstart:
       	      // Label of the IRQ/BRK interrupt routine
-	      fprintf(fp, "\nDEFINE NESIRQBRK %04X\n", pinstr->operand);
+	      fprintf(fp, "\n.DEFINE NESIRQBRK  $01%04X", pinstr->addr);
 	      break;
+	    case novector:
 	    default:
 	      break;
 	    }
@@ -154,24 +159,24 @@ int Crecompilateur::patchPrgRom(const char *outAsmName, const char *outPrgName, 
 	      break;
 	    case replaceIOPort:
 	      // Patch the io port code with BRK Byte1 Byte2
-	      patchBRK(pinstr, popcode_list, pPRG, PRGSize, PatchRoutines);
+	      patchBRK(pinstr, popcode_list, pPRG, PRGSize, PatchRoutines, &mapper);
 	      break;
 	    case replaceBackupRam:
 	      //outReplaceBackupRam(fp, pinstr, popcode_list);
 	      break;
 	    case replaceJumpIndirect:
 	      // Patch the indirect jump code with BRK Byte1 Byte2
-	      patchBRK(pinstr, popcode_list, pPRG, PRGSize, PatchRoutines);
+	      patchBRK(pinstr, popcode_list, pPRG, PRGSize, PatchRoutines, &mapper);
 	      break;
 	    default:
 	      break;
 	    };
 	  pinstr = plisting->get_next(false);
 	}      
-      fprintf(fp, "\n.ENDS\n");
+      fprintf(fp, "\n\n.ENDS\n");
       fclose(fp);
       // Write the patched PRG rom.
-      fp = fopen(outPrgName, "w");
+      fp = fopen(outPrgName, "wb");
       if (fp == NULL)
 	{
 	  snprintf(m_error_str, sizeof(m_error_str),

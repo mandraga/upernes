@@ -6,6 +6,7 @@
 
 .include "rom.asm"
 .include "romprg.asm"
+.include "patchedPrg.asm"
 .include "CHR.asm"
 .include "PaletteUpdate.asm"
 .include "DMABGUpdate.asm"
@@ -176,7 +177,7 @@ eraseNesRamLoop:
 	nop
 	; Go to the start of the nes routine
 	BREAK
-	jmp NESReset
+	jmp NESRESET  ; Long jump to the other bank with patched IO and indirect jumps. 16bits instructions are still available here.
 
 .ENDS
 

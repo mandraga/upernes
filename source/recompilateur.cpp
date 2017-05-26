@@ -11,7 +11,7 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
-//     upernes Copyright 2015 Patrick Xavier Areny - "arenyp at yahoo.fr"
+//     upernes Copyright 2015 Patrick Areny - "arenyp at yahoo.fr"
 
 #include <stdio.h>
 #include <string.h>
@@ -22,6 +22,7 @@
 #include "rom_file.h"
 #include "cpu6502.h"
 #include "nes.h"
+#include "mapper.h"
 #include "instruction6502.h"
 #include "label.h"
 #include "indirectJmp.h"

@@ -7,7 +7,7 @@ LINK= wlalink
 LILKFILE= linkfile.prj
 FLAGS= -o
 
-objects = init.o recomp.o instructions.o iopemulation.o indjmp.o
+objects = init.o instructions.o iopemulation.o indjmp.o
 
 default: all
 

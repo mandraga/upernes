@@ -15,7 +15,7 @@
 .DW     EmptyHandler		; ABORT
 .DW     DMAUpdateHandler	; NMI
 .DW     Reset				; RESET            The entire program starts here and the calls NESReset
-.DW     NESIRQBRK			; NESIRQBRK IRQ/BRK
+.DW     NESIRQBRKHandler	; NESIRQBRK IRQ/BRK
 
 ; ============================================
 
@@ -28,7 +28,7 @@ DMAUpdateHandler:
 	;jsr InitSprite0
 
 	; Read the V value
-	;sep #$20    ; A 8bits	
+	;sep #$20    ; A 8bits
 	; Low first
 	;lda STAT78
 	; Latch the H and V counters
@@ -51,12 +51,31 @@ DMAUpdateHandler:
 	;lda NESNMIENABLED
 	;beq QuitNMI
 	;pla
-	jmp NESNonMaskableInterrupt ; Call the recompiled NMI vector
+	jmp NESNMI ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called form emulation
 QuitNMI:
 	;pla
 	;rti
 ;;; put this on vblank
+
+NESIRQBRKHandler:
+	; Test if it is a BRK instruction
+	sta AccIt
+	pla
+	pha
+	and #%00010000 ; Test for bit 4 in p register
+	bne BRKinterrrupt
+	lda AccIt
+	; No, jump to the original IRQ
+	jmp NESIRQBRK ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called form emulation
+BRKinterrrupt:
+	lda AccIt
+	; jsr to the routine using the routine index
 	
+	; Pop the stack values and return to the address without rti
+	
+	
+
+
 ; Called by the Native IRQ handler
 VCountHandler:
 	sei ; Disable interrupts at start ot it will flood the stack

@@ -21,6 +21,7 @@
 #include "rom_file.h"
 #include "cpu6502.h"
 #include "nes.h"
+#include "mapper.h"
 #include "instruction6502.h"
 #include "label.h"
 #include "indirectJmp.h"
@@ -28,9 +29,9 @@
 
 void Crecompilateur::writeheader(FILE *fp)
 {
-  fprintf(fp, "\n.include \"cartridge.inc\"\n\n");
-  fprintf(fp, "\n.include \"var.inc\"\n\n");
-  fprintf(fp, ".BANK 0\n.ORG 0\n.SECTION \"Nesprg\"\n");  
+  //fprintf(fp, "\n.include \"cartridge.inc\"\n\n");
+  //fprintf(fp, "\n.include \"var.inc\"\n\n");
+  fprintf(fp, ".BANK 0\n.ORG 0\n.SECTION \"Nesprg\"\n");
 }
 
 void Crecompilateur::printlabel(FILE *fp, t_pinstr pinstr)

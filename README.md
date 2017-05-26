@@ -81,6 +81,6 @@ Super Sleuth by Kris Bleakley (was the best emulator with debugger at the start 
 "bsnes-plus" based on Byuu's bsnes with improved debugging added by devinacker, undisbeliever and others.
 
 
-upernes,(c)2015 Patrick Xavier Areny, upernes is released under the GPL licence.
+upernes,(c)2015 Patrick Areny, upernes is released under the GPL licence.
 my blog: http://www.blog.vreemdelabs.com/
 

@@ -280,7 +280,8 @@ int Crom_file::create_rom_headerfile(const char *file_name)
 	};
       //      fprintf(fp, ".SECTION \"OriginalPRGrom\" FORCE\n");
       fprintf(fp, "PRGrom:\n");
-      fprintf(fp, ".INCBIN \"nesprg.bin\"\n");
+      fprintf(fp, ";.INCBIN \"nesprg.bin\"\n"); // comented
+      fprintf(fp, ".INCBIN \"patchedPrg.bin\"\n");
       // fprintf(fp, ".ENDS\n");
       fclose(fp);
     }

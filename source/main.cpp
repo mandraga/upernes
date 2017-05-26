@@ -56,7 +56,7 @@ int recompile(Cprogramlisting *plisting,
     }
   snprintf(path, cstrsz, "%s/%s", outpath, "patchedPrg.bin");
   snprintf(pathAsm, cstrsz, "%s/%s", outpath, "patchedPrg.asm");
-  if (recompilateur.patchPrgRom(path, pathAsm, plisting, popcode_list, pindjmp, prom))
+  if (recompilateur.patchPrgRom(pathAsm, path, plisting, popcode_list, pindjmp, prom))
     {
       printf("Error: %s\n", recompilateur.m_error_str);
       return 1;
@@ -112,22 +112,23 @@ int main(int argc, char *argv[])
   Copcodes *popcode_list;
   char path[] = "./opcodes.txt";
   char outpath[] = "./";
-  //char ROMpath[] = "../rom/Super Mario Bros. (W) [!].nes";
-  //char ROMpath[] = "../rom/nes/Balloon Fight (JU) [!].nes";
+  //char ROMpath[] = "../../rom/nes/smb1.nes";
+  char ROMpath[] = "../../rom/nes/BalloonF.nes";
   //char ROMpath[] = "../rom/nes/dev/ppu0/ppu0.nes";
   //char ROMpath[] = "../rom/Xevious (E).nes";
   //char ROMpath[] = "../rom/Galaga (U).nes";
-  char *ROMpath;
+  //char *ROMpath;
   char *OutputPath;
   Ivideo scr;
 
+  /*
   if (argc > 1)
     ROMpath = argv[1];
   else
     {
       printf("Usage: upernes romname.nes [output directory]\n\n");
       return 0;
-    }
+    }*/
   if (argc > 2)
     {
       OutputPath = argv[2];

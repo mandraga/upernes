@@ -22,6 +22,7 @@
 #include "rom_file.h"
 #include "cpu6502.h"
 #include "nes.h"
+#include "mapper.h"
 #include "instruction6502.h"
 #include "label.h"
 #include "indirectJmp.h"
@@ -43,7 +44,7 @@ void Crecompilateur::AddPRGPatch(int iopaddr, Copcodes *popcode_list, Instructio
 
   PatchR.opcode  = pinstr->opcode;
   PatchR.operand = pinstr->operand;
-  snprintf(PatchR.RoutineName, LABELSZ, "%s\n", routineName);
+  snprintf(PatchR.RoutineName, LABELSZ, "%s", routineName);
   PatchRoutines.push_back(PatchR);
 }
 

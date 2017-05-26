@@ -22,6 +22,7 @@
 #include "rom_file.h"
 #include "cpu6502.h"
 #include "nes.h"
+#include "mapper.h"
 #include "instruction6502.h"
 #include "label.h"
 #include "indirectJmp.h"
