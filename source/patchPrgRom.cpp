@@ -57,7 +57,7 @@ cpy
 */
 
 /*
- * This method patches the rom binary with BRQ routines.
+ * This method patches the rom binary with BRK routines.
  * - PRG contains the orignal rom.
  * - The Routines vector is the replacement routine array used in emulation.
  * - pinstr is the pointer to the instruction
@@ -72,13 +72,14 @@ void Crecompilateur::patchBRK(t_pinstr pinstr, Copcodes *popcode_list, unsigned 
   printf("%02X replaced by %02X at %04X\n", pPRG[PRGAddress], 0, pinstr->addr);
   pPRG[PRGAddress] = 0x00; // BRK is 0
   // the next 2 bytes are a code to find the proper routine.
+  assert(Routines.size() < 256);
   for (i = 0; i < Routines.size(); i++)
     {
       if (Routines[i].opcode == pinstr->opcode && Routines[i].operand == pinstr->operand)
 	{
 	  printf("Pointing to routine %s\n", Routines[i].RoutineName);
 	  pPRG[PRGAddress + 1] = i & 0xFF;
-	  pPRG[PRGAddress + 2] = (i >> 8) & 0xFF;
+	  pPRG[PRGAddress + 2] = 0xEA; // add just a NOP  (i >> 8) & 0xFF;
 	}
     }
 }

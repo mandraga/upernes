@@ -19,6 +19,20 @@
 
 ; ============================================
 
+.MACRO NATIVE
+	sei         ; disable interrupts, because we do not want any interrupt in the native mode
+	clc			; native 65816 mode
+	xce
+.ENDM
+
+.MACRO EMULATION
+	sec			; 6502 emulation mode
+	xce
+	; Any call to sta lda sti will restore the status register and hence interrupt mask bit
+.ENDM
+
+; ============================================
+
 .BANK 0 SLOT 0
 .org 0
 .SECTION "EmptyVectors" SEMIFREE
@@ -43,7 +57,7 @@ DMAUpdateHandler:
 	;rep #$20    ; A 16bits
 	;sta TMPVCOUNTL + 2
 	
-	;BREAK2 something is wrong if removed
+	;BREAK2 ; something is wrong if removed
 	jsr UpdatePalettes
 	jsr UpdateBackgrounds       ; Copy changed bytes to the VRAMdddfffgcxcvsfgggcxxxcv
 	; If the nes nmi is enables, call it
@@ -51,6 +65,7 @@ DMAUpdateHandler:
 	;lda NESNMIENABLED
 	;beq QuitNMI
 	;pla
+	;BREAK2
 	jmp NESNMI ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called form emulation
 QuitNMI:
 	;pla
@@ -63,18 +78,64 @@ NESIRQBRKHandler:
 	pla
 	pha
 	and #%00010000 ; Test for bit 4 in p register
-	bne BRKinterrrupt
+	bne BRKinterrupt
 	lda AccIt
 	; No, jump to the original IRQ
-	jmp NESIRQBRK ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called form emulation
-BRKinterrrupt:
+	BREAK
+	jmp NESIRQBRK ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called from emulation
+BRKinterrupt:
+	; Things pushed on the stack:
+	; - PC Hi
+	; - PC Lo
+	; - Status P
+	;
+	; Get the PC, and get the routine code
+	pla
+	sta Status
+	pla
+	sta RetLow
+	pla
+	sta RetHi
+	stx XiLevel1
+	; Recover the BRK parameter byte by using the direct page
+	sei         ; disable interrupts, because we do not want any interrupt in the native mode
+	clc			; native 65816 mode
+	xce
+	;
+	rep #$30		; All 16bits
+	lda RetLow
+	sec
+	sbc #$0001
+	sta SignatureLo
+	tax
+	lda $010000,X
+	and #$00FF
+	asl A			; x2 to get the routine index address (+ 0 2 4 6 in WR_OAMconversionroutines)
+	tax
+;	jmp (BRKRoutinesTable,X) ; Jump to the routine for the selected address
+	sep #$30		; All 8bits
 	lda AccIt
-	; jsr to the routine using the routine index
-	
-	; Pop the stack values and return to the address without rti
-	
-	
-
+	jsr (BRKRoutinesTable,X) ; Jump to the routine for the selected address
+	EMULATION
+	ldx XiLevel1
+BRKinterruptReturn:
+	; Push the stack values and return to the address without rti
+    ;BREAK
+	;
+	sta AccIt
+	; restore the bank
+	lda #$01
+	pha
+	; Restore the return address
+	lda RetHi
+	pha
+	lda RetLow
+	pha
+	lda Status
+	pha
+	plp
+	lda AccIt
+	rtl ; Return long
 
 ; Called by the Native IRQ handler
 VCountHandler:

@@ -40,6 +40,12 @@
 .DEFINE PPUReadLatch       RAMBASE + 26 ; Set to One when the ppu addresse register is changed, 0 on the first read
 
 .DEFINE AccIt              RAMBASE + 27
+.DEFINE Status             RAMBASE + 28 ; Status register storage
+.DEFINE RetLow             RAMBASE + 29 ; Return values storage
+.DEFINE RetHi              RAMBASE + 30 ;
+.DEFINE SignatureLo        RAMBASE + 31 ; Address of the signature
+.DEFINE SignatureHi        RAMBASE + 32 ;
+.DEFINE XiLevel1           RAMBASE + 33 ;
 
 ;--------------------------------------------------------------------
 ; 
