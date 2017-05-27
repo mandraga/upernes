@@ -133,7 +133,7 @@ RetIOroutineR:
 ; 	plp			; pop flags
 
 	
-				
+
 ;; --------------------------------------------------------------------
 ;; staioportroutine
 ; 	RW PPU Control Register 1

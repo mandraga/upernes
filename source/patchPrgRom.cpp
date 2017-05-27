@@ -56,6 +56,11 @@ cpx
 cpy
 */
 
+#define RAMROUTINEBASEADDRESS   0x1000
+#define RAMROUTINESIZE          8
+// This is 0x7000 in the org directive
+#define EMULATIONROUTINEADDRESS 0xF000
+
 /*
  * This method patches the rom binary with BRK routines.
  * - PRG contains the orignal rom.
@@ -67,10 +72,11 @@ void Crecompilateur::patchBRK(t_pinstr pinstr, Copcodes *popcode_list, unsigned 
 {
   unsigned int i;
   unsigned int PRGAddress;
+  unsigned int RamRoutineAddress;
 
   PRGAddress = pmapper->cpu2prg(pinstr->addr);
-  printf("%02X replaced by %02X at %04X\n", pPRG[PRGAddress], 0, pinstr->addr);
-  pPRG[PRGAddress] = 0x00; // BRK is 0
+  printf("%02X replaced by %02X at %04X\n", pPRG[PRGAddress], 0x4C, pinstr->addr);
+  pPRG[PRGAddress] = 0x20; // JSR
   // the next 2 bytes are a code to find the proper routine.
   assert(Routines.size() < 256);
   for (i = 0; i < Routines.size(); i++)
@@ -78,10 +84,47 @@ void Crecompilateur::patchBRK(t_pinstr pinstr, Copcodes *popcode_list, unsigned 
       if (Routines[i].opcode == pinstr->opcode && Routines[i].operand == pinstr->operand)
 	{
 	  printf("Pointing to routine %s\n", Routines[i].RoutineName);
-	  pPRG[PRGAddress + 1] = i & 0xFF;
-	  pPRG[PRGAddress + 2] = 0xEA; // add just a NOP  (i >> 8) & 0xFF;
+	  RamRoutineAddress = RAMROUTINEBASEADDRESS + i * RAMROUTINESIZE; // Address of the code in ram
+	  pPRG[PRGAddress + 1] = RamRoutineAddress & 0xFF;
+	  pPRG[PRGAddress + 2] = (RamRoutineAddress >> 8) & 0xFF;
 	}
     }
+}
+
+/*
+ * Write routines in ram. They are used to go from Bank 1 where the patched PRG rom is, to bank 0 where emulation code is.
+ */
+void Crecompilateur::writeRamRoutineBinary(const char *fileName, std::vector<t_PatchRoutine>& Patches)
+{
+  FILE          *fp;
+  unsigned int   i;
+  std::vector<unsigned char> RamBuffer;
+
+  for (i = 0; i < Patches.size(); i++)
+    {
+      RamBuffer.push_back(0x08); // PHP
+      RamBuffer.push_back(0x48); // PHA
+      RamBuffer.push_back(0xA9); // LDA immediate
+      RamBuffer.push_back(i & 0xFF); // Routine index
+      RamBuffer.push_back(0x5C); // JML
+      RamBuffer.push_back(EMULATIONROUTINEADDRESS & 0xFF); // routine address
+      RamBuffer.push_back((EMULATIONROUTINEADDRESS >> 8) & 0xFF);
+      RamBuffer.push_back(0x00); // $00 bank 0
+    }
+  // Write the binary file
+  fp = fopen(fileName, "wb");
+  if (fp == NULL)
+    {
+      snprintf(m_error_str, sizeof(m_error_str),
+	       "opening file %s failed", fileName);
+      throw 1;
+      
+    }
+  for (i = 0; i < RamBuffer.size(); i++)
+    {
+      fwrite(&RamBuffer[i], 1, 1, fp);
+    }
+  fclose(fp);
 }
 
 /*
@@ -96,13 +139,17 @@ void Crecompilateur::writeRoutineVector(FILE *fp, Copcodes *popcode_list, std::v
     {
       fprintf(fp, ".DW %s\n", Patches[i].RoutineName);
     }
+  // Number of io routines
+  fprintf(fp, "\n.DEFINE NBIOROUTINES %d\n", (int)Patches.size());
+  fprintf(fp, ".DEFINE RAMBINSIZE   %d\n", 8 * (int)Patches.size());
 }
 
 /*
- * Patches a PRG Rom with BRK instructions and writes the routines in an asm file.
+ * Patches a PRG Rom with BRK or jsr instructions and writes the routines in an asm file.
  */
-int Crecompilateur::patchPrgRom(const char *outAsmName, const char *outPrgName, Cprogramlisting *plisting, Copcodes *popcode_list, CindirectJmpRuntimeLabels *pindjmp, Crom_file *prom)
+int Crecompilateur::patchPrgRom(const char *outName, Cprogramlisting *plisting, Copcodes *popcode_list, CindirectJmpRuntimeLabels *pindjmp, Crom_file *prom)
 {
+  const int                   cstrsz = 4096;
   FILE                       *fp;
   Instruction6502            *pinstr;
   unsigned char              *pPRG;
@@ -110,7 +157,8 @@ int Crecompilateur::patchPrgRom(const char *outAsmName, const char *outPrgName, 
   std::vector<t_PatchRoutine> PatchRoutines;
   int                         PRGSize;
   Cmapper                     mapper;
-
+  char                        filePath[cstrsz];
+  
   pPRG = NULL;
   try
     {
@@ -121,11 +169,12 @@ int Crecompilateur::patchPrgRom(const char *outAsmName, const char *outPrgName, 
       
       create_label_list(plisting, popcode_list);
       // Write the IO and indirect jump routines file
-      fp = fopen(outAsmName, "w");
+      snprintf(filePath, cstrsz, "%s.asm", outName);
+      fp = fopen(filePath, "w");
       if (fp == NULL)
 	{
 	  snprintf(m_error_str, sizeof(m_error_str),
-		   "opening file %s failed", outAsmName);
+		   "opening file %s failed", filePath);
 	  throw int(1);
 	}
       writeheader(fp);
@@ -177,16 +226,19 @@ int Crecompilateur::patchPrgRom(const char *outAsmName, const char *outPrgName, 
       fprintf(fp, "\n\n.ENDS\n");
       fclose(fp);
       // Write the patched PRG rom.
-      fp = fopen(outPrgName, "wb");
+      snprintf(filePath, cstrsz, "%s.bin", outName);
+      fp = fopen(filePath, "wb");
       if (fp == NULL)
 	{
 	  snprintf(m_error_str, sizeof(m_error_str),
-		   "opening file %s failed", outPrgName);
+		   "opening file %s failed", filePath);
 	  throw int(1);
 	}
       fwrite(pPRG, 1, PRGSize, fp);
       fclose(fp);
       delete[] pPRG;
+      snprintf(filePath, cstrsz, "%sRam.bin", outName);
+      writeRamRoutineBinary(filePath, PatchRoutines);
     }
   catch (int e)
     {

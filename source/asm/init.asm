@@ -33,13 +33,14 @@ Reset:
 	pld
 
 	;----------------------------------------------------------------------------
-	; Clear the sram from 8KB down to 2KB (mirrored on the nes but used as variables & buffers on the snes)s
+	; Clear the sram from 8KB down to 2KB (mirrored on the nes but used as variables & buffers on the snes)
 	ldx #$1800      ; 6k 
 eraseSnesRamLoop:
 	dex
 	dex
 	sta $0800,X
 	bne eraseSnesRamLoop
+
 	;----------------------------------------------------------------------------
 	; Clears the 2KB of ram (even the stack so this is not a routine)
 	; Uses the pattern FFFFFFFF00000000 like fceux
@@ -149,6 +150,24 @@ eraseNesRamLoop:
 	;sta HCOUNTERH
 	
 	;cli
+
+	;----------------------------------------------------------------------------
+	; Copy the emulation patching code to the ram
+	phb
+	sep #$20 ; A 8bits
+	lda #:RamEmulationCode		; Bank of the CHR data
+	pha
+	plb			; Data Bank Register = A
+	ldx #$0000
+copyRamCode:
+	lda RamEmulationCode.w,X
+	sta PatchRoutinesBuff.w,X
+	inx
+	txa
+	cmp #RAMBINSIZE
+	bne copyRamCode
+	rep #$20 ; A 16bits
+	plb
 
 	; Return to emulation mode and jump to the
 	; recompiled nes reset routine.

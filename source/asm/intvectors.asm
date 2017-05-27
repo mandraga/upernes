@@ -73,69 +73,7 @@ QuitNMI:
 ;;; put this on vblank
 
 NESIRQBRKHandler:
-	; Test if it is a BRK instruction
-	sta AccIt
-	pla
-	pha
-	and #%00010000 ; Test for bit 4 in p register
-	bne BRKinterrupt
-	lda AccIt
-	; No, jump to the original IRQ
-	BREAK
 	jmp NESIRQBRK ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called from emulation
-BRKinterrupt:
-	; Things pushed on the stack:
-	; - PC Hi
-	; - PC Lo
-	; - Status P
-	;
-	; Get the PC, and get the routine code
-	pla
-	sta Status
-	pla
-	sta RetLow
-	pla
-	sta RetHi
-	stx XiLevel1
-	; Recover the BRK parameter byte by using the direct page
-	sei         ; disable interrupts, because we do not want any interrupt in the native mode
-	clc			; native 65816 mode
-	xce
-	;
-	rep #$30		; All 16bits
-	lda RetLow
-	sec
-	sbc #$0001
-	sta SignatureLo
-	tax
-	lda $010000,X
-	and #$00FF
-	asl A			; x2 to get the routine index address (+ 0 2 4 6 in WR_OAMconversionroutines)
-	tax
-;	jmp (BRKRoutinesTable,X) ; Jump to the routine for the selected address
-	sep #$30		; All 8bits
-	lda AccIt
-	jsr (BRKRoutinesTable,X) ; Jump to the routine for the selected address
-	EMULATION
-	ldx XiLevel1
-BRKinterruptReturn:
-	; Push the stack values and return to the address without rti
-    ;BREAK
-	;
-	sta AccIt
-	; restore the bank
-	lda #$01
-	pha
-	; Restore the return address
-	lda RetHi
-	pha
-	lda RetLow
-	pha
-	lda Status
-	pha
-	plp
-	lda AccIt
-	rtl ; Return long
 
 ; Called by the Native IRQ handler
 VCountHandler:
@@ -221,5 +159,52 @@ EmptyVBlank:
     plp
     pla
     rti
+
+	
+.ENDS
+
+;-------------------------------------------------------------------------------------
+; Routine called through the ram code
+.BANK 0 SLOT 0
+.ORG    $7000
+.SECTION "Entry" SEMIFREE
+RamCodeDestPoint:
+	stx XiLevel1
+	asl
+	tax ; Get the routine address in the table
+	; Things pushed on the stack:
+	; - PC Hi
+	; - PC Lo
+	; - Status P
+	; - Acc
+	;
+	; Get the PC, and get the routine code
+	pla
+	sta AccIt
+	pla
+	sta Status
+	pla
+	sta RetLow
+	pla
+	sta RetHi
+	stx XiLevel1
+	lda AccIt
+	jsr (BRKRoutinesTable,X) ; Jump to the routine for the selected address
+	BREAK
+	ldx XiLevel1
+	sta AccIt
+	; restore the bank
+	lda #$01
+	pha
+	; Restore the return address
+	lda RetHi
+	pha
+	lda RetLow
+	pha
+	lda Status
+	pha
+	lda AccIt
+	plp
+	rtl ; Return long
 
 .ENDS

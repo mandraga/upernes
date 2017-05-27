@@ -176,7 +176,7 @@ void CindirectJmpAsmRoutines::writeIndJumproutines(FILE *fp, CindirectJmpRuntime
 		  fprintf(fp, "\txce\n");
 		  fprintf(fp, "\tlda Acc                    ; restore the Accumulator\n");
 		  if (get_indirect_jump_labelnumber(plabel_gen_list, addr, &indlabelnumber))
-		    fprintf(fp, "\tjmp $%04X  ; static jump to the indirect label\n", addr);
+		    fprintf(fp, "\tjml $01%04X  ; static jump to the indirect label in the PRG bank\n", addr);
 		    //fprintf(fp, "\tjmp indirectlabel%04d   ; static jump to the indirect label\n", indlabelnumber);
 		  else
 		    assert(false);
@@ -218,4 +218,5 @@ int  CindirectJmpAsmRoutines::create_indjump_asm_routines(const char *outname,
     }
   return 0;
 }
+
 

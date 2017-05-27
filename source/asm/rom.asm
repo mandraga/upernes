@@ -48,6 +48,8 @@ ASCIITiles:
 	.INCBIN	"data/ascii.pic"
 nes2snespalette:
 	.INCBIN "data/palette.dat"
+RamEmulationCode:
+	.INCBIN "patchedPrgRam.bin"
 .ENDS
 
 ; --------------------------------------------------------------------

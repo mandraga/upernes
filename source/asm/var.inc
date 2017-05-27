@@ -121,6 +121,8 @@
 .DEFINE TextBufferSize          1024
 ; up to $0FFF
 
+;--------------------------------------------------------------------
+.DEFINE PatchRoutinesBuff       $1000 ; This area contains the code in ram used to jump to the bank 0 and emulate IO accesses.
 
 ;--------------------------------------------------------------------
 ;               SNES VRAM defines (WORD addresses)

@@ -23,7 +23,7 @@ public:
   int re(const char *outname, Cprogramlisting *plisting,
 	 Copcodes *popcode_list, Crom_file *prom);
   t_label_list *get_label_gen_info();
-  int patchPrgRom(const char *outAsmName, const char *outPrgName, Cprogramlisting *plisting, Copcodes *popcode_list, CindirectJmpRuntimeLabels *pindjmp, Crom_file *prom);
+  int patchPrgRom(const char *outPrgName, Cprogramlisting *plisting, Copcodes *popcode_list, CindirectJmpRuntimeLabels *pindjmp, Crom_file *prom);
   
 private:
   void labelgen(t_label *plabel);
@@ -59,6 +59,7 @@ private:
   // patchPrgRom.cpp
   void patchBRK(t_pinstr pinstr, Copcodes *popcode_list, unsigned char *pPRG, unsigned int PRGSize, std::vector<t_PatchRoutine>& Routines, Cmapper *pmapper);
   void writeRoutineVector(FILE *fp, Copcodes *popcode_list, std::vector<t_PatchRoutine>& Patches);
+  void writeRamRoutineBinary(const char *fileName, std::vector<t_PatchRoutine>& Patches);
   
 public:
   char m_error_str[128];

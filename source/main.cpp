@@ -40,7 +40,6 @@ int recompile(Cprogramlisting *plisting,
   CindirectJmpAsmRoutines asr;
   const int cstrsz = 4096;
   char      path[cstrsz];
-  char      pathAsm[cstrsz];
 
   snprintf(path, cstrsz, "%s/%s", outpath, "recomp.asm");
   if (recompilateur.re(path, plisting, popcode_list, prom))
@@ -54,9 +53,8 @@ int recompile(Cprogramlisting *plisting,
       printf("Error: %s\n", asr.m_error_str);
       return 1;
     }
-  snprintf(path, cstrsz, "%s/%s", outpath, "patchedPrg.bin");
-  snprintf(pathAsm, cstrsz, "%s/%s", outpath, "patchedPrg.asm");
-  if (recompilateur.patchPrgRom(pathAsm, path, plisting, popcode_list, pindjmp, prom))
+  snprintf(path, cstrsz, "%s/%s", outpath, "patchedPrg");
+  if (recompilateur.patchPrgRom(path, plisting, popcode_list, pindjmp, prom))
     {
       printf("Error: %s\n", recompilateur.m_error_str);
       return 1;
@@ -113,7 +111,7 @@ int main(int argc, char *argv[])
   char path[] = "./opcodes.txt";
   char outpath[] = "./";
   //char ROMpath[] = "../../rom/nes/smb1.nes";
-  //char ROMpath[] = "../../rom/nes/BalloonF.nes";
+  //char ROMpath[] = "../rom/nes/BalloonF.nes";
   //char ROMpath[] = "../rom/nes/dev/ppu0/ppu0.nes";
   //char ROMpath[] = "../rom/Xevious (E).nes";
   //char ROMpath[] = "../rom/Galaga (U).nes";
