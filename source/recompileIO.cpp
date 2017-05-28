@@ -30,25 +30,40 @@
 
 void Crecompilateur::print_save(FILE *fp)
 {
-  fprintf(fp, "\tphp\n\tstx Xi\n");
+  //fprintf(fp, "\tphp\n\tstx Xi\n");
 }
 
 void Crecompilateur::print_restore(FILE *fp)
 {
-  fprintf(fp, "\tldx Xi\n\tplp\n");
+  //fprintf(fp, "\tldx Xi\n\tplp\n");
 }
 
-void Crecompilateur::AddPRGPatch(int iopaddr, Copcodes *popcode_list, Instruction6502 *pinstr, char *routineName, std::vector<t_PatchRoutine> &PatchRoutines)
+/*
+ * Takes a list of instruction accessing a port and stores the routine index if not present
+ */
+void Crecompilateur::AddPRGPatch(int iopaddr, Copcodes *popcode_list, t_pinstr pinstr, char *routineName, std::vector<t_PatchRoutine> &PatchRoutines)
 {
   t_PatchRoutine PatchR;
-
+  
   PatchR.opcode  = pinstr->opcode;
   PatchR.operand = pinstr->operand;
+  PatchR.type = write;
+  if (pinstr->opcode == 0x6C) // indirect jump
+    {
+      PatchR.type = indirectJump;
+    }
+  // FIXME it only covers lda ldx ldy but not all the possible opcodes
+  else if (pinstr->opcode == 0xAD || pinstr->opcode == 0xBD || pinstr->opcode == 0xB9 || // lda
+	   pinstr->opcode == 0xAE || pinstr->opcode == 0xBE || // ldx
+	   pinstr->opcode == 0xAC || pinstr->opcode == 0xBC)   // ldy
+    {
+      PatchR.type = read;
+    }
   snprintf(PatchR.RoutineName, LABELSZ, "%s", routineName);
   PatchRoutines.push_back(PatchR);
 }
 
-void Crecompilateur::routineSTAiop(FILE *fp, int iopaddr, Copcodes *popcode_list, Instruction6502 *pinstr, std::vector<t_PatchRoutine> &PatchRoutines)
+void Crecompilateur::routineSTAiop(FILE *fp, int iopaddr, Copcodes *popcode_list, t_pinstr pinstr, std::vector<t_PatchRoutine> &PatchRoutines)
 {
    char routine[LABELSZ];
 
@@ -64,7 +79,7 @@ void Crecompilateur::routineSTAiop(FILE *fp, int iopaddr, Copcodes *popcode_list
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }
 
-void Crecompilateur::routineSTAAbsXiop(FILE *fp, int iopaddr, Copcodes *popcode_list, Instruction6502 *pinstr, std::vector<t_PatchRoutine> &PatchRoutines)
+void Crecompilateur::routineSTAAbsXiop(FILE *fp, int iopaddr, Copcodes *popcode_list, t_pinstr pinstr, std::vector<t_PatchRoutine> &PatchRoutines)
 {
   /*
     rsta_4002AbsX:
@@ -98,7 +113,7 @@ void Crecompilateur::routineSTAAbsXiop(FILE *fp, int iopaddr, Copcodes *popcode_
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }
 
-void Crecompilateur::routineSTAAbsYiop(FILE *fp, int iopaddr, Copcodes *popcode_list, Instruction6502 *pinstr, std::vector<t_PatchRoutine> &PatchRoutines)
+void Crecompilateur::routineSTAAbsYiop(FILE *fp, int iopaddr, Copcodes *popcode_list, t_pinstr pinstr, std::vector<t_PatchRoutine> &PatchRoutines)
 {
   /*
     rsta_4002AbsY:
@@ -136,7 +151,7 @@ void Crecompilateur::routineSTAAbsYiop(FILE *fp, int iopaddr, Copcodes *popcode_
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }
 
-void Crecompilateur::routineLDAiop(FILE *fp, int iopaddr, Copcodes *popcode_list, Instruction6502 *pinstr, std::vector<t_PatchRoutine> &PatchRoutines)
+void Crecompilateur::routineLDAiop(FILE *fp, int iopaddr, Copcodes *popcode_list, t_pinstr pinstr, std::vector<t_PatchRoutine> &PatchRoutines)
 {
   char routine[LABELSZ];
 
@@ -152,7 +167,7 @@ void Crecompilateur::routineLDAiop(FILE *fp, int iopaddr, Copcodes *popcode_list
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }
 
-void Crecompilateur::routineLDXiop(FILE *fp, int iopaddr, Copcodes *popcode_list, Instruction6502 *pinstr, std::vector<t_PatchRoutine> &PatchRoutines)
+void Crecompilateur::routineLDXiop(FILE *fp, int iopaddr, Copcodes *popcode_list, t_pinstr pinstr, std::vector<t_PatchRoutine> &PatchRoutines)
 {
   char routine[LABELSZ];
 
@@ -161,14 +176,15 @@ void Crecompilateur::routineLDXiop(FILE *fp, int iopaddr, Copcodes *popcode_list
   fprintf(fp, "\tsta Acc\n");
   fprintf(fp, "\tldx #$%02X\n", 2 * PORT2INDEX(iopaddr));
   fprintf(fp, "\tjsr ldaioportroutine\n");
-  fprintf(fp, "\tsta Xi\n");
+  //fprintf(fp, "\tsta Xi\n");
+  fprintf(fp, "\tsta XiLevel1\n");
   fprintf(fp, "\tlda Acc\n");
-  fprintf(fp, "\tldx Xi		; x like if it has been loaded by a ldx\n");  
+  //fprintf(fp, "\tldx Xi		; x like if it has been loaded by a ldx\n");  
   fprintf(fp, "\trts\n");
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }
 
-void Crecompilateur::routineLDYiop(FILE *fp, int iopaddr, Copcodes *popcode_list, Instruction6502 *pinstr, std::vector<t_PatchRoutine> &PatchRoutines)
+void Crecompilateur::routineLDYiop(FILE *fp, int iopaddr, Copcodes *popcode_list, t_pinstr pinstr, std::vector<t_PatchRoutine> &PatchRoutines)
 {
   char routine[LABELSZ];
  
@@ -186,7 +202,7 @@ void Crecompilateur::routineLDYiop(FILE *fp, int iopaddr, Copcodes *popcode_list
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }
 
-void Crecompilateur::routineSTXiop(FILE *fp, int iopaddr, Copcodes *popcode_list, Instruction6502 *pinstr, std::vector<t_PatchRoutine> &PatchRoutines)
+void Crecompilateur::routineSTXiop(FILE *fp, int iopaddr, Copcodes *popcode_list, t_pinstr pinstr, std::vector<t_PatchRoutine> &PatchRoutines)
 {
   char routine[LABELSZ];
  
@@ -194,6 +210,7 @@ void Crecompilateur::routineSTXiop(FILE *fp, int iopaddr, Copcodes *popcode_list
   fprintf(fp, "\n%s:\n", routine);
   // Save status...
   print_save(fp);
+  fprintf(fp, "\tldx XiLevel1\n");
   fprintf(fp, "\tsta Acc\n");
   fprintf(fp, "\ttxa\n");
   fprintf(fp, "\tldx #$%02X\n", 2 * PORT2INDEX(iopaddr));
@@ -204,7 +221,7 @@ void Crecompilateur::routineSTXiop(FILE *fp, int iopaddr, Copcodes *popcode_list
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }
 
-void Crecompilateur::routineSTYiop(FILE *fp, int iopaddr, Copcodes *popcode_list, Instruction6502 *pinstr, std::vector<t_PatchRoutine> &PatchRoutines)
+void Crecompilateur::routineSTYiop(FILE *fp, int iopaddr, Copcodes *popcode_list, t_pinstr pinstr, std::vector<t_PatchRoutine> &PatchRoutines)
 {
   char routine[LABELSZ];
  
@@ -339,16 +356,40 @@ void Crecompilateur::outReplaceIOport(FILE *fp, t_pinstr pinstr,
   fprintf(fp, "\t;------------\n");
 }
 
-bool Crecompilateur::findinstr(const char *mnemonicstr, t_instrlist *plist, Copcodes *popcode_list, int &addressing, Instruction6502 **pinstr)
+bool Crecompilateur::isIn(t_pinstr pinstr, t_instrlist& instrList)
+{
+  std::list<t_pinstr>::iterator it;
+
+  it = instrList.begin();
+  while (it != instrList.end())
+    {
+      if ((*it)->opcode == pinstr->opcode &&
+	  (*it)->operand == pinstr->operand)
+	{
+	  return true;
+	}
+      it++;
+    }
+  return false;
+}
+
+/*
+ * Goes through the instruction list and looks for the given mnemonic
+ */
+bool Crecompilateur::findinstr(const char *mnemonicstr, t_instrlist *plist, Copcodes *popcode_list, int &addressing, t_instrlist& instrList)
 {
   t_instrlist::iterator II;
   int ret = false;
 
+  instrList.clear();
   for (II = plist->begin(), addressing = 0; II != plist->end(); II++)
     {
       if (popcode_list->is_mnemonic((*II)->opcode, mnemonicstr))
 	{
-	  *pinstr = (*II);
+	  if (!isIn((*II), instrList))
+	    {
+	      instrList.push_back((*II));
+	    }
 	  ret = true;
 	  switch (popcode_list->addressing((*II)->opcode))
 	    {
@@ -367,14 +408,22 @@ bool Crecompilateur::findinstr(const char *mnemonicstr, t_instrlist *plist, Copc
   return ret;
 }
 
+/*
+ * Writes the IO port access routines
+ *
+ * Goes through the instruction accessing the ports and prints the emulation routines.
+ */
 void Crecompilateur::writeiop_routines(FILE *fp, Cprogramlisting *plisting, Copcodes *popcode_list, std::vector<t_PatchRoutine> &PatchRoutines)
 {
   t_instrlist *plist;
   bool start = true;
   int  iopaddr;
   int  addressing;
-  Instruction6502 *pinstr;
+  t_instrlist instrList;
+  t_instrlist::iterator it;
+  t_pinstr pinstr;
 
+  // For each IO port, will give the complete list of instructions accessessing it.
   while (plisting->get_IO_accessed(start, &plist))
     {
       start = false;
@@ -382,48 +431,102 @@ void Crecompilateur::writeiop_routines(FILE *fp, Cprogramlisting *plisting, Copc
       if (iopaddr == JOYSTICK1)
 	continue ;
       // The list of accesses contains all the instructions using the IO port
-      // If found, wrtie it to the file
-      if (findinstr("lda", plist, popcode_list, addressing, &pinstr))
+      // If an instruciton is found, write his emulation routine to the file
+      if (findinstr("lda", plist, popcode_list, addressing, instrList))
 	{
-	  if (addressing & 1)
+	    it = instrList.begin();
+	    while (it != instrList.end())
+	      {
+		pinstr = *it;
+		switch (popcode_list->addressing(pinstr->opcode))
+		  {
+		  case Abs:
+		    routineLDAiop(fp, iopaddr, popcode_list, pinstr, PatchRoutines);
+		    break;
+		  case AbsX:
+		    printf("lda AbsX addressing mode non implemented\n");
+		    assert(false);
+		    break;
+		  case AbsY:
+		    printf("lda AbsY addressing mode non implemented\n");
+		    assert(false);
+		    break;
+		  };
+		it++;
+	      }
+	    assert(addressing == 1);
+	}
+      if (findinstr("ldx", plist, popcode_list, addressing, instrList))
+	{
+	  it = instrList.begin();
+	  while (it != instrList.end())
 	    {
-	      routineLDAiop(fp, iopaddr, popcode_list, pinstr, PatchRoutines);
+	      pinstr = *it;
+	      switch (popcode_list->addressing(pinstr->opcode))
+		{
+		case Abs:
+		  routineLDXiop(fp, iopaddr, popcode_list, pinstr, PatchRoutines);
+		  break;
+		case AbsY:
+		  printf("ldx AbsY addressing mode non implemented\n");
+		  assert(false);
+		  break;
+		};
+	      it++;
 	    }
 	  assert(addressing == 1);
 	}
-      else if (findinstr("ldx", plist, popcode_list, addressing, &pinstr))
+      if (findinstr("ldy", plist, popcode_list, addressing, instrList))
 	{
-  	  routineLDXiop(fp, iopaddr, popcode_list, pinstr, PatchRoutines);
+	  it = instrList.begin();
+	  while (it != instrList.end())
+	    {
+	      pinstr = *it;
+	      switch (popcode_list->addressing(pinstr->opcode))
+		{
+		case Abs:
+		  routineLDYiop(fp, iopaddr, popcode_list, pinstr, PatchRoutines);
+		  break;
+		case AbsX:
+		  printf("ldy AbsX addressing mode non implemented\n");
+		  assert(false);
+		  break;
+		};
+	      it++;
+	    }
 	  assert(addressing == 1);
 	}
-      else if (findinstr("ldy", plist, popcode_list, addressing, &pinstr))
+      if (findinstr("sta", plist, popcode_list, addressing, instrList))
 	{
-	  routineLDYiop(fp, iopaddr, popcode_list, pinstr, PatchRoutines);
+	    it = instrList.begin();
+	    while (it != instrList.end())
+	      {
+		pinstr = *it;
+		switch (popcode_list->addressing(pinstr->opcode))
+		  {
+		  case Abs:
+		    routineSTAiop(fp, iopaddr, popcode_list, pinstr, PatchRoutines);
+		    break;
+		  case AbsX:
+		    routineSTAAbsXiop(fp, iopaddr, popcode_list, pinstr, PatchRoutines);
+		    break;
+		  case AbsY:
+		    routineSTAAbsYiop(fp, iopaddr, popcode_list, pinstr, PatchRoutines);
+		    break;
+		  };
+		it++;
+	      }
+	}
+      if (findinstr("stx", plist, popcode_list, addressing, instrList))
+	{
+	  routineSTXiop(fp, iopaddr, popcode_list, *instrList.begin(), PatchRoutines);
 	  assert(addressing == 1);
 	}
-      else if (findinstr("sta", plist, popcode_list, addressing, &pinstr))
+      if (findinstr("sty", plist, popcode_list, addressing, instrList))
 	{
-	  if (addressing & 1)
-	    routineSTAiop(fp, iopaddr, popcode_list, pinstr, PatchRoutines);
-	  if (addressing & 2)
-	    routineSTAAbsXiop(fp, iopaddr, popcode_list, pinstr, PatchRoutines);
-	  if (addressing & 4)
-	    routineSTAAbsYiop(fp, iopaddr, popcode_list, pinstr, PatchRoutines);
-	}
-      else if (findinstr("stx", plist, popcode_list, addressing, &pinstr))
-	{
-	  routineSTXiop(fp, iopaddr, popcode_list, pinstr, PatchRoutines);
+	  routineSTYiop(fp, iopaddr, popcode_list, *instrList.begin(), PatchRoutines);
 	  assert(addressing == 1);
-	}
-      else if (findinstr("sty", plist, popcode_list, addressing, &pinstr))
-	{
-	  routineSTYiop(fp, iopaddr, popcode_list, pinstr, PatchRoutines);
-	  assert(addressing == 1);
-	}
-      else
-	{
-	  printf("Unsuported io port access: \n");
-	  assert(false);
 	}
     }
 }
+

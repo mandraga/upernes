@@ -110,22 +110,28 @@ int main(int argc, char *argv[])
   Copcodes *popcode_list;
   char path[] = "./opcodes.txt";
   char outpath[] = "./";
+  //#define FORCE_FILE
+#ifdef FORCE_FILE
   //char ROMpath[] = "../../rom/nes/smb1.nes";
-  //char ROMpath[] = "../rom/nes/BalloonF.nes";
+  char ROMpath[] = "../rom/nes/BalloonF.nes";
   //char ROMpath[] = "../rom/nes/dev/ppu0/ppu0.nes";
   //char ROMpath[] = "../rom/Xevious (E).nes";
   //char ROMpath[] = "../rom/Galaga (U).nes";
+#else
   char *ROMpath;
+#endif
   char *OutputPath;
   Ivideo scr;
 
+#ifndef FORCE_FILE
   if (argc > 1)
     ROMpath = argv[1];
   else
     {
       printf("Usage: upernes romname.nes [output directory]\n\n");
       return 0;
-    }
+     }
+#endif
   if (argc > 2)
     {
       OutputPath = argv[2];

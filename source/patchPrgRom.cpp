@@ -56,7 +56,7 @@ cpx
 cpy
 */
 
-#define RAMROUTINEBASEADDRESS   0x1000
+#define RAMROUTINEBASEADDRESS   0x0E00
 #define RAMROUTINESIZE          8
 // This is 0x7000 in the org directive
 #define EMULATIONROUTINEADDRESS 0xF000
@@ -73,13 +73,17 @@ void Crecompilateur::patchBRK(t_pinstr pinstr, Copcodes *popcode_list, unsigned 
   unsigned int i;
   unsigned int PRGAddress;
   unsigned int RamRoutineAddress;
-
+  unsigned long instruction;
+  bool          bRoutineFound;
+  
   PRGAddress = pmapper->cpu2prg(pinstr->addr);
+  instruction = pPRG[PRGAddress] + (pPRG[PRGAddress + 1] << 8) + (pPRG[PRGAddress + 2] << 16);
+  popcode_list->print_instruction(pinstr->addr, instruction);
   printf("%02X replaced by %02X at %04X\n", pPRG[PRGAddress], 0x4C, pinstr->addr);
   pPRG[PRGAddress] = 0x20; // JSR
   // the next 2 bytes are a code to find the proper routine.
   assert(Routines.size() < 256);
-  for (i = 0; i < Routines.size(); i++)
+  for (i = 0, bRoutineFound = false; i < Routines.size(); i++)
     {
       if (Routines[i].opcode == pinstr->opcode && Routines[i].operand == pinstr->operand)
 	{
@@ -87,8 +91,18 @@ void Crecompilateur::patchBRK(t_pinstr pinstr, Copcodes *popcode_list, unsigned 
 	  RamRoutineAddress = RAMROUTINEBASEADDRESS + i * RAMROUTINESIZE; // Address of the code in ram
 	  pPRG[PRGAddress + 1] = RamRoutineAddress & 0xFF;
 	  pPRG[PRGAddress + 2] = (RamRoutineAddress >> 8) & 0xFF;
+	  bRoutineFound = true;
 	}
     }
+  if (!bRoutineFound)
+    {
+      printf("Patch routine not found!\n");
+      assert(false);
+    }
+  //
+  instruction = pPRG[PRGAddress] + (pPRG[PRGAddress + 1] << 8) + (pPRG[PRGAddress + 2] << 16);
+  popcode_list->print_instruction(pinstr->addr, instruction);
+  printf("\n");
 }
 
 /*
@@ -128,20 +142,67 @@ void Crecompilateur::writeRamRoutineBinary(const char *fileName, std::vector<t_P
 }
 
 /*
+ * Sorts the routines byt write, read, and indirectjumps
+ */
+void Crecompilateur::sortRoutines(std::vector<t_PatchRoutine>& Patches, int& readIndex, int& indJmpIndex)
+{
+  std::vector<t_PatchRoutine> WrkPatches;
+  unsigned int i;
+
+  readIndex = 0;
+  for (i = 0; i < Patches.size(); i++)
+    {
+      if (Patches[i].type == write)
+	{
+	  WrkPatches.push_back(Patches[i]);
+	  readIndex++;
+	}
+    }
+  indJmpIndex = readIndex;
+  for (i = 0; i < Patches.size(); i++)
+    {
+      if (Patches[i].type == read)
+	{
+	  WrkPatches.push_back(Patches[i]);
+	  indJmpIndex++;
+	}
+    }
+  for (i = 0; i < Patches.size(); i++)
+    {
+      if (Patches[i].type == indirectJump)
+	{
+	  WrkPatches.push_back(Patches[i]);
+	}
+    }
+  Patches.clear();
+  Patches = WrkPatches;
+}
+
+/*
  * Writes the table of IO accesses and indirect jumps replacement.
  */
-void Crecompilateur::writeRoutineVector(FILE *fp, Copcodes *popcode_list, std::vector<t_PatchRoutine>& Patches)
+void Crecompilateur::writeRoutineVector(FILE *fp, Copcodes *popcode_list, std::vector<t_PatchRoutine>& Patches, int readIndex, int indJmpIndex)
 {
   unsigned int i;
 
   fprintf(fp, "BRKRoutinesTable:\n");
   for (i = 0; i < Patches.size(); i++)
     {
+      if (i == (unsigned int)readIndex)
+	{
+	  fprintf(fp, "ReadRoutinesTable:\n");
+	}
+      if (i == (unsigned int)indJmpIndex)
+	{
+	  fprintf(fp, "IndJumpTable:\n");
+	}
       fprintf(fp, ".DW %s\n", Patches[i].RoutineName);
     }
   // Number of io routines
   fprintf(fp, "\n.DEFINE NBIOROUTINES %d\n", (int)Patches.size());
   fprintf(fp, ".DEFINE RAMBINSIZE   %d\n", 8 * (int)Patches.size());
+  fprintf(fp, ".DEFINE READROUTINESINDEX %d\n", readIndex);
+  fprintf(fp, ".DEFINE INDJMPINDEX %d\n", indJmpIndex);
 }
 
 /*
@@ -158,7 +219,9 @@ int Crecompilateur::patchPrgRom(const char *outName, Cprogramlisting *plisting, 
   int                         PRGSize;
   Cmapper                     mapper;
   char                        filePath[cstrsz];
-  
+  int                         readIndex;
+  int                         indJmpIndex;
+    
   pPRG = NULL;
   try
     {
@@ -180,7 +243,8 @@ int Crecompilateur::patchPrgRom(const char *outName, Cprogramlisting *plisting, 
       writeheader(fp);
       writeiop_routines(fp, plisting, popcode_list, PatchRoutines);
       IndJumpsRoutines.writeIndJumproutines(fp, pindjmp, get_label_gen_info(), PatchRoutines);
-      writeRoutineVector(fp, popcode_list, PatchRoutines);
+      sortRoutines(PatchRoutines, readIndex, indJmpIndex);
+      writeRoutineVector(fp, popcode_list, PatchRoutines, readIndex, indJmpIndex);
       // Patch the rom buffer
       pinstr = plisting->get_next(true);
       while (pinstr != NULL)

@@ -122,6 +122,7 @@ void CindirectJmpAsmRoutines::AddPRGPatch(int OpAddr, char *routineName, vector<
 
   PatchR.opcode  = INDJUMPOPCODE;
   PatchR.operand = OpAddr;
+  PatchR.type = indirectJump;
   snprintf(PatchR.RoutineName, LABELSZ, "%s\n", routineName);
   Patches.push_back(PatchR);
 }
@@ -151,6 +152,7 @@ void CindirectJmpAsmRoutines::writeIndJumproutines(FILE *fp, CindirectJmpRuntime
 	  fprintf(fp, ".ACCU 16\n");
 	  sprintf(routine, "IndJmp%04X", jmpoperand);
 	  fprintf(fp, "%s:\n", routine);
+	  fprintf(fp, "\tldx XiLevel1\n");
 	  fprintf(fp, "\tsta Acc                    ; save Acc\n");
 	  fprintf(fp, "\tclc                        ; To native mode\n");
 	  fprintf(fp, "\txce\n");

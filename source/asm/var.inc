@@ -47,6 +47,8 @@
 .DEFINE SignatureHi        RAMBASE + 32 ;
 .DEFINE XiLevel1           RAMBASE + 33 ;
 
+.DEFINE JumpAddress        RAMBASE + 36 ; Stores an address in order to avoid using X
+
 ;--------------------------------------------------------------------
 ; 
 .DEFINE IOBASE	$0900
@@ -112,8 +114,6 @@
 .DEFINE SpriteMemoryBase		$0A00       ; 256 bytes
 
 .DEFINE NametableChanges        $0B00       ; 256 bytes, the changed bytes in the nametables, up to 128 names.
-.DEFINE NametableBaseBank1      $1000       ; 4KB nes nametable, updated with HDMA or DMA if more than 128 updates.
-.DEFINE NametableBaseBank2      $1800       ;
 
 ;--------------------------------------------------------------------
 ; String buffer
@@ -121,8 +121,12 @@
 .DEFINE TextBufferSize          1024
 ; up to $0FFF
 
+.DEFINE PatchRoutinesBuff       $0E00 ; This area contains the code in ram used to jump to the bank 0 and emulate IO accesses.
+
 ;--------------------------------------------------------------------
-.DEFINE PatchRoutinesBuff       $1000 ; This area contains the code in ram used to jump to the bank 0 and emulate IO accesses.
+
+.DEFINE NametableBaseBank1      $1000       ; 4KB nes nametable, updated with HDMA or DMA if more than 128 updates.
+.DEFINE NametableBaseBank2      $1800       ;
 
 ;--------------------------------------------------------------------
 ;               SNES VRAM defines (WORD addresses)

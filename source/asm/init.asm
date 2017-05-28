@@ -168,6 +168,10 @@ copyRamCode:
 	bne copyRamCode
 	rep #$20 ; A 16bits
 	plb
+	lda #$00
+	sta JumpAddress
+	sta JumpAddress + 1
+	sta JumpAddress + 2
 
 	; Return to emulation mode and jump to the
 	; recompiled nes reset routine.
@@ -175,8 +179,8 @@ copyRamCode:
 	; Data bank is bank 1 containing original source code
 	; Program bank is 0 contains recompiled source code
 	; Bank 2 is chr data 
-	sep #$30		;  All 8bits
-	lda #$01
+	sep #$30		; All 8bits
+	lda #$01        ; Data bank
 	pha
 	plb
 	; Set 6502 emulation mode

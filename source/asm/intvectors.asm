@@ -57,7 +57,7 @@ DMAUpdateHandler:
 	;rep #$20    ; A 16bits
 	;sta TMPVCOUNTL + 2
 	
-	;BREAK2 ; something is wrong if removed
+	BREAK2 ; something is wrong if removed
 	jsr UpdatePalettes
 	jsr UpdateBackgrounds       ; Copy changed bytes to the VRAMdddfffgcxcvsfgggcxxxcv
 	; If the nes nmi is enables, call it
@@ -169,7 +169,54 @@ EmptyVBlank:
 .ORG    $7000
 .SECTION "Entry" SEMIFREE
 RamCodeDestPoint:
+	BREAK
+	
 	stx XiLevel1
+	
+	cmp #READROUTINESINDEX
+	bcc StoreRoutine ; Acc < index
+	cmp #INDJMPINDEX
+	bcs IndJumpRoutine ;  Acc >= index
+ReadRoutine:
+	asl
+	tax ; Get the routine address in the table
+	; Things pushed on the stack:
+	; - PC Hi
+	; - PC Lo
+	; - Status P
+	; - Acc
+	;
+	; Get the PC, and get the routine code
+	pla
+	;sta AccIt
+	pla
+	sta Status
+	pla
+	sta RetLow
+	pla
+	sta RetHi
+	;lda AccIt
+	jsr (BRKRoutinesTable,X) ; Jump to the routine for the selected address
+	ldx XiLevel1
+	sta AccIt
+	; restore the bank
+	lda #$01
+	pha
+	; Restore the return address
+	lda RetHi
+	pha
+	lda RetLow
+	pha
+	lda Status
+	pha
+	lda AccIt
+	BREAK
+	nop
+	plp
+	ora #$00 ; Update the flags
+	rtl ; Return long
+
+StoreRoutine:
 	asl
 	tax ; Get the routine address in the table
 	; Things pushed on the stack:
@@ -187,12 +234,10 @@ RamCodeDestPoint:
 	sta RetLow
 	pla
 	sta RetHi
-	stx XiLevel1
-	lda AccIt
+	lda AccIt    ; Could be an sta
+	;ldx XiLevel1 ; Could be an stx
 	jsr (BRKRoutinesTable,X) ; Jump to the routine for the selected address
-	BREAK
 	ldx XiLevel1
-	sta AccIt
 	; restore the bank
 	lda #$01
 	pha
@@ -204,7 +249,31 @@ RamCodeDestPoint:
 	lda Status
 	pha
 	lda AccIt
+	BREAK
 	plp
 	rtl ; Return long
 
+	; Remove the data of the jsr call from the stack and jump to the routine
+IndJumpRoutine:
+	BREAK
+	nop
+	nop
+	nop
+	nop
+	asl
+	;sta JumpAddress
+	tax ; Get the routine address in the table
+	pla ; Acc
+	sta AccIt
+	pla ; Status
+	sta Status
+	pla ; RetLow
+	pla ; RetHi
+	lda Status
+	pha
+	lda AccIt
+	plp
+	jmp (BRKRoutinesTable,X) ; Jump to the routine for the selected address, X needs to be restored in the routine
+
 .ENDS
+
