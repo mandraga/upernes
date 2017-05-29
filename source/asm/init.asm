@@ -163,8 +163,11 @@ copyRamCode:
 	lda RamEmulationCode.w,X
 	sta PatchRoutinesBuff.w,X
 	inx
+	lda RamEmulationCode.w,X
+	sta PatchRoutinesBuff.w,X
+	inx
 	txa
-	cmp #RAMBINSIZE
+	cmp #RAMBINWSIZE
 	bne copyRamCode
 	rep #$20 ; A 16bits
 	plb

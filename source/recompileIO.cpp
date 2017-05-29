@@ -100,6 +100,7 @@ void Crecompilateur::routineSTAAbsXiop(FILE *fp, int iopaddr, Copcodes *popcode_
   // Save status...
   print_save(fp);
   // Put the io port somewhere
+  fprintf(fp, "\tldx XiLevel1\n");
   fprintf(fp, "\tsta Acc\n");
   fprintf(fp, "\ttxa\n");
   fprintf(fp, "\tasl A\n");

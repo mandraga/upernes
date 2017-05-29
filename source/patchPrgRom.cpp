@@ -117,6 +117,7 @@ void Crecompilateur::writeRamRoutineBinary(const char *fileName, std::vector<t_P
   for (i = 0; i < Patches.size(); i++)
     {
       RamBuffer.push_back(0x08); // PHP
+      //RamBuffer.push_back(0x78); // SEI
       RamBuffer.push_back(0x48); // PHA
       RamBuffer.push_back(0xA9); // LDA immediate
       RamBuffer.push_back(i & 0xFF); // Routine index
@@ -184,6 +185,7 @@ void Crecompilateur::sortRoutines(std::vector<t_PatchRoutine>& Patches, int& rea
 void Crecompilateur::writeRoutineVector(FILE *fp, Copcodes *popcode_list, std::vector<t_PatchRoutine>& Patches, int readIndex, int indJmpIndex)
 {
   unsigned int i;
+  unsigned int size;
 
   fprintf(fp, "BRKRoutinesTable:\n");
   for (i = 0; i < Patches.size(); i++)
@@ -200,7 +202,9 @@ void Crecompilateur::writeRoutineVector(FILE *fp, Copcodes *popcode_list, std::v
     }
   // Number of io routines
   fprintf(fp, "\n.DEFINE NBIOROUTINES %d\n", (int)Patches.size());
-  fprintf(fp, ".DEFINE RAMBINSIZE   %d\n", 8 * (int)Patches.size());
+  size = RAMROUTINESIZE * (int)Patches.size();
+  fprintf(fp, ".DEFINE RAMBINSIZE   %d\n", size);
+  fprintf(fp, ".DEFINE RAMBINWSIZE  %d\n", size / 2);
   fprintf(fp, ".DEFINE READROUTINESINDEX %d\n", readIndex);
   fprintf(fp, ".DEFINE INDJMPINDEX %d\n", indJmpIndex);
 }
