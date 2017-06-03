@@ -177,7 +177,8 @@ ClearPPUEmuBuffer:
 ClearAttrmem:
    dex
    dex
-   sta Attributebuffer,X
+   sta Attributebuffer1,X
+   sta Attributebuffer2,X
    bne ClearAttrmem
    ; Palette
    ldx #PalettebufferSz

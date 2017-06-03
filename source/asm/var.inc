@@ -102,8 +102,7 @@
 .DEFINE Printfbuffer            IOBASE + 32  ; 16bytes for the printf parameters
 .DEFINE PrintfbufferSz          16
 
-.DEFINE Attributebuffer         IOBASE + 48  ; 64bytes to store the attributes to do the reads
-.DEFINE AttributebufferSz       64
+;.DEFINE EMPTYA                 IOBASE + 48  ; 64bytes unused
 
 .DEFINE Palettebuffer           IOBASE + 112 ; 2 x 16bytes to store the palettes to do the reads and conversions during NMI
 .DEFINE PalettebufferSz         32
@@ -127,6 +126,12 @@
 
 .DEFINE NametableBaseBank1      $1000       ; 4KB nes nametable, updated with HDMA or DMA if more than 128 updates.
 .DEFINE NametableBaseBank2      $1800       ;
+
+.DEFINE Attributebuffer1        $1780 ; 64bytes to store the attributes to do the reads
+.DEFINE Attributebuffer2        $17C0 ; 64bytes to store the attributes of bank 2
+.DEFINE AttributebufferSz       64
+
+.DEFINE AttributePrecalc        $1F80 ; 128Bytes to precalculate the Attribute @ nes to snes conversion
 
 ;--------------------------------------------------------------------
 ;               SNES VRAM defines (WORD addresses)

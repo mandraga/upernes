@@ -750,10 +750,57 @@ AttrtableW:
 	sbc #$C0
 	and #$3F        ; Protect against overflow
 	tax
+	lda PPUmemaddrH
+	and #$04 ; Look at bit 2 for BANK 1 or 2
+	beq AttBank1W
+AttBank2W:
 	tya
-	sta Attributebuffer,X
+	sta Attributebuffer2,X
+	jsr ppuAddToVram
+	rep #$10        ; X Y are 16bits
+	tya
+	asl A			; Attibute palette are at bits 2 3 4 on snes, so shift the data.
+	asl A
+	and #$0C		; 00
+	ldx attributeaddr
+	sta NametableBaseBank2+1,X    ; Store the value in the ram buffer
+	sta NametableBaseBank2+3,X
+	sta NametableBaseBank2+65,X   ; the line below
+	sta NametableBaseBank2+67,X
+	tya
+	and #$0C		; 11
+	sta NametableBaseBank2+5,X    ; Store the value in the ram buffer
+	sta NametableBaseBank2+7,X
+	sta NametableBaseBank2+69,X
+	sta NametableBaseBank2+71,X
+	;; Lower 2 x 4 tiles
+	tya
+	lsr A
+	lsr A
+	and #$0C		; 22
+	sta NametableBaseBank2+129,X  ; Store the value in the ram buffer
+	sta NametableBaseBank2+131,X
+	sta NametableBaseBank2+193,X
+	sta NametableBaseBank2+195,X
+	;
+	tya
+	lsr A
+	lsr A
+	lsr A
+	lsr A
+	and #$0C		; 33
+	sta NametableBaseBank2+133,X  ; Store the value in the ram buffer
+	sta NametableBaseBank2+135,X
+	sta NametableBaseBank2+197,X
+	sta NametableBaseBank2+199,X
+	jsr IncPPUmemaddrL
+	RETW
+	
+AttBank1W:
+	tya
+	sta Attributebuffer1,X
 	; Translate the address
-	;lda AttrAddressTranslation,X ; Could be quicker with a 128bit table in wram
+	;lda AttrAddressTranslation,X ; Could be quicker with a 2*128byte table in wram
 	;tax
 	;sta attributeaddr
 	;tya
@@ -899,7 +946,15 @@ AttrtableR:
 	sbc #$C0
 	and #$3F
 	tax
-	lda Attributebuffer,X
+	lda PPUmemaddrH
+	and #$04 ; Look at bit 2 for BANK 1 or 2
+	beq AttBank1R
+AttBank2R:
+	lda Attributebuffer2,X
+	jsr IncPPUmemaddrL
+	jmp AttrtableRend
+AttBank1R:
+	lda Attributebuffer1,X
 	jsr IncPPUmemaddrL
 	jmp AttrtableRend
 LatchedAttrValue:
