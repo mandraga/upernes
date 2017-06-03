@@ -544,7 +544,7 @@ WPPUMEMADDR:
 	lda PPUmemaddrH
 	;; Find the address range
 	cmp #$20		     ; On the nes, below $2000, it is CHR data
-	bcc CHRdata          ; A < #$20, prepare an empty routine
+	bcc CHRdata          ; A < #$20
 	cmp #$30
 	bcs afternametablesj ; A >= #$30  Past $3000 empty or palette
 	;; #$20 <= @ < #$30
@@ -652,7 +652,7 @@ SetNametableOffset:
 	pha
 	rep #$20		; A 16bits
 	lda PPUmemaddrL
-	and #$07FF		; Lower address value
+	and #$03FF		; Lower address value
 	asl             ; word adress
 	; The adress is in word count (should be $(3/7)000 to $(3/7)003F)
 	sta NameAddresL
@@ -874,9 +874,18 @@ NametableW:
 	rep #$10        ; X Y are 16bits
 	;BREAK
 	; Store the byte
-	
+
 	jsr SetNametableOffset
 	ldx NameAddresL
+	pha
+	lda PPUmemaddrH
+	and #$04 ; Look at bit 2 for BANK 1 or 2
+	beq NameBank1W
+	pla
+	sta NametableBaseBank2,X
+	jmp NoMoreUpdates
+NameBank1W:
+	pla
 	sta NametableBaseBank1,X   ; Write to VRAM. This is the lower nametable byte, the character code number.
 	; If room is available for a HDMA transfer, store the word to be updated
 	;tay
@@ -972,7 +981,16 @@ NametableR:
 	; Store the byte
 	jsr SetNametableOffset
 	ldx NameAddresL
+	; Bank selection
+	lda PPUmemaddrH
+	and #$04 ; Look at bit 2 for BANK 1 or 2
+	beq NameBank1R
+NameBank2R:
+	lda NametableBaseBank2,X
+	jmp NameBankREnd
+NameBank1R:
 	lda NametableBaseBank1,X
+NameBankREnd:	
 	tax
 	; Increment the PPU address
 	jsr IncPPUmemaddrL
