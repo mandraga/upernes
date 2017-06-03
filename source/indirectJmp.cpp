@@ -251,8 +251,8 @@ void CindirectJmpRuntimeLabels::writeheader(FILE *fp, Crom_file *rom)
   fprintf(fp, "## will halt the recompiled rom and display the address.\n");
   fprintf(fp, "#\n");
   fprintf(fp, "# IndirectJump: $06\n");
-  fprintf(fp, "# addr  $3201\n");
-  fprintf(fp, "# addr  $324E\n");
+  fprintf(fp, "# addr: $3201\n");
+  fprintf(fp, "# addr: $324E\n");
   fprintf(fp, "#\n");
   fprintf(fp, "# jmp ($06): $06 is the direct page address of the 16bit address to jump.\n");
   fprintf(fp, "# $3201 and $324E are two addresses where it has jumped during\n");

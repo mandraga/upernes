@@ -4,7 +4,8 @@ enum
     noreplace,
     replaceBackupRam,
     replaceIOPort,
-    replaceJumpIndirect
+    replaceJumpIndirect,
+    shityOpcode
   };
 
 enum patchType

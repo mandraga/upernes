@@ -26,6 +26,9 @@
 
 ;; --------------------------------------------------------------------
 ; PRG
+
+.include "romprg.asm"
+
 ; defined in romprg.asm dynamicly writen by upernes
 ;.BANK 1 SLOT 0
 ;.ORG 0

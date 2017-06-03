@@ -145,6 +145,26 @@ void Cprogramlisting::insert_branch(int jmpaddr, int destaddr)
   instr->pbranches->push_front(jmpinstr);
 }
 
+// When an opcode is in fact in the operands of another opcode, because of the bit trick in smb1,
+// the instruction will not be updated and kept at -1. Because his memory area is already decoded as 'bit' operands.
+// A correct way of doing it would be to decode each byte per address.
+// But because the code is patched and not recompiled, this is not mandatory.
+void Cprogramlisting::removeNonUpdateOpcodes()
+{
+  t_instrlist::iterator II;
+
+  for (II = m_listing.begin(); II != m_listing.end();)
+    {
+      if ((*II)->opcode == -1)
+	{
+	  printf("Removed an opcode at $%04X (probably a bit trick)\n", (*II)->addr);
+	  II = m_listing.erase(II);
+	}
+      else
+	II++;
+    }
+}
+
 // Partial execution
 int Cprogramlisting::update_state(int addr, Ccpu6502 cpustate)
 {

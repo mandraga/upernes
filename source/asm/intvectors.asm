@@ -57,7 +57,7 @@ DMAUpdateHandler:
 	;rep #$20    ; A 16bits
 	;sta TMPVCOUNTL + 2
 	
-	;BREAK2 ; something is wrong if removed
+	BREAK2 ; something is wrong if removed
 	jsr UpdatePalettes
 	jsr UpdateBackgrounds       ; Copy changed bytes to the VRAMdddfffgcxcvsfgggcxxxcv
 	; If the nes nmi is enables, call it
@@ -170,9 +170,7 @@ EmptyVBlank:
 .SECTION "Entry" SEMIFREE
 RamCodeDestPoint:
 	BREAK
-	
 	stx XiLevel1
-	
 	cmp #READROUTINESINDEX
 	bcc StoreRoutine ; Acc < index
 	cmp #INDJMPINDEX

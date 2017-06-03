@@ -57,6 +57,10 @@ void Crecompilateur::strprintoperandlabel(t_pinstr pinstr, Copcodes *popcode_lis
   t_label *labelptr;
 
   labelptr = findlabel(pinstr->branchaddr);
+  if (labelptr == NULL)
+    {
+      return ; // Case of the branch in the bit operand corresponding to another instruction
+    }
   assert(labelptr != NULL);
   assert(pinstr->opcode != 0x6C);  // indirect jump in another function
   if (popcode_list->is_mnemonic(pinstr->opcode, "jsr"))

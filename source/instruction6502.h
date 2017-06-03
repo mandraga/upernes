@@ -47,6 +47,7 @@ public:
 
   void insert(int opcode, int operand, int addr, int vectstart);
   void insert_branch(int jmpaddr, int destaddr);
+  void removeNonUpdateOpcodes();
   Instruction6502 *find_instr(int addr);
 
   void print_listing(Copcodes *pops);

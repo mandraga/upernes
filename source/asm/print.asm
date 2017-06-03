@@ -97,9 +97,10 @@ endindjmp:
 	sta $0000, Y
 	ldy #Printfbuffer
 	SetCursorPos  1, 1
-	PrintString "Unknown indirect jump:\n jmp ($%x%x) to @ $%x%x"  ; higher byte of A
+	;PrintString "Unknown indirect jump:\n jmp ($%x%x) to @ $%x%x"  ; higher byte of A
+	PrintString "\n jmp ($%x%x) to @ $%x%x"  ; higher byte of A
 	;; Enable BG3 and BG1
-	lda #%00000101	        ; Turn on BG1 and BG3
+	lda #%00000100	        ; Turn on BG1 and BG3
 	sta TM
     lda #$18
     sta BG3SC

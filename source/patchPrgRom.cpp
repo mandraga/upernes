@@ -225,6 +225,8 @@ int Crecompilateur::patchPrgRom(const char *outName, Cprogramlisting *plisting, 
   char                        filePath[cstrsz];
   int                         readIndex;
   int                         indJmpIndex;
+  bool                        bnesIRQVect;
+  bool                        bnesNMIVect;
     
   pPRG = NULL;
   try
@@ -250,6 +252,7 @@ int Crecompilateur::patchPrgRom(const char *outName, Cprogramlisting *plisting, 
       sortRoutines(PatchRoutines, readIndex, indJmpIndex);
       writeRoutineVector(fp, popcode_list, PatchRoutines, readIndex, indJmpIndex);
       // Patch the rom buffer
+      bnesIRQVect = bnesNMIVect = false;
       pinstr = plisting->get_next(true);
       while (pinstr != NULL)
 	{
@@ -262,10 +265,12 @@ int Crecompilateur::patchPrgRom(const char *outName, Cprogramlisting *plisting, 
 	    case nmistart:
 	      // Label of the non maskable interrupt routine
 	      fprintf(fp, "\n.DEFINE NESNMI     $01%04X", pinstr->addr);
+	      bnesNMIVect = true;
 	      break;
 	    case irqbrkstart:
       	      // Label of the IRQ/BRK interrupt routine
 	      fprintf(fp, "\n.DEFINE NESIRQBRK  $01%04X", pinstr->addr);
+	      bnesIRQVect = true;
 	      break;
 	    case novector:
 	    default:
@@ -290,7 +295,15 @@ int Crecompilateur::patchPrgRom(const char *outName, Cprogramlisting *plisting, 
 	      break;
 	    };
 	  pinstr = plisting->get_next(false);
-	}      
+	}
+      if (!bnesNMIVect)
+	{
+	  fprintf(fp, "\n.DEFINE NESNMI     $%04X", 0); // Empty
+	}
+      if (!bnesIRQVect)
+	{
+	  fprintf(fp, "\n.DEFINE NESIRQBRK  $%04X", 0); // Empty
+	}
       fprintf(fp, "\n\n.ENDS\n");
       fclose(fp);
       // Write the patched PRG rom.

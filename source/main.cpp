@@ -112,8 +112,8 @@ int main(int argc, char *argv[])
   char outpath[] = "./";
   //#define FORCE_FILE
 #ifdef FORCE_FILE
-  //char ROMpath[] = "../../rom/nes/smb1.nes";
-  char ROMpath[] = "../rom/nes/BalloonF.nes";
+  char ROMpath[] = "../../rom/nes/smb1.nes";
+  //char ROMpath[] = "../rom/nes/BalloonF.nes";
   //char ROMpath[] = "../rom/nes/dev/ppu0/ppu0.nes";
   //char ROMpath[] = "../rom/Xevious (E).nes";
   //char ROMpath[] = "../rom/Galaga (U).nes";

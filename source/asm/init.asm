@@ -5,7 +5,6 @@
 .include "cartridge.inc"
 
 .include "rom.asm"
-.include "romprg.asm"
 .include "patchedPrg.asm"
 .include "CHR.asm"
 .include "PaletteUpdate.asm"
@@ -155,10 +154,12 @@ eraseNesRamLoop:
 	; Copy the emulation patching code to the ram
 	phb
 	sep #$20 ; A 8bits
+	rep #$10 ; X Y are 16bits
 	lda #:RamEmulationCode		; Bank of the CHR data
 	pha
 	plb			; Data Bank Register = A
 	ldx #$0000
+	ldy #$0000
 copyRamCode:
 	lda RamEmulationCode.w,X
 	sta PatchRoutinesBuff.w,X
@@ -166,11 +167,11 @@ copyRamCode:
 	lda RamEmulationCode.w,X
 	sta PatchRoutinesBuff.w,X
 	inx
-	txa
+	iny
+	tya
 	cmp #RAMBINWSIZE
 	bne copyRamCode
-	rep #$20 ; A 16bits
-	plb
+	plb ; Restore the data bank
 	lda #$00
 	sta JumpAddress
 	sta JumpAddress + 1

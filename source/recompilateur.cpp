@@ -108,7 +108,7 @@ int Crecompilateur::isreplaced(t_pinstr pinstr, Copcodes *popcode_list)
     {
       addressing = popcode_list->addressing(pinstr->opcode);
       fprintf(stderr, "Wrong address and opcode $%4X at $%4X!!!! FIXME rom code confusion?\n", pinstr->opcode, pinstr->addr);
-      return 80;
+      return shityOpcode;
     }
   //assert (addressing >= 0);
   switch (addressing)
@@ -196,6 +196,9 @@ int Crecompilateur::re(const char *outname, Cprogramlisting *plisting,
 	      break;
 	    case replaceJumpIndirect:
 	      outReplaceJumpIndirect(fp, pinstr, popcode_list);
+	      break;
+	    case shityOpcode:
+	      printf("shitty opcode at $%04X!!\n", pinstr->addr);
 	      break;
 	    default:
 	      break;

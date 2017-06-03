@@ -63,7 +63,7 @@ textcpy:
     stz MDMAEN	      ;Clear the DMA control register
 	ldx #TextBuffer
     stx DMA1A1SRCL	  ;Store the data offset into DMA source offset
-	ldy #$0400        ; 1k
+	ldy #$0200        ; 512bytes
 	sty DMA1SZL 	  ;Store the size of the data block
 	lda #$00
     sta DMA1A1SRCBNK  ;Store the data bank of the source data
@@ -97,7 +97,7 @@ textcpy:
 	lda #$14
 	sta VMADDH
 	; Counters
-	ldy #$0400		; Total number of tiles 32x32, 1024 tiles for a screen
+	ldy #$0200		; Total number of tiles 32x32, 1024 tiles for a screen but we use 512 to save ram
 	ldx #$0000
 BG3strloop:
 	lda TextBuffer.w,X	; Ascii tile number

@@ -52,6 +52,11 @@ int  Copcodes::op_call_size(unsigned char opcode)
 
 bool Copcodes::is_mnemonic(unsigned char opcode, const char *mnemonic)
 {
+  if (!is_valid(opcode))
+    {
+      printf("Copcodes::is_mnemonic Invalid opcode %02X.\n", opcode);
+      return false;
+    }
   return (strncmp(m_pop2mnemonic[opcode]->mnemonic, mnemonic, MNEMONIC_STR_SZ) == 0);
 }
 

@@ -135,7 +135,9 @@ int Cdisasm::get_next_instruction(unsigned long *instruction,
       else
 	{
 	  // Problem: a jump in the middle of a previous instruction
-	  assert(pexplore[cpu2prg(m_cur_addr)] == enArgs);
+	  assert(pexplore[cpu2prg(m_cur_addr)] == enArgs); // The exploration buffer says that this address was the arguments of a previous opcode
+	  // It could be because of the bit trick to jump over an lda ldy ldx, where lda #04 it the operand of the previous bit
+	  // depending on where the jump goes.
 	  return (JUMP_stack_sz > 0? middleofapreviousinstruction : stopdisasm);
 	}
     }
@@ -356,7 +358,7 @@ int Cdisasm::disasm(Copcodes *pops, Crom_file *prom, CindirectJmpRuntimeLabels *
       printf("Error: %s\n", pindjmp->m_error_str);
       return 1;
     }
-
+  m_listing.removeNonUpdateOpcodes(); // bit trick to jump opver ldy are not updated (opcode == -1)
   copy_to_bitmap(&m_img, 30, 30);
   update_screen();
   //m_listing.print_listing(pops);
