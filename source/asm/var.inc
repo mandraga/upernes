@@ -102,7 +102,12 @@
 .DEFINE Printfbuffer            IOBASE + 32  ; 16bytes for the printf parameters
 .DEFINE PrintfbufferSz          16
 
-;.DEFINE EMPTYA                 IOBASE + 48  ; 64bytes unused
+.DEFINE SprCHRB1                 0
+.DEFINE SprCHRB2                 1
+.DEFINE SprCHRInit               2
+.DEFINE SpriteCHRChg            IOBASE + 48  ; Sprite chr has not changed
+
+; 63 unused bytes
 
 .DEFINE Palettebuffer           IOBASE + 112 ; 2 x 16bytes to store the palettes to do the reads and conversions during NMI
 .DEFINE PalettebufferSz         32

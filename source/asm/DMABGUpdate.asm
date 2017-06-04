@@ -42,7 +42,7 @@ UpdateBackgrounds:
     lda #$04	;Initiate the DMA2 transfer
     sta MDMAEN
 	
-jmp labs
+;jmp labs
 	stz MDMAEN	;Clear the DMA control register
 
 	ldx #$1800

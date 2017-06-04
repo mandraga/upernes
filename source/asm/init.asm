@@ -132,6 +132,8 @@ eraseNesRamLoop:
 	stz UpdatePalette
 	jsr InitUpdateFlags
 	stz PPUReadLatch
+	lda #SprCHRInit
+	sta SpriteCHRChg
 
 	
 	;lda SNESNMITMP

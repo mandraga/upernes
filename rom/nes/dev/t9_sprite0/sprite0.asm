@@ -181,7 +181,7 @@ loopLikeSuperMario:
 ; Nmi with sprite zero like in super mario
 NMI:
 	jsr DISABLENMI
-
+	
 	lda #$02		; Sprite table at 512 (2 * $100)
 	sta DMAACCESS	; start the transfert
 

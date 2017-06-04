@@ -127,6 +127,7 @@ IORroutinestable:
 ;       |   7 | VBlank Enable, 1 = generate interrupts on VBlank.
 
 WPPUC1:
+	BREAK
 	sep #$30		; All 8 bit
 	sta PPUcontrolreg1      ; Save the written value
 	;; ------------------------------------------
@@ -148,6 +149,12 @@ endnametableaddress:
 	lda #$08
 	bit PPUcontrolreg1	; test bit 3 (#$08), zero if not set ("bit and" result)
 	bne Spritesinsecondbank
+	; Do not update the bank all the time, only if it changes
+	lda SpriteCHRChg
+	cmp #SprCHRB1
+	beq Spritebankend
+	lda #SprCHRB1
+	sta SpriteCHRChg
 	;; Do a conversion in the WRAM and then a DMA transfert to $0000 in vram
 	lda #$00		;; TODO use a table to organise the sprite buffers as a cache
 	ldy #$00
@@ -155,6 +162,13 @@ endnametableaddress:
 	jsr DMA_WRAMtoVRAM_sprite_bank
 	jmp Spritebankend
 Spritesinsecondbank:
+	; Update the bank
+	lda SpriteCHRChg
+	cmp #SprCHRB2
+	beq Spritebankend
+	lda #SprCHRB2
+	sta SpriteCHRChg
+	; Bank 2 update
 	lda #$01
 	ldy #$01
 	jsr NesSpriteCHRtoWram
@@ -200,7 +214,8 @@ novblank:
 	; Vblank interrupt disabled
 	stz NESNMIENABLED	
 	lda SNESNMITMP
-	and #$7F
+	;and #$7E
+	and #$00    ; Try to limitate the effect
 	sta NMITIMEN
 	sta SNESNMITMP
 vblankend:
@@ -1016,7 +1031,6 @@ paletteR:
 
 CHRDataR:
 	sep #$30		; All 8bit
-	BREAK
 	lda PPUReadLatch
 	bne LatchedCHRDataValue
 	sep #$20		; mem/A = 8 bit

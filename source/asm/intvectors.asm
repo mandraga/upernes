@@ -169,7 +169,6 @@ EmptyVBlank:
 .ORG    $7000
 .SECTION "Entry" SEMIFREE
 RamCodeDestPoint:
-	BREAK
 	stx XiLevel1
 	cmp #READROUTINESINDEX
 	bcc StoreRoutine ; Acc < index
@@ -208,8 +207,8 @@ ReadRoutine:
 	lda Status
 	pha
 	lda AccIt
-	BREAK
-	nop
+	;BREAK
+	;nop
 	plp
 	ora #$00 ; Update the flags
 	rtl ; Return long
@@ -247,17 +246,12 @@ StoreRoutine:
 	lda Status
 	pha
 	lda AccIt
-	BREAK
+	;BREAK
 	plp
 	rtl ; Return long
 
 	; Remove the data of the jsr call from the stack and jump to the routine
 IndJumpRoutine:
-	BREAK
-	nop
-	nop
-	nop
-	nop
 	asl
 	;sta JumpAddress
 	tax ; Get the routine address in the table
