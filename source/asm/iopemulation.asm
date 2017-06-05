@@ -133,13 +133,14 @@ WPPUC1:
 	;; ------------------------------------------
 	;; Test Nametable @ bits
 	;; Mirroring is the default value. FIXME add cartridge nametables?
-	and #$01
-	beq firstnametableaddress  ; If zero flag then it it the first nametable
-    lda #$74                ; (1k word segment $7400 / $400)=$1D << 2
-	ora #$01                ; Right screen following the first one
-    sta BG1SC
-	jmp endnametableaddress
-firstnametableaddress:	
+	;and #$01
+	;beq firstnametableaddress  ; If zero flag then it it the first nametable
+    ;lda #$74                ; (1k word segment $7400 / $400)=$1D << 2
+	;ora #$01	; Right screen following the first one
+    ;sta BG1SC
+	;jmp endnametableaddress
+firstnametableaddress:
+	; Always on bank 0 and add this bit to the scrolling ergister
     lda #$70                ; (1k word segment $7000 / $400)=$1C << 2
 	ora #$01                ; Right screen following the first one
     sta BG1SC
@@ -520,9 +521,17 @@ vertical_scroll:
 	stz BG1VOFS 		    ; High byte is 0
 	jmp chgscrollregister
 horizontal_scroll:
-	txa
-	sta BG1HOFS		        ; This register must be written twice
-	stz BG1HOFS 		    ; High byte is 0
+	sep #$30		; All 8b
+	BREAK
+	;swa
+	lda PPUcontrolreg1
+	and #$01
+	;swa
+	;rep #$20 ; A 16bits
+	;sta BG1HOFS
+	;sep #$30 ; All 8b
+	stx BG1HOFS		        ; This register must be written twice
+	sta BG1HOFS 		    ; High byte's lower bit comes from PPU control 1 lower bit when scrolling horizontally
 ignorescrollvalue:          ; ignore the value but change the register state
 chgscrollregister:
 	lda CurScrolRegister
@@ -935,7 +944,6 @@ paletteW:
 	sta Palettebuffer,Y
 	; Test for index 0 mirroring
 	lda PPUmemaddrL
-	BREAK
 	and #$1F
 	cmp #$10  ; using $3FC0 as a mirror port makes the screen black in SMB1, it must be a masked color... http://wiki.nesdev.com/w/index.php/PPU_palettes
 	beq UpdateAllMirrorColors
