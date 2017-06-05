@@ -127,7 +127,7 @@ IORroutinestable:
 ;       |   7 | VBlank Enable, 1 = generate interrupts on VBlank.
 
 WPPUC1:
-	BREAK
+	;BREAK
 	sep #$30		; All 8 bit
 	sta PPUcontrolreg1      ; Save the written value
 	;; ------------------------------------------
@@ -933,6 +933,12 @@ paletteW:
 	tay
 	txa
 	sta Palettebuffer,Y
+	; Test for index 0 mirroring
+	lda PPUmemaddrL
+	BREAK
+	and #$1F
+	cmp #$10  ; using $3FC0 as a mirror port makes the screen black in SMB1, it must be a masked color... http://wiki.nesdev.com/w/index.php/PPU_palettes
+	beq UpdateAllMirrorColors
 	; Indicate a change in this palette
 	tya
 	lsr A
@@ -954,6 +960,21 @@ endwpumem:
 changewrfunction:
 	jmp emptyrange
 
+	; The first palette index is mirrored on every palette
+UpdateAllMirrorColors:
+	sep #$30
+	txa
+	sta Palettebuffer
+	sta Palettebuffer + 4
+	sta Palettebuffer + 8
+	sta Palettebuffer + 12
+	sta Palettebuffer + 16
+	sta Palettebuffer + 20
+	sta Palettebuffer + 24
+	sta Palettebuffer + 28
+	lda #$FF
+	sta UpdatePalette
+	jmp	endwpumem
 
 ;----------------------------------------------------------------------
 ; 

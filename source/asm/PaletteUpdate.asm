@@ -13,7 +13,7 @@ UpdatePalettes:
 	pha
 	phx
 	phy
-
+	
 	sep #$30	; All 8bits
 
 	; Test each bit corresponding to a palette

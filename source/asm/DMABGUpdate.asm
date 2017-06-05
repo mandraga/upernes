@@ -42,10 +42,10 @@ UpdateBackgrounds:
     lda #$04	;Initiate the DMA2 transfer
     sta MDMAEN
 	
-;jmp labs
+	; Mirroring emulation by making a copy after bank 2
 	stz MDMAEN	;Clear the DMA control register
 
-	ldx #$1800
+	ldx #$1000
     stx DMA2A1SRCL	  ; Store the data offset into DMA source offset
 	ldy #$0800        ; 4k
 	sty DMA2SZL 	  ; Store the size of the data block
@@ -60,10 +60,34 @@ UpdateBackgrounds:
     lda #$18	;Set the destination register (VRAM gate)
     sta DMA2BDEST
 	
-	ldy #$7400
+	ldy #$7800
 	sty VMADDL
 
     lda #$04	;Initiate the DMA2 transfer
+    sta MDMAEN
+	
+;jmp labs
+	;stz MDMAEN	;Clear the DMA control register
+
+	ldx #$1800
+    stx DMA3A1SRCL	  ; Store the data offset into DMA source offset
+	ldy #$0800        ; 4k
+	sty DMA3SZL 	  ; Store the size of the data block
+	lda #$00
+    sta DMA3A1SRCBNK  ;Store the data bank of the source data
+
+	lda #$80
+	sta VMAINC	;set VRAM transfer mode to word-access, increment by 1
+
+    lda #$01	;Set the DMA mode (word, normal increment)
+    sta DMA3CTL
+    lda #$18	;Set the destination register (VRAM gate)
+    sta DMA3BDEST
+	
+	ldy #$7400
+	sty VMADDL
+
+    lda #$08	;Initiate the DMA3 transfer
     sta MDMAEN
 	
 labs:
