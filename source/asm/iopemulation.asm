@@ -278,14 +278,14 @@ RPPUSTATUS:
 	; If the nes NMI on Vblank is disabled it does not mean that VBlank is not occuring
 	; Just compare the counter value
 	rep #$20 ;  A 16bits
+	BREAK
 	lda VCOUNTL
 	cmp #239
-	bcs InVblank
+	bcs InVblank ; A >= 239
 	lda #$00
+	jmp GetSprite0Flag
 InVblank:
 	lda #$80   ; Vblank enabled
-	jmp GetSprite0Flag
-	lda #$00   ; Vblank disabled
 GetSprite0Flag:
 	sep #$20
 	;; sprite 0
