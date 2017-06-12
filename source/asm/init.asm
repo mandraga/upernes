@@ -134,6 +134,9 @@ eraseNesRamLoop:
 	stz PPUReadLatch
 	lda #SprCHRInit
 	sta SpriteCHRChg
+	stz BGTransferStep
+	lda #$01
+	sta NESNMIENABLED
 
 	
 	;lda SNESNMITMP
@@ -195,9 +198,9 @@ copyRamCode:
 	
 	;; -----------------------------------------------
 	; NMI on Vblank always enable because used to update the palettes and backgrounds.
-	;lda SNESNMITMP
-	;sta NMITIMEN
-	;sta SNESNMITMP
+	lda SNESNMITMP
+	sta NMITIMEN
+	sta SNESNMITMP
 	;; -----------------------------------------------
 	; Does nothing. Just here to help finding the end of the initialisation, and the call of the nes reset vector.
 	nop

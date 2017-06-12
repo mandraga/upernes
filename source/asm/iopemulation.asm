@@ -128,21 +128,21 @@ IORroutinestable:
 
 WPPUC1:
 	;BREAK
-	sep #$30		; All 8 bit
-	sta PPUcontrolreg1      ; Save the written value
+	sep #$30		     ; All 8 bit
+	sta PPUcontrolreg1   ; Save the written value
 	;; ------------------------------------------
 	;; Test Nametable @ bits
 	;; Mirroring is the default value. FIXME add cartridge nametables?
 	;and #$01
 	;beq firstnametableaddress  ; If zero flag then it it the first nametable
-    ;lda #$74                ; (1k word segment $7400 / $400)=$1D << 2
-	;ora #$01	; Right screen following the first one
+    ;lda #$74            ; (1k word segment $7400 / $400)=$1D << 2
+	;ora #$01	         ; Right screen following the first one
     ;sta BG1SC
 	;jmp endnametableaddress
 firstnametableaddress:
 	; Always on bank 0 and add this bit to the scrolling ergister
-    lda #$70                ; (1k word segment $7000 / $400)=$1C << 2
-	ora #$01                ; Right screen following the first one
+    lda #$70             ; (1k word segment $7000 / $400)=$1C << 2
+	ora #$01             ; Right screen following the first one
     sta BG1SC
 endnametableaddress:
 	;; ------------------------------------------
@@ -179,7 +179,7 @@ Spritebankend:
 	sep #$30		; All 8 bit
 	;; ------------------------------------------
 	;; Test Screen Pattern Table Address (BG chr 4kB bank 0 or 1)
-	lda #$10
+	lda #$10 ; FIXME it should be bit 0?
 	bit PPUcontrolreg1
 	bne secondbgchrbank
 	lda #$02		; 0x0002 -> 4kWord=8kB segment 2
@@ -275,16 +275,19 @@ RPPUSTATUS:
 	cmp StarPPUStatus
 	beq PowerUp     ; If 1, then it is power up (always here, even on reset)
 	jsr updateSprite0Flag
-	; If the nes NMI on Vblank is disabled then set this falg to 0
-	lda NESNMIENABLED
-	beq NesNMIDisabled
-	; Else return the flag from the snes
-	lda NMIFLAG 	; NMIFLAG has the same behaviour as the nes, and not HVBJOY flag
-	and #$80
-	jmp GetSprite0Flag
-NesNMIDisabled:
+	; If the nes NMI on Vblank is disabled it does not mean that VBlank is not occuring
+	; Just compare the counter value
+	rep #$20 ;  A 16bits
+	lda VCOUNTL
+	cmp #239
+	bcs InVblank
 	lda #$00
+InVblank:
+	lda #$80   ; Vblank enabled
+	jmp GetSprite0Flag
+	lda #$00   ; Vblank disabled
 GetSprite0Flag:
+	sep #$20
 	;; sprite 0
 	ora SPRITE0FLAG
 	jmp EndRPPUSTATUS
@@ -522,14 +525,8 @@ vertical_scroll:
 	jmp chgscrollregister
 horizontal_scroll:
 	sep #$30		; All 8b
-	BREAK
-	;swa
 	lda PPUcontrolreg1
 	and #$01
-	;swa
-	;rep #$20 ; A 16bits
-	;sta BG1HOFS
-	;sep #$30 ; All 8b
 	stx BG1HOFS		        ; This register must be written twice
 	sta BG1HOFS 		    ; High byte's lower bit comes from PPU control 1 lower bit when scrolling horizontally
 ignorescrollvalue:          ; ignore the value but change the register state
@@ -906,11 +903,17 @@ NametableW:
 	and #$04 ; Look at bit 2 for BANK 1 or 2
 	beq NameBank1W
 	pla
+	cmp NametableBaseBank2,X
+	beq NoMoreUpdates  ; Same value, do nothing
 	sta NametableBaseBank2,X
+	;BREAK
+	;jsr UpdateNametablesBitsBank2
 	jmp NoMoreUpdates
 NameBank1W:
 	pla
 	sta NametableBaseBank1,X   ; Write to VRAM. This is the lower nametable byte, the character code number.
+	;BREAK
+	;jsr UpdateNametablesBitsBank1
 	; If room is available for a HDMA transfer, store the word to be updated
 	;tay
 	;lda NamesBank1UpdateCounter
@@ -927,6 +930,49 @@ NoMoreUpdates:
 	rep #$20		; A 16bit
 	jsr IncPPUmemaddrL
 	RETW
+
+	; Enable the update of the column
+UpdateNametablesBitsBank2:
+	sep #$30		; All 8bit
+	txa
+	; Find the column
+	and #$3F
+	lsr ; A/2
+	pha
+	and $07 ; Get the bit value
+	tax
+	pla
+	; Find the byte
+	lsr
+	lsr
+	lsr
+	; Set the bit
+	tay
+	lda ColumnUpdateFlags + 4,Y
+	ora UpdateFlags,X
+	sta ColumnUpdateFlags + 4,Y
+	rts
+
+UpdateNametablesBitsBank1:
+	sep #$30		; All 8bit
+	txa
+	; Find the column
+	and #$3F
+	lsr ; A/2
+	pha
+	and $07 ; Get the bit value
+	tax
+	pla
+	; Find the byte
+	lsr
+	lsr
+	lsr
+	; Set the bit
+	tay
+	lda ColumnUpdateFlags,Y
+	ora UpdateFlags,X
+	sta ColumnUpdateFlags,Y
+	rts
 
 	;; ---------------------------------------------------------------
 	;; nes palette address: write in cg ram
@@ -984,6 +1030,7 @@ UpdateAllMirrorColors:
 	sta UpdatePalette
 	jmp	endwpumem
 
+	
 ;----------------------------------------------------------------------
 ; 
 RPPUMEMDATA:

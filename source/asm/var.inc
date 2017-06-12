@@ -48,6 +48,13 @@
 .DEFINE XiLevel1           RAMBASE + 33 ;
 
 .DEFINE JumpAddress        RAMBASE + 36 ; Stores an address in order to avoid using X
+.DEFINE AccNmi             RAMBASE + 37 ;
+.DEFINE NmiRetLo           RAMBASE + 38 ;
+.DEFINE NmiRetHi           RAMBASE + 39 ;
+.DEFINE NmiStatus          RAMBASE + 40 ;
+
+.DEFINE VCOUNTL            RAMBASE + 41 ;
+.DEFINE VCOUNTH            RAMBASE + 42 ;
 
 ;--------------------------------------------------------------------
 ; 
@@ -107,7 +114,14 @@
 .DEFINE SprCHRInit               2
 .DEFINE SpriteCHRChg            IOBASE + 48  ; Sprite chr has not changed
 
-; 63 unused bytes
+.DEFINE ColumnUpdateFlags       IOBASE + 49  ; 8 bytes to update the colums of the 2 banks
+.DEFINE UpdateCtr               IOBASE + 57  ;
+.DEFINE ColumnTableLo           IOBASE + 58  ;
+.DEFINE ColumnTableHi           IOBASE + 59  ;
+.DEFINE COLUMUPDATENUMBER       4
+
+.DEFINE BGTransferStep          IOBASE + 60  ; To use dma on a group of lines only
+; 58 unused bytes
 
 .DEFINE Palettebuffer           IOBASE + 112 ; 2 x 16bytes to store the palettes to do the reads and conversions during NMI
 .DEFINE PalettebufferSz         32
@@ -131,12 +145,22 @@
 
 .DEFINE NametableBaseBank1      $1000       ; 4KB nes nametable, updated with HDMA or DMA if more than 128 updates.
 .DEFINE NametableBaseBank2      $1800       ;
+.DEFINE NAMETABLEBASEINTERVAL   $0800
 
-.DEFINE Attributebuffer1        $1780 ; 64bytes to store the attributes to do the reads
-.DEFINE Attributebuffer2        $17C0 ; 64bytes to store the attributes of bank 2
+.DEFINE Attributebuffer1        $1780       ;  64bytes to store the attributes to do the reads
+.DEFINE Attributebuffer2        $17C0       ;  64bytes to store the attributes of bank 2
 .DEFINE AttributebufferSz       64
 
-.DEFINE AttributePrecalc        $1F80 ; 128Bytes to precalculate the Attribute @ nes to snes conversion
+.DEFINE AttributePrecalc        $1F80       ; 128Bytes to precalculate the Attribute @ nes to snes conversion
+
+;--------------------------------------------------------------------
+; Wram table at bank $7E or $7F
+;--------------------------------------------------------------------
+.DEFINE NameTransferTables      $8000       ; Used to transfer the data with HDMA
+
+.DEFINE NAMETABLE1BASE          $7000
+.DEFINE NAMETABLE2BASE          $7400
+.DEFINE NAMETABLEINTERVAL       $0400
 
 ;--------------------------------------------------------------------
 ;               SNES VRAM defines (WORD addresses)
@@ -146,12 +170,6 @@
 .DEFINE TEXTNAMEBASE            $1800
 .DEFINE SPRITECHRBASE           $2000  ; OBSEL has 8K granularity
 .DEFINE BGCHRBASE               $3000
-
-.DEFINE NAMETABLE1BASE          $7000
-.DEFINE NAMETABLE2BASE          $7400
-
-
-
 
 
 

@@ -57,7 +57,7 @@ DMAUpdateHandler:
 	;rep #$20    ; A 16bits
 	;sta TMPVCOUNTL + 2
 	
-	BREAK2 ; something is wrong if removed
+	;BREAK2 ; something is wrong if removed
 	jsr UpdatePalettes
 	jsr UpdateBackgrounds       ; Copy changed bytes to the VRAMdddfffgcxcvsfgggcxxxcv
 	; If the nes nmi is enables, call it
@@ -66,10 +66,26 @@ DMAUpdateHandler:
 	;beq QuitNMI
 	;pla
 	;BREAK2
-	jmp NESNMI ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called form emulation
+	;lda #$01
+	;sta NESNMIENABLED
+	jml NESNMI ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called form emulation
 QuitNMI:
-	;pla
-	;rti
+	pla
+	sta AccNmi
+	pla
+	sta NmiStatus
+	pla
+	sta NmiRetLo
+	pla
+	sta NmiRetHi
+	lda #$01      ; Bank
+	pha
+	lda NmiRetHi
+	pha
+	lda NmiRetLo
+	pha
+	lda AccNmi
+	rtl
 ;;; put this on vblank
 
 NESIRQBRKHandler:

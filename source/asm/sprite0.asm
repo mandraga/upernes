@@ -25,7 +25,7 @@ spr0Enabled:
 	;
 	;sei
 	lda SNESNMITMP
-	ora #%00100000 ; Enable V timer
+	ora #%10100000 ; Enable V timer
 	sta NMITIMEN
 	sta SNESNMITMP	
 	;
@@ -67,12 +67,14 @@ updateSprite0Flag:
 	and #$01    ; Mask the open bus shit
 	swa
 	rep #$20    ; A 16bits
-	sta TMPVCOUNTL + 2
+	sta VCOUNTL
 	;swa
 	;lda OPVCT   ; Hight Byte
 	;swa
 	cmp TMPVCOUNTL ; Compare to sprite 0's Y
 	bcc Sprite0NotSet        ; If below, the sprite is not set
+	cmp #260
+	bcs Sprite0NotSet        ; Say it is pre render
 	;lda OPHCT                ; Horizontal value
 	;cmp SpriteMemoryBase + 0 ; Compare to sprite 0's X
 	;bcc Sprite0NotSet        ; If below, the sprite is not set

@@ -281,14 +281,14 @@ int Crecompilateur::patchPrgRom(const char *outName, Cprogramlisting *plisting, 
 	    case noreplace:
 	      break;
 	    case replaceIOPort:
-	      // Patch the io port code with BRK Byte1 Byte2
+	      // Patch the io port code
 	      patchBRK(pinstr, popcode_list, pPRG, PRGSize, PatchRoutines, &mapper);
 	      break;
 	    case replaceBackupRam:
 	      //outReplaceBackupRam(fp, pinstr, popcode_list);
 	      break;
 	    case replaceJumpIndirect:
-	      // Patch the indirect jump code with BRK Byte1 Byte2
+	      // Patch the indirect jump code
 	      patchBRK(pinstr, popcode_list, pPRG, PRGSize, PatchRoutines, &mapper);
 	      break;
 	    default:
