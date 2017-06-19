@@ -137,6 +137,10 @@ void CindirectJmpAsmRoutines::writeIndJumproutines(FILE *fp, CindirectJmpRuntime
   int          indlabelnumber;
   char         routine[LABELSZ];
 
+  if (pindjmp->GetPatchingDisabled())
+    {
+      return;
+    }
   first = true;
   //prevjmpoperand = 0xFFFFFF; // starts with an impossible value for a nes address.
   

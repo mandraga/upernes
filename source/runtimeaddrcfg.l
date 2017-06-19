@@ -16,6 +16,7 @@ int           zznum_line;
 #.*                      DEBUG_FLEX("COMMENT\n"); return (COMMENT);
 crc32:                   DEBUG_FLEX("CRC "); return (CRC);
 IndirectJump:            DEBUG_FLEX("JUMP "); return (JUMP);
+DisableIndJumpPatching   DEBUG_FLEX("DISJUMP\n"); return (DISJUMP);
 addr                     DEBUG_FLEX("ADDR "); return (ADDR);
 $[0-9A-Fa-f]{2}          DEBUG_FLEX(" BYTE\n"); return (BYTE);
 $[0-9A-Fa-f]{4}          DEBUG_FLEX(" WORD\n"); return (WORD);

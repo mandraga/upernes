@@ -52,7 +52,8 @@ CindirectJmpRuntimeLabels::CindirectJmpRuntimeLabels():
   m_crc(-2),
   m_state(get_new_line),
   m_currentjopaddr(-2),
-  m_binit(false)
+  m_binit(false),
+  m_bDisableIndJumpPatching(false)
 {
   strcpy(m_error_str, "");
 }
@@ -260,7 +261,8 @@ void CindirectJmpRuntimeLabels::writeheader(FILE *fp, Crom_file *rom)
   fprintf(fp, "#\n");
   fprintf(fp, "##########################################\n");
   fprintf(fp, "# %s\n", romname);
-  fprintf(fp, "\ncrc32:\t$%08X\n\n\n", (unsigned int)rom->crc());
+  fprintf(fp, "\ncrc32:\t$%08X\n\n", (unsigned int)rom->crc());
+  fprintf(fp, "\n#DisableIndJumpPatching  # Uncomment to disable indirect jump control.\n\n");
 }
 
 void CindirectJmpRuntimeLabels::writenewjumps(FILE *fp)
@@ -312,4 +314,10 @@ int CindirectJmpRuntimeLabels::update_indjump_file(Crom_file *rom, char *output_
       fclose(fp);
     }
   return 0;
+}
+
+
+bool CindirectJmpRuntimeLabels::GetPatchingDisabled()
+{
+  return m_bDisableIndJumpPatching;
 }

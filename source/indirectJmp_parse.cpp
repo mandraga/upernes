@@ -26,8 +26,8 @@
 
 extern FILE *zzin;
 extern char *zztext;
-extern int  zzleng;
-extern int  zznum_line;
+extern int   zzleng;
+extern int   zznum_line;
 
 extern "C" {
 int zzlex(void);
@@ -73,7 +73,6 @@ int CindirectJmpRuntimeLabels::list_add_jopaddr(unsigned int jopaddr)
   return 0;
 }
 
-
 void CindirectJmpRuntimeLabels::add_addr(unsigned int addr)
 {
   t_indirjmp elt;
@@ -95,6 +94,9 @@ void CindirectJmpRuntimeLabels::get_new(int res)
       break;
     case JUMP:
       m_state = jumpaddr_var;
+      break;
+    case DISJUMP:
+      m_bDisableIndJumpPatching = true;
       break;
     case ADDR:
       m_state = jumpaddr_addr;

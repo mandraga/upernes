@@ -31,6 +31,7 @@ public:
   bool next_op_address(bool first, unsigned int jopaddr, unsigned int *paddr);
   bool next_operand(bool first, unsigned int *pjoperand);
   bool next_indaddr(bool first, unsigned int joperand, unsigned int *paddr);
+  bool GetPatchingDisabled();
 private:
   int  find_config_filename(Crom_file *rom, char *cfg_file_name, char *output_path);
   bool check_crc(Crom_file *rom);
@@ -57,4 +58,5 @@ private:
   t_indjmplist      m_jmplist;
   t_indirjmpiter    m_Ijopaddr;
   t_jmpaddriter     m_Iaddr;
+  bool              m_bDisableIndJumpPatching;
 };

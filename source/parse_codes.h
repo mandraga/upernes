@@ -26,4 +26,7 @@
 // BYTE already defined
 #define WORD               5002
 #define DWORD              5003
+// Disable indirect jump patching
+#define DISJUMP            5004
+
 

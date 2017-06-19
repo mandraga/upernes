@@ -289,7 +289,10 @@ int Crecompilateur::patchPrgRom(const char *outName, Cprogramlisting *plisting, 
 	      break;
 	    case replaceJumpIndirect:
 	      // Patch the indirect jump code
-	      patchBRK(pinstr, popcode_list, pPRG, PRGSize, PatchRoutines, &mapper);
+	      if (!pindjmp->GetPatchingDisabled())
+		{
+		  patchBRK(pinstr, popcode_list, pPRG, PRGSize, PatchRoutines, &mapper);
+		}
 	      break;
 	    default:
 	      break;
