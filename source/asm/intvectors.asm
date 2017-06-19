@@ -61,13 +61,11 @@ DMAUpdateHandler:
 	jsr UpdatePalettes
 	jsr UpdateBackgrounds       ; Copy changed bytes to the VRAMdddfffgcxcvsfgggcxxxcv
 	; If the nes nmi is enables, call it
-	;pha
-	;lda NESNMIENABLED
-	;beq QuitNMI
-	;pla
+	pha
+	lda NESNMIENABLED
+	beq QuitNMI
+	pla
 	;BREAK2
-	;lda #$01
-	;sta NESNMIENABLED
 	jml NESNMI ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called form emulation
 QuitNMI:
 	pla

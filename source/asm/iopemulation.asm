@@ -278,7 +278,7 @@ RPPUSTATUS:
 	; If the nes NMI on Vblank is disabled it does not mean that VBlank is not occuring
 	; Just compare the counter value
 	rep #$20 ;  A 16bits
-	BREAK
+	;BREAK
 	lda VCOUNTL
 	cmp #239
 	bcs InVblank ; A >= 239
@@ -513,6 +513,7 @@ convert_sprflags_to_nes:
 ;       |     | Name Tables, not 4.
 WSCROLOFFSET:
 	sep #$30		; All 8b
+	BREAK2
 	tax
 	cmp #240		; > 239?
 	bcs ignorescrollvalue
@@ -525,7 +526,7 @@ vertical_scroll:
 	jmp chgscrollregister
 horizontal_scroll:
 	sep #$30		; All 8b
-	lda PPUcontrolreg1
+	lda PPUcontrolreg1  ; FIXME works only with horizontal mappers
 	and #$01
 	stx BG1HOFS		        ; This register must be written twice
 	sta BG1HOFS 		    ; High byte's lower bit comes from PPU control 1 lower bit when scrolling horizontally
@@ -1106,6 +1107,7 @@ paletteR:
 	RETR
 
 CHRDataR:
+	BREAK
 	sep #$30		; All 8bit
 	lda PPUReadLatch
 	bne LatchedCHRDataValue
@@ -1119,8 +1121,10 @@ CHRDataR:
 	ldx PPUmemaddrL ; Load the PPU bus address between $0000 and $2000
 	lda NESCHR.w,X  ; Load the value
 	plb			; Restore data bank	
+	tax
 	; Increment the PPU address
 	jsr IncPPUmemaddrL
+	txa
 	jmp CHRDataRend
 LatchedCHRDataValue:
 	lda #$00  ; Return zero at the first read after the write to $2006
