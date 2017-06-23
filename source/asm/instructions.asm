@@ -107,9 +107,8 @@
 ; 	R  Joystick2 + Strobe
 ;;
 ldaioportroutine:
-	sty Yi
 	;; Native mode
-	NATIVE
+	;NATIVE
 	;; --------------------------------------------------------
 	;; Go to the IO address read routine
 	;; Jump to the routine
@@ -117,21 +116,9 @@ ldaioportroutine:
 	jmp (IORroutinestable,X)
 RetIOroutineR:
 	;; Emulation mode
-	EMULATION
-	ldy Yi
+	;EMULATION
 	;; Done
 	rts
-
-;; Call
-; 	php			; push flags
-; 	stx Xi			; save index registers if needed
-; 	sty Yi	
-; 	ldx #$ioaddr		; Load the io port address index
-; 	jsr ldaioroutine
-; 	ldx Xi
-; 	ldy Yi
-; 	plp			; pop flags
-
 	
 
 ;; --------------------------------------------------------------------
@@ -148,10 +135,8 @@ RetIOroutineR:
 ; 	RW Sound Channel Switch/Sound Status
 ;;
 staioportroutine:
-	sty Yi
-	sta AccLevel1
 	;; Native mode
-	NATIVE
+	;NATIVE
 	;; --------------------------------------------------------
 	;; Go to the IO address write routine
 	;; Jump to the routine
@@ -159,9 +144,6 @@ staioportroutine:
 	jmp (IOWroutinestable,X)
 RetIOroutineW:
 	;; Emulation mode
-	EMULATION
-	ldy Yi
-	lda AccLevel1
 	;; Done
 	rts
 

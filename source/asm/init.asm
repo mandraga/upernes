@@ -121,6 +121,7 @@ eraseNesRamLoop:
 	stz PPUmemaddrH
 	stz CurScrolRegister
 	stz PPUcontrolreg2
+	stz PPUStatus
     stz	SpriteMemoryAddress
 	stz attributeaddr
 	stz VideoIncrementL
@@ -137,21 +138,22 @@ eraseNesRamLoop:
 	stz BGTransferStep
 	lda #$01
 	sta NESNMIENABLED
+	stz VblankOn
 
 	
-	;lda SNESNMITMP
-	;ora #%00100000 ; Enable V timer
-	;;ora #%00010000 ; Enable H timer
-	;sta NMITIMEN
-	;sta SNESNMITMP	
+	lda SNESNMITMP
+	ora #%00100000 ; Enable V timer
+	;ora #%00010000 ; Enable H timer
+	sta NMITIMEN
+	sta SNESNMITMP	
 	;
 	; Set the first interrupt on line 261 which is the end of Vblank on the nes
-	;lda #$05
-	;sta VTIMEL
-	;sta HCOUNTERL
-	;lda #$01
-	;sta VTIMEH
-	;sta HCOUNTERH
+	lda #$05
+	sta VTIMEL
+	sta HCOUNTERL
+	lda #$01
+	sta VTIMEH
+	sta HCOUNTERH
 	
 	;cli
 
@@ -195,6 +197,12 @@ copyRamCode:
 	; Set 6502 emulation mode
 	sec
 	xce
+
+	lda #$0F		  ;Turn on screen, 100% brightness
+	sta INIDISP
+
+	lda #$01 
+	sta MEMSEL
 	
 	;; -----------------------------------------------
 	; NMI on Vblank always enable because used to update the palettes and backgrounds.

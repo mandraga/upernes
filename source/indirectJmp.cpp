@@ -262,7 +262,7 @@ void CindirectJmpRuntimeLabels::writeheader(FILE *fp, Crom_file *rom)
   fprintf(fp, "##########################################\n");
   fprintf(fp, "# %s\n", romname);
   fprintf(fp, "\ncrc32:\t$%08X\n\n", (unsigned int)rom->crc());
-  fprintf(fp, "\n#DisableIndJumpPatching  # Uncomment to disable indirect jump control.\n\n");
+  fprintf(fp, "\n# Uncomment to disable indirect jump control.\n#DisableIndJumpPatching\n\n");
 }
 
 void CindirectJmpRuntimeLabels::writenewjumps(FILE *fp)

@@ -11,7 +11,7 @@
 .DB     "upernes conversion   "	; Title (21 bytes)
 ;       "123456789012345678901"
 .ORG    $7FD5
-.DB     $20						; Memory Mode ($20=Slow LoRom, $21=Slow HiRom)
+.DB     $30						; Memory Mode ($20=Slow LoRom, $21=Slow HiRom, $30=Fast LoRom)
 
 ;; Part 2
 .ORG    $7FD6

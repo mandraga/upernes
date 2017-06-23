@@ -7,7 +7,7 @@
 .DW     EmptyHandler	; ABORT
 .DW     EmptyVBlank		; NMI
 .DW     $0000			; (Unused)
-.DW     EmptyHandler	; IRQ, never used in native mode. The native mode is only used for the IO callbacks.
+.DW     VCountHandler ;EmptyHandler	; IRQ, never used in native mode. The native mode is only used for the IO callbacks.
 
 .ORG    $7FF4				; = Emulation Mode = nes
 .DW     EmptyHandler		; COP
@@ -56,15 +56,27 @@ DMAUpdateHandler:
 	;swa
 	;rep #$20    ; A 16bits
 	;sta TMPVCOUNTL + 2
-	
-	;BREAK2 ; something is wrong if removed
-	jsr UpdatePalettes
-	jsr UpdateBackgrounds       ; Copy changed bytes to the VRAMdddfffgcxcvsfgggcxxxcv
-	; If the nes nmi is enables, call it
+
 	pha
 	lda NESNMIENABLED
 	beq QuitNMI
+	;lda PPUcontrolreg1  ; Puts the 7th bit in the n flag
+	;and #$80
+	;beq QuitNMI
 	pla
+	
+	; Read the vertical line counter position
+	;jsr ReadHcout
+	;BREAK ; something is wrong if removed
+	
+	jsr UpdatePalettes
+	jsr UpdateBackgrounds       ; Copy changed bytes to the VRAMdddfffgcxcvsfgggcxxxcv
+	; If the nes nmi is enables, call it
+
+	; Read the vertical line counter position
+	;jsr ReadHcout
+	;BREAK ; something is wrong if removed
+
 	;BREAK2
 	jml NESNMI ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called form emulation
 QuitNMI:
@@ -207,7 +219,13 @@ ReadRoutine:
 	pla
 	sta RetHi
 	;lda AccIt
+	sty Yi
+	;; Native mode
+	NATIVE
 	jsr (BRKRoutinesTable,X) ; Jump to the routine for the selected address
+	;; Emulation mode
+	EMULATION
+	ldy Yi
 	ldx XiLevel1
 	sta AccIt
 	; restore the bank
@@ -247,7 +265,13 @@ StoreRoutine:
 	sta RetHi
 	lda AccIt    ; Could be an sta
 	;ldx XiLevel1 ; Could be an stx
+	sty Yi
+	;; Native mode
+	NATIVE
 	jsr (BRKRoutinesTable,X) ; Jump to the routine for the selected address
+	;; Emulation mode
+	EMULATION
+	ldy Yi
 	ldx XiLevel1
 	; restore the bank
 	lda #$01

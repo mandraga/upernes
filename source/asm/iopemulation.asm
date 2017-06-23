@@ -127,8 +127,28 @@ IORroutinestable:
 ;       |   7 | VBlank Enable, 1 = generate interrupts on VBlank.
 
 WPPUC1:
-	;BREAK
 	sep #$30		     ; All 8 bit
+	cmp PPUcontrolreg1 	; Anything changed?
+	bne testPPUCtrl1Chg
+	jmp vblankend
+testPPUCtrl1Chg:
+	tax
+	; If the lower bit changed, then change the screen hscrolling
+	ora PPUcontrolreg1
+	and #$01
+	beq NoScrollChange
+	; Update the scroll register bit 8
+	txa
+	pha
+	and #$01
+	ldx NESHSCROLL
+	stx BG1HOFS		        ; This register must be written twice
+	sta BG1HOFS 		    ; High byte's lower bit comes from PPU control 1 lower bit when scrolling horizontally
+	pla
+	tax
+	;
+NoScrollChange:
+	txa
 	sta PPUcontrolreg1   ; Save the written value
 	;; ------------------------------------------
 	;; Test Nametable @ bits
@@ -194,15 +214,18 @@ BGbankend:
 	;; ------------------------------------------
 
 	;; FIXME is it used on the nes?.???? enable and disable screen?????????????????????????????????,,,,,,,
-	lda #$0F		  ;Turn on screen, 100% brightness
-	sta INIDISP
+	;lda #$0F		  ;Turn on screen, 100% brightness
+	;sta INIDISP
 	;lda #$8F		  ;Turn off screen, 100% brightness
 	;sta INIDISP
 
+	;BREAK
 	;; Test Vblank
-	;lda #$80
-	bit PPUcontrolreg1  ; Puts the 7th bit in the n flag
-	bpl novblank		; Therefore bpl branches if the 7th bit is not set
+	;bit PPUcontrolreg1
+	;bpl novblank		; Therefore bpl branches if the 7th bit is not set
+	lda PPUcontrolreg1  ; Puts the 7th bit in the n flag
+	and #$80
+	beq novblank
 	; Vblank interrupt enabled
 	lda #$01
 	sta NESNMIENABLED
@@ -213,7 +236,7 @@ BGbankend:
 	jmp vblankend
 novblank:
 	; Vblank interrupt disabled
-	stz NESNMIENABLED	
+	stz NESNMIENABLED
 	lda SNESNMITMP
 	;and #$7E
 	and #$00    ; Try to limitate the effect
@@ -251,7 +274,15 @@ WPPUC2:
 	lda PPUcontrolreg2
 	and #$10                ; Keep only the 4rth bit
 	ora tmp_dat
-	sta TM			; BG1 enabled as a main screen, Sprite enable (also bit 4)
+	sta TM			; BG1 enabled as a main screen, Sprite enable (also bit 4)	
+	;beq blankscreen
+	;lda #$0F		  ;Turn on screen, 100% brightness
+	;sta INIDISP
+	;jmp endWPPUC2
+blankscreen:
+	;lda #$8F		  ;Turn off screen, 100% brightness
+	;sta INIDISP
+
 endWPPUC2:
 	RETW
 
@@ -261,7 +292,8 @@ RPPUC2:
 
 ; ------+-----+---------------------------------------------------------------
 ; $2002 | R   | PPU Status Register
-;       | 0-5 | Unknown (???)
+;       | 0-4 | Unknown (???)
+;       |   5 | Sprite overflow bit
 ;       |   6 | Hit Flag, 1 = Sprite refresh has hit sprite #0.
 ;       |     | This flag resets to 0 when screen refresh starts
 ;       |     |
@@ -277,14 +309,17 @@ RPPUSTATUS:
 	jsr updateSprite0Flag
 	; If the nes NMI on Vblank is disabled it does not mean that VBlank is not occuring
 	; Just compare the counter value
-	rep #$20 ;  A 16bits
+	;rep #$20 ;  A 16bits
 	;BREAK
+	;jsr readVcount	
+	rep #$20    ; A 16bits
 	lda VCOUNTL
 	cmp #239
 	bcs InVblank ; A >= 239
 	lda #$00
 	jmp GetSprite0Flag
 InVblank:
+	;lda VblankOn
 	lda #$80   ; Vblank enabled
 GetSprite0Flag:
 	sep #$20
@@ -295,6 +330,7 @@ PowerUp:
 	stz StarPPUStatus ; Boot passed
 	lda #$80          ; return boot PPUSTATUS
 EndRPPUSTATUS:
+	sta PPUStatus
 	RETR
 
 ; ------+-----+---------------------------------------------------------------
@@ -513,19 +549,21 @@ convert_sprflags_to_nes:
 ;       |     | Name Tables, not 4.
 WSCROLOFFSET:
 	sep #$30		; All 8b
-	BREAK2
 	tax
-	cmp #240		; > 239?
-	bcs ignorescrollvalue
 	lda CurScrolRegister
 	beq horizontal_scroll   ; 0 horizontal, 1 vertical
 vertical_scroll:
 	txa
+	sta NESVSCROLL
+	cmp #240		; > 239?
+	bcs ignorescrollvalue
 	sta BG1VOFS             ; This register must be written twice
 	stz BG1VOFS 		    ; High byte is 0
 	jmp chgscrollregister
 horizontal_scroll:
 	sep #$30		; All 8b
+	BREAK2
+	stx NESHSCROLL
 	lda PPUcontrolreg1  ; FIXME works only with horizontal mappers
 	and #$01
 	stx BG1HOFS		        ; This register must be written twice
@@ -821,6 +859,7 @@ AttBank2W:
 AttBank1W:
 	tya
 	sta Attributebuffer1,X
+
 	; Translate the address
 	;lda AttrAddressTranslation,X ; Could be quicker with a 2*128byte table in wram
 	;tax
@@ -870,6 +909,7 @@ AttBank1W:
 	sta NametableBaseBank1+199,X
 	;; Add the updated tile data to the tiles to be updated by dma
 
+IncAttrAddr:
 	;; Increment the Attribute address
 	jsr IncPPUmemaddrL
 	;rep #$20		; Acc 16bits
@@ -1107,7 +1147,6 @@ paletteR:
 	RETR
 
 CHRDataR:
-	BREAK
 	sep #$30		; All 8bit
 	lda PPUReadLatch
 	bne LatchedCHRDataValue
@@ -1144,7 +1183,9 @@ IncPPUmemaddrL:
 	; +1
 	rep #$30		; All 16bits
 	lda PPUmemaddrL
-	;tax
+	and #$FFC0
+	sta TMPPPUAL
+	lda PPUmemaddrL
 	clc
 	adc #$0001
 	sta PPUmemaddrL
@@ -1167,10 +1208,16 @@ name_incr_32:
 	;sta NameAddresL
 	; Other than nametables
 	lda PPUmemaddrL
+	and #$FFC0
+	sta TMPPPUAL
+	lda PPUmemaddrL
 	clc
 	adc #$0020
 	sta PPUmemaddrL
 IncPPUmemaddrLEnds:
+	and #$FFC0
+	ora PPUmemaddrL
+	beq IncPPUmemaddrEnd
 	; Check if the adress is greater or equal to $2000
 	cmp #$2000
 	bcc CHRSpace
@@ -1203,7 +1250,7 @@ PaletteSpace:
 IncPPUmemaddrEnd:
 	sep #$30		; All 8bit
 	rts
-	
+
 ; ------+-----+---------------------------------------------------------------
 ; $4000-$4013 | Sound Registers
 ;             | See "Sound".

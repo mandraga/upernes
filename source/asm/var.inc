@@ -9,7 +9,7 @@
 
 ;; Theese variables are used to avoid using the stack when emulating I/O ports
 .DEFINE Acc	        	RAMBASE
-.DEFINE AccLevel1      	RAMBASE + 1
+.DEFINE notused      	RAMBASE + 1
 .DEFINE Xi	        	RAMBASE + 2
 .DEFINE Yi	        	RAMBASE + 4
 .DEFINE SP	        	RAMBASE + 6
@@ -53,8 +53,9 @@
 .DEFINE NmiRetHi           RAMBASE + 39 ;
 .DEFINE NmiStatus          RAMBASE + 40 ;
 
-.DEFINE VCOUNTL            RAMBASE + 41 ;
-.DEFINE VCOUNTH            RAMBASE + 42 ;
+.DEFINE VblankOn           RAMBASE + 41 ;
+.DEFINE TMPPPUAL           RAMBASE + 42 ; Stores the PPUC address
+.DEFINE TMPPPUAH           RAMBASE + 42 ;
 
 ;--------------------------------------------------------------------
 ; 
@@ -71,14 +72,17 @@
 .DEFINE tmp_addr				IOBASE + 8	; Word, tmp address storage
 .DEFINE tmp_dat 				IOBASE + 10	; Word, tmp data storage
 
-.DEFINE PPUcontrolreg1			IOBASE + 12
-.DEFINE PPUcontrolreg2			IOBASE + 14
-
-.DEFINE	SpriteMemoryAddress		IOBASE + 16
+.DEFINE PPUcontrolreg1			IOBASE + 11
+.DEFINE PPUcontrolreg2			IOBASE + 12
+.DEFINE PPUStatus               IOBASE + 13 ; Used to check visually with the debugger
+.DEFINE	SpriteMemoryAddress		IOBASE + 14
+.DEFINE	NESVSCROLL              IOBASE + 15
+.DEFINE	NESHSCROLL              IOBASE + 16
 .DEFINE PPTMP                   IOBASE + 17
-
-.DEFINE StarPPUStatus           IOBASE + 19 ; 1 on start
-.DEFINE CurScrolRegister        IOBASE + 20 ; 0 or 1 selects the vertical scroll register
+.DEFINE StarPPUStatus           IOBASE + 18 ; 1 on start
+.DEFINE VCOUNTL                 IOBASE + 19 ;
+.DEFINE VCOUNTH                 IOBASE + 20 ;
+.DEFINE CurScrolRegister        IOBASE + 21 ; 0 or 1 selects the vertical scroll register
 
 .DEFINE attributeaddr           IOBASE + 22	; Used as the nes attribute table
 

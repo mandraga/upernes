@@ -55,6 +55,8 @@
 .EQU MDMAEN   $420B
 .EQU HDMAEN   $420C
 
+.EQU MEMSEL   $420D ;; For fast rom
+
 ;------------ DMA1 ---------------
 .EQU DMA1CTL      $4310
 .EQU DMA1BDEST    $4311

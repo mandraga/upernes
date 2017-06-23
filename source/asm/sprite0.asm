@@ -42,24 +42,11 @@ EndInitSprite0
 	rts		;Return to caller
 
 
-; Updates the sprite zero flag only by reading to the counter
-updateSprite0Flag:
-	rep #$20    ; A 16bits
-	
-	lda TMPVCOUNTL
-	;lda TMPVCOUNTL + 2
-	;
-	sep #$20    ; A 8bits
-	lda #$00
-	sta TMPVCOUNTH
-	lda SpriteMemoryBase + 1 ; sprite 0's Y
-	sta TMPVCOUNTL
-	
+ReadHcout:
 	; Low first
 	lda STAT78
 	; Latch the H and V counters
 	lda HVLATCH
-	;lda #$00
 	lda OPVCT   ; Low Byte
 	swa
 	lda HVLATCH
@@ -68,13 +55,26 @@ updateSprite0Flag:
 	swa
 	rep #$20    ; A 16bits
 	sta VCOUNTL
-	;swa
-	;lda OPVCT   ; Hight Byte
-	;swa
+	rts
+
+; Updates the sprite zero flag only by reading to the counter
+updateSprite0Flag:
+	;
+	sep #$20    ; A 8bits
+	lda #$00
+	sta TMPVCOUNTH
+	lda SpriteMemoryBase + 1 ; sprite 0's Y
+	clc
+	adc #$60 ; Ack fixme
+	sta TMPVCOUNTL
+
+	; Read the vertical line counter position
+	jsr ReadHcout
+
 	cmp TMPVCOUNTL ; Compare to sprite 0's Y
 	bcc Sprite0NotSet        ; If below, the sprite is not set
-	cmp #260
-	bcs Sprite0NotSet        ; Say it is pre render
+	;cmp #260                 ; If above 260, it is pre render
+	;bcs Sprite0NotSet        ; Say it is pre render
 	;lda OPHCT                ; Horizontal value
 	;cmp SpriteMemoryBase + 0 ; Compare to sprite 0's X
 	;bcc Sprite0NotSet        ; If below, the sprite is not set
@@ -87,7 +87,7 @@ Sprite0NotSet:
 	sep #$20    ; A 8bits
 	stz SPRITE0FLAG
 	rts
-	
+
 .ENDS
 
 
