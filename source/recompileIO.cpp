@@ -163,7 +163,7 @@ void Crecompilateur::routineLDAiop(FILE *fp, int iopaddr, Copcodes *popcode_list
   fprintf(fp, "\tldx #$%02X\n", 2 * PORT2INDEX(iopaddr));
   fprintf(fp, "\tjsr ldaioportroutine\n");
   print_restore(fp);
-  fprintf(fp, "\tora #$00		; test N Z flags without affecting A\n");
+  //fprintf(fp, "\tora #$00		; test N Z flags without affecting A\n");
   fprintf(fp, "\trts\n");
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }

@@ -44,6 +44,7 @@ rm ./indjmp.asm
 rm ./init.asm
 rm ./PaletteUpdate.asm
 rm ./DMABGUpdate.asm
+rm ./SpritesUpdate.asm
 rm ./instructions.asm
 rm ./intvectors.asm
 rm ./iopemulation.asm

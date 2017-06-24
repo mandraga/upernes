@@ -307,19 +307,37 @@ RPPUSTATUS:
 	cmp StarPPUStatus
 	beq PowerUp     ; If 1, then it is power up (always here, even on reset)
 	jsr updateSprite0Flag
+	; The scroll registers latches are cleared by a read to this register
+	stz CurScrolRegister
+	;stz PPUmemaddrB
+
 	; If the nes NMI on Vblank is disabled it does not mean that VBlank is not occuring
 	; Just compare the counter value
-	;rep #$20 ;  A 16bits
-	;BREAK
-	;jsr readVcount	
 	rep #$20    ; A 16bits
 	lda VCOUNTL
-	cmp #239
-	bcs InVblank ; A >= 239
+	cmp #240
+	bcs InVblank ; A >= 240
+	lda VblankStateOff
+	sta VblankState
 	lda #$00
 	jmp GetSprite0Flag
 InVblank:
-	;lda VblankOn
+	lda VblankState
+	cmp VblankStateOff
+	beq EnVblank
+	cmp VblankStateOn
+	beq VblankClrFlag
+	; Already in Clr state
+	lda #$00
+	jmp GetSprite0Flag
+VblankClrFlag:
+	lda VblankStateClr
+	sta VblankState
+	lda #$00
+	jmp GetSprite0Flag
+EnVblank:
+	lda VblankStateOn
+	sta VblankState	
 	lda #$80   ; Vblank enabled
 GetSprite0Flag:
 	sep #$20
@@ -332,7 +350,7 @@ PowerUp:
 EndRPPUSTATUS:
 	sta PPUStatus
 	RETR
-
+	
 ; ------+-----+---------------------------------------------------------------
 ; $2003 | W   | Sprite Memory Address
 ;       |     | Used to set the address of the 256-byte Sprite Memory to be 
@@ -1322,55 +1340,15 @@ sprconversionloop:
 	bne sprconversionloop	; loop if not zero	(passed 256)	
 	;;------------------------------------------------------------------------------
 	;; Then copy the 256 bytes into the OAM memory
-wait_for_vblank:
-	lda HVBJOY		;check the vblank flag
-	bpl wait_for_vblank
-.DEFINE USEDMA
-.IFDEF USEDMA
-	;; Transfer the 256 bytes to the OAM memory port via DMA 1
-	;; -------------------------------------------------------------
-	stz MDMAEN      ; disable any dma channel
-	;; Writes to OAMDATA from 0 to 256
-	stz OAMADDL
-	stz OAMADDH
-	;; DMA mode:   CPU RAM to PPU RAM 0, x, x, 00 automatic increment, 00 one address per byte
-	sep #$20		; A 8b
-	lda #%00000000
-	sta DMA1CTL     ; Write the mode before everything else
-	lda #$04		; OAMDATA register, byte ($2104)
-	sta DMA1BDEST
-	;; Size = $100 = 256
-	rep #$20		; A 16b
-	lda #$0100
-	sta DMA1SZL
-	;; Source address (in RAM)
-	rep #$20		; A 16b
-	lda #SpriteMemoryBase
-	sta DMA1A1SRCL
-	sep #$20		; A 8b
-	phb
-	pla
-	sta DMA1A1SRCBNK ; bank
-	;; Start the transfert
 	sep #$20	; A 8b
-	lda #$02    ; channel 1
-	sta MDMAEN
-	pld			; restore the direct page register
+	lda #$01
+	sta UpdateSprites
+;wait_for_vblank:
+;    lda HVBJOY              ;check the vblank flag
+;    bpl wait_for_vblank
+;    jsr UpdateSpritesDMA	
+	pld
 	RETW
-.ELSE
-	; A loop instead of a dma transfert
-	sep #$30		; all 8b
-	stz OAMADDL     ; OAM address set to $00
-	stz OAMADDH     ; OAM address set to $00	
-	ldx #0
-sprtransfertloop:
-	lda SpriteMemoryBase,X  ; Copy the 256 bytes
-	sta OAMDATA
-	inx
-	bne sprtransfertloop	; loop if not zero
-	pld			; restore the direct page register
-	RETW
-.ENDIF
 	
 ;; NES
 ; Sprite Attribute RAM:

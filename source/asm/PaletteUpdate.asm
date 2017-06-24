@@ -7,15 +7,7 @@
 ;--------------------------------------------------------------------------------------------------
 ; Updates the palette in CGRAM during NMI
 UpdatePalettes:
-
-	;phb
-	php		;Preserve registers
-	pha
-	phx
-	phy
-	
 	sep #$30	; All 8bits
-
 	; Test each bit corresponding to a palette
 	; If 0, then do nothing
 	lda UpdatePalette
@@ -76,12 +68,6 @@ SprPalette3:
 	jsr transferPalette	
 EndSprPalette:	
 	stz UpdatePalette       ; Nothing to be updated
-
-	ply
-	plx
-	pla
-	plp		;Restore registers
-	;plb
 	rts		;Return to caller
 
 ;--------------------------------------------------------------------------------------------------	

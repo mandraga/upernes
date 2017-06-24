@@ -9,6 +9,7 @@
 .include "CHR.asm"
 .include "PaletteUpdate.asm"
 .include "DMABGUpdate.asm"
+.include "SpritesUpdate.asm"
 .include "sprite0.asm"
 .include "intvectors.asm"
 .include "LoadGraphics.asm"
@@ -78,6 +79,10 @@ eraseNesRamLoop:
 	lda #$01        ; 8kW
 	sta OBSEL       ; Sprite base address for object data at 8kw (1 * 8k), OBJ size 8/16
 
+	; Move the last 64 sprites to a corner
+	;; -----------------------------------------------
+	jsr HideLast64Sprites
+	
 	; Load the APU simulator into the SPC700
 	;; -----------------------------------------------
 	;; TODO
@@ -102,7 +107,7 @@ eraseNesRamLoop:
 	;; -----------------------------------------------
 	rep #$30		; All 16bits
 	jsr NesBackgroundCHRtoVram
-		
+	
 	; Tilemap fixed addresses
 	;; -----------------------------------------------
 	; BG1 tilemap (fusion of the "nes name table + attibute tables")
@@ -110,7 +115,7 @@ eraseNesRamLoop:
 	sep #$30		;  All 8bits
 	lda #$70		; (1k word segment $7000 / $400)=$1C << 2
 	sta BG1SC       ;  the two lower bits are the screen size and are set to 00 : only one screen
-
+	
 	; Initialises the nes port emulation vars
 	;; -----------------------------------------------
 	stz PPUmemaddrB
@@ -138,7 +143,8 @@ eraseNesRamLoop:
 	stz BGTransferStep
 	lda #$01
 	sta NESNMIENABLED
-	stz VblankOn
+	stz VblankState
+	stz NMI_occurred
 
 	
 	lda SNESNMITMP
@@ -203,7 +209,7 @@ copyRamCode:
 
 	lda #$01 
 	sta MEMSEL
-	
+
 	;; -----------------------------------------------
 	; NMI on Vblank always enable because used to update the palettes and backgrounds.
 	lda SNESNMITMP

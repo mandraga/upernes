@@ -53,9 +53,18 @@
 .DEFINE NmiRetHi           RAMBASE + 39 ;
 .DEFINE NmiStatus          RAMBASE + 40 ;
 
-.DEFINE VblankOn           RAMBASE + 41 ;
+.DEFINE VblankState        RAMBASE + 41 ; State of the Vblank flag
+.DEFINE VblankStateOff     $00
+.DEFINE VblankStateOn      $01
+.DEFINE VblankStateClr     $02
+
 .DEFINE TMPPPUAL           RAMBASE + 42 ; Stores the PPUC address
-.DEFINE TMPPPUAH           RAMBASE + 42 ;
+.DEFINE TMPPPUAH           RAMBASE + 43 ;
+
+.DEFINE NMI_occurred       RAMBASE + 44 ; To one when nmi occured
+.DEFINE UpdateSprites      RAMBASE + 45 ; Update sprite in the Vblank interval
+
+
 
 ;--------------------------------------------------------------------
 ; 

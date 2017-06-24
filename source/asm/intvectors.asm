@@ -57,21 +57,43 @@ DMAUpdateHandler:
 	;rep #$20    ; A 16bits
 	;sta TMPVCOUNTL + 2
 
+	; If the nes nmi is enables, call it
 	pha
 	lda NESNMIENABLED
 	beq QuitNMI
 	;lda PPUcontrolreg1  ; Puts the 7th bit in the n flag
 	;and #$80
 	;beq QuitNMI
+	lda #$01
+	sta NMI_occurred
 	pla
 	
 	; Read the vertical line counter position
 	;jsr ReadHcout
 	;BREAK ; something is wrong if removed
+	;-------------------------------------------------------------------
+	php		;Preserve registers
+	pha
+	phx
+	phy
+	;NATIVE
+	clc			; native 65816 mode
+	xce
 	
 	jsr UpdatePalettes
+	jsr UpdateSpritesDMA
 	jsr UpdateBackgrounds       ; Copy changed bytes to the VRAMdddfffgcxcvsfgggcxxxcv
-	; If the nes nmi is enables, call it
+	
+	;-------------------------------------------------------------------
+	;EMULATION
+	sec			; 6502 mulation mode
+	xce
+	; Restore registers
+	ply
+	plx
+	pla
+	plp		;Restore registers
+	;plb
 
 	; Read the vertical line counter position
 	;jsr ReadHcout

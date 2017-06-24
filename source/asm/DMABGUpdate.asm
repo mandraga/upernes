@@ -6,16 +6,6 @@
 .SECTION "DmaBackgroundUpdate"
 
 UpdateBackgrounds:
-	;phb
-	php		;Preserve registers
-	pha
-	phx
-	phy
-	
-	;NATIVE
-	clc			; native 65816 mode
-	xce
-
 	;BREAK2
 	;jsr UpdateNametables
 	;jmp labs ; Jumps over the DMA update
@@ -106,16 +96,6 @@ labs:
 	and #$7F   ; This is the transfer step	
 	adc #$02
 	sta BGTransferStep
-
-	;EMULATION
-	sec			; 6502 mulation mode
-	xce
-
-	ply
-	plx
-	pla
-	plp		;Restore registers
-	;plb
 	rts		;Return to caller
 
 ;---------------------------------------------------------------------
