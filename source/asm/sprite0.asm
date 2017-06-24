@@ -65,7 +65,7 @@ updateSprite0Flag:
 	sta TMPVCOUNTH
 	lda SpriteMemoryBase + 1 ; sprite 0's Y
 	clc
-	adc #$43 ; Ack fixme
+	adc #$03 ; Ack fixme
 	sta TMPVCOUNTL
 
 	; Read the vertical line counter position

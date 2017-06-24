@@ -124,7 +124,7 @@ IORroutinestable:
 ;       |   4 | Screen Pattern Table Address, 1 = $1000, 0 = $0000.
 ;       |   5 | Sprite Size, 1 = 8x16, 0 = 8x8.
 ;       |   6 | PPU Master/Slave Mode, not used in NES.
-;       |   7 | VBlank Enable, 1 = generate interrupts on VBlank.
+;       |   7 | Enable VBlank as NMI irq trigger, 1 = generate interrupts on VBlank.
 
 WPPUC1:
 	sep #$30		     ; All 8 bit
@@ -134,7 +134,7 @@ WPPUC1:
 testPPUCtrl1Chg:
 	tax
 	; If the lower bit changed, then change the screen hscrolling
-	ora PPUcontrolreg1
+	eor PPUcontrolreg1
 	and #$01
 	beq NoScrollChange
 	; Update the scroll register bit 8
@@ -317,26 +317,28 @@ RPPUSTATUS:
 	lda VCOUNTL
 	cmp #240
 	bcs InVblank ; A >= 240
-	lda VblankStateOff
+	sep #$20  ; A 8bits
+	lda #VblankStateOff
 	sta VblankState
 	lda #$00
 	jmp GetSprite0Flag
 InVblank:
+	sep #$20  ; A 8bits
 	lda VblankState
-	cmp VblankStateOff
+	cmp #VblankStateOff
 	beq EnVblank
-	cmp VblankStateOn
+	cmp #VblankStateOn
 	beq VblankClrFlag
 	; Already in Clr state
 	lda #$00
 	jmp GetSprite0Flag
 VblankClrFlag:
-	lda VblankStateClr
+	lda #VblankStateClr
 	sta VblankState
 	lda #$00
 	jmp GetSprite0Flag
 EnVblank:
-	lda VblankStateOn
+	lda #VblankStateOn
 	sta VblankState	
 	lda #$80   ; Vblank enabled
 GetSprite0Flag:
@@ -349,6 +351,7 @@ PowerUp:
 	lda #$80          ; return boot PPUSTATUS
 EndRPPUSTATUS:
 	sta PPUStatus
+	BREAK
 	RETR
 	
 ; ------+-----+---------------------------------------------------------------
