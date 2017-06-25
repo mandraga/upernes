@@ -156,7 +156,7 @@ void CindirectJmpAsmRoutines::writeIndJumproutines(FILE *fp, CindirectJmpRuntime
 	  fprintf(fp, ".ACCU 16\n");
 	  sprintf(routine, "IndJmp%04X", jmpoperand);
 	  fprintf(fp, "%s:\n", routine);
-	  fprintf(fp, "\tldx XiLevel1\n");
+	  //fprintf(fp, "\tldx Xi\n");
 	  fprintf(fp, "\tsta Acc                    ; save Acc\n");
 	  fprintf(fp, "\tclc                        ; To native mode\n");
 	  fprintf(fp, "\txce\n");

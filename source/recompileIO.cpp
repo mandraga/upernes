@@ -30,12 +30,12 @@
 
 void Crecompilateur::print_save(FILE *fp)
 {
-  //fprintf(fp, "\tphp\n\tstx Xi\n");
+  fprintf(fp, "\tphp\n\tsei\n\tstx Xi\n");
 }
 
 void Crecompilateur::print_restore(FILE *fp)
 {
-  //fprintf(fp, "\tldx Xi\n\tplp\n");
+  fprintf(fp, "\tldx Xi\n\tplp\n");
 }
 
 /*
@@ -65,17 +65,19 @@ void Crecompilateur::AddPRGPatch(int iopaddr, Copcodes *popcode_list, t_pinstr p
 
 void Crecompilateur::routineSTAiop(FILE *fp, int iopaddr, Copcodes *popcode_list, t_pinstr pinstr, std::vector<t_PatchRoutine> &PatchRoutines)
 {
-   char routine[LABELSZ];
+  char routine[LABELSZ];
 
   snprintf(routine, LABELSZ, "rsta_%02X", iopaddr); // Print the label name);
   fprintf(fp, "\n%s:\n", routine); // Print the label name
   // Save status...
   print_save(fp);
+  fprintf(fp, "\tsta Acc\n");
   // Put the io port somewhere
   fprintf(fp, "\tldx #$%02X\n", 2 * PORT2INDEX(iopaddr));
   fprintf(fp, "\tjsr staioportroutine\n");
+  fprintf(fp, "\tlda Acc\n");
   print_restore(fp);
-  fprintf(fp, "\trts\n");
+  fprintf(fp, "\trtl\n");
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }
 
@@ -100,7 +102,6 @@ void Crecompilateur::routineSTAAbsXiop(FILE *fp, int iopaddr, Copcodes *popcode_
   // Save status...
   print_save(fp);
   // Put the io port somewhere
-  fprintf(fp, "\tldx XiLevel1\n");
   fprintf(fp, "\tsta Acc\n");
   fprintf(fp, "\ttxa\n");
   fprintf(fp, "\tasl A\n");
@@ -109,8 +110,9 @@ void Crecompilateur::routineSTAAbsXiop(FILE *fp, int iopaddr, Copcodes *popcode_
   fprintf(fp, "\ttax\n");
   fprintf(fp, "\tlda Acc\n");
   fprintf(fp, "\tjsr staioportroutine\n");
+  fprintf(fp, "\tlda Acc\n");
   print_restore(fp);
-  fprintf(fp, "\trts\n");
+  fprintf(fp, "\trtl\n");
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }
 
@@ -148,7 +150,7 @@ void Crecompilateur::routineSTAAbsYiop(FILE *fp, int iopaddr, Copcodes *popcode_
   fprintf(fp, "\tldy Yi\n");
   fprintf(fp, "\tjsr staioportroutine\n");
   print_restore(fp);
-  fprintf(fp, "\trts\n");
+  fprintf(fp, "\trtl\n");
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }
 
@@ -163,8 +165,8 @@ void Crecompilateur::routineLDAiop(FILE *fp, int iopaddr, Copcodes *popcode_list
   fprintf(fp, "\tldx #$%02X\n", 2 * PORT2INDEX(iopaddr));
   fprintf(fp, "\tjsr ldaioportroutine\n");
   print_restore(fp);
-  //fprintf(fp, "\tora #$00		; test N Z flags without affecting A\n");
-  fprintf(fp, "\trts\n");
+  fprintf(fp, "\tora #$00		; test N Z flags without affecting A\n");
+  fprintf(fp, "\trtl\n");
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }
 
@@ -174,14 +176,15 @@ void Crecompilateur::routineLDXiop(FILE *fp, int iopaddr, Copcodes *popcode_list
 
   snprintf(routine, LABELSZ, "rldx_%02X", iopaddr); // Print the label name);
   fprintf(fp, "\n%s:\n", routine);
+  fprintf(fp, "\tphp\n\tsei\n");
   fprintf(fp, "\tsta Acc\n");
   fprintf(fp, "\tldx #$%02X\n", 2 * PORT2INDEX(iopaddr));
   fprintf(fp, "\tjsr ldaioportroutine\n");
-  //fprintf(fp, "\tsta Xi\n");
-  fprintf(fp, "\tsta XiLevel1\n");
+  fprintf(fp, "\tsta Xi\n");
   fprintf(fp, "\tlda Acc\n");
-  //fprintf(fp, "\tldx Xi		; x like if it has been loaded by a ldx\n");  
-  fprintf(fp, "\trts\n");
+  fprintf(fp, "\tplp\n");
+  fprintf(fp, "\tldx Xi		; x like if it has been loaded by a ldx\n");  
+  fprintf(fp, "\trtl\n");
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }
 
@@ -199,7 +202,7 @@ void Crecompilateur::routineLDYiop(FILE *fp, int iopaddr, Copcodes *popcode_list
   fprintf(fp, "\tlda Acc\n");
   print_restore(fp);
   fprintf(fp, "\tldy Yi		; y like if it has been loaded by a ldy\n");
-  fprintf(fp, "\trts\n");
+  fprintf(fp, "\trtl\n");
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }
 
@@ -211,14 +214,13 @@ void Crecompilateur::routineSTXiop(FILE *fp, int iopaddr, Copcodes *popcode_list
   fprintf(fp, "\n%s:\n", routine);
   // Save status...
   print_save(fp);
-  fprintf(fp, "\tldx XiLevel1\n");
   fprintf(fp, "\tsta Acc\n");
   fprintf(fp, "\ttxa\n");
   fprintf(fp, "\tldx #$%02X\n", 2 * PORT2INDEX(iopaddr));
   fprintf(fp, "\tjsr staioportroutine\n");
   fprintf(fp, "\tlda Acc\n");
   print_restore(fp);
-  fprintf(fp, "\trts\n");
+  fprintf(fp, "\trtl\n");
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }
 
@@ -237,7 +239,7 @@ void Crecompilateur::routineSTYiop(FILE *fp, int iopaddr, Copcodes *popcode_list
   fprintf(fp, "\tjsr staioportroutine\n");
   fprintf(fp, "\tlda Acc\n");
   print_restore(fp);
-  fprintf(fp, "\trts\n");
+  fprintf(fp, "\trtl\n");
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }
 

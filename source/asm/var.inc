@@ -45,7 +45,8 @@
 .DEFINE RetHi              RAMBASE + 30 ;
 .DEFINE SignatureLo        RAMBASE + 31 ; Address of the signature
 .DEFINE SignatureHi        RAMBASE + 32 ;
-.DEFINE XiLevel1           RAMBASE + 33 ;
+;.DEFINE XiLevel1           RAMBASE + 33 ; This is used to save X during IO emulation call
+.DEFINE YiLeveL1           RAMBASE + 34
 
 .DEFINE JumpAddress        RAMBASE + 36 ; Stores an address in order to avoid using X
 .DEFINE AccNmi             RAMBASE + 37 ;

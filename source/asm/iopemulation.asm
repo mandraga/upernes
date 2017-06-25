@@ -213,13 +213,6 @@ BGbankend:
 	;; Sprite size
 	;; ------------------------------------------
 
-	;; FIXME is it used on the nes?.???? enable and disable screen?????????????????????????????????,,,,,,,
-	;lda #$0F		  ;Turn on screen, 100% brightness
-	;sta INIDISP
-	;lda #$8F		  ;Turn off screen, 100% brightness
-	;sta INIDISP
-
-	;BREAK
 	;; Test Vblank
 	;bit PPUcontrolreg1
 	;bpl novblank		; Therefore bpl branches if the 7th bit is not set
@@ -260,6 +253,7 @@ RPPUC1:
 ;       |     | Do not use any other numbers as you may damage PPU hardware.
 
 WPPUC2:
+	BREAK
 	cmp PPUcontrolreg2 	; Anything changed?
 	beq endWPPUC2
 	sta PPUcontrolreg2
@@ -301,6 +295,7 @@ RPPUC2:
 ;       |     | This flag resets to 0 when VBlank ends or CPU reads $2002
 ;       |     |
 RPPUSTATUS:
+	BREAK
 	sep #$20
 	;; vblank
 	lda #$01
@@ -351,7 +346,7 @@ PowerUp:
 	lda #$80          ; return boot PPUSTATUS
 EndRPPUSTATUS:
 	sta PPUStatus
-	BREAK
+	;BREAK
 	RETR
 	
 ; ------+-----+---------------------------------------------------------------
@@ -955,7 +950,6 @@ IncAttrAddr:
 NametableW:
 	sep #$20		; A 8bit
 	rep #$10        ; X Y are 16bits
-	;BREAK
 	; Store the byte
 
 	jsr SetNametableOffset

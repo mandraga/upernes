@@ -76,7 +76,7 @@
 ; The save ram must be 32KB because last 8KB are used
 
 .MACRO NATIVE
-	sei         ; disable interrupts, because we do not want any interrupt in the native mode
+	;sei         ; disable interrupts, because we do not want any interrupt in the native mode
 	clc			; native 65816 mode
 	xce
 .ENDM
@@ -101,14 +101,15 @@
 ; 	RW PPU Control Register 2
 ; 	R  PPU Status Register
 ; 	RW Sprite Memory Data
-; 	RW PPU Memory Data <- By far the most difficult!
+; 	RW PPU Memory Data <- difficult because it points on different aeras/behaviours depending on the address
 ; 	RW Sound Channel Switch/Sound Status
 ; 	RW Joystick1 + Strobe   Write not emulated!
 ; 	R  Joystick2 + Strobe
 ;;
 ldaioportroutine:
+	sty YiLeveL1
 	;; Native mode
-	;NATIVE
+	NATIVE
 	;; --------------------------------------------------------
 	;; Go to the IO address read routine
 	;; Jump to the routine
@@ -116,10 +117,11 @@ ldaioportroutine:
 	jmp (IORroutinestable,X)
 RetIOroutineR:
 	;; Emulation mode
-	;EMULATION
+	EMULATION
+	ldy YiLeveL1
 	;; Done
 	rts
-	
+
 
 ;; --------------------------------------------------------------------
 ;; staioportroutine
@@ -129,14 +131,15 @@ RetIOroutineR:
 ; 	RW Sprite Memory Data
 ; 	 W Screen Scroll Offsets
 ; 	 W PPU Memory Address
-; 	RW PPU Memory Data <- By far the most difficult!
+; 	RW PPU Memory Data <- difficult because it points on different aeras/behaviours depending on the address
 ; 	 W Sound registers
 ; 	 W DMA Access to the Sprite Memory
 ; 	RW Sound Channel Switch/Sound Status
 ;;
 staioportroutine:
+	sty YiLeveL1
 	;; Native mode
-	;NATIVE
+	NATIVE
 	;; --------------------------------------------------------
 	;; Go to the IO address write routine
 	;; Jump to the routine
@@ -144,58 +147,12 @@ staioportroutine:
 	jmp (IOWroutinestable,X)
 RetIOroutineW:
 	;; Emulation mode
+	EMULATION
+	ldy YiLeveL1
 	;; Done
 	rts
 
-;; Call
-; 	php			; push flags
-; 	stx Xi			; save index registers if needed
-; 	sty Yi	
-; 	sta Acc			; Save A (Absolute @)
-; 	lda #$ioaddr		; Load the io port address index
-; 	jsr ldaioroutine
-; 	ldx Xi
-; 	ldy Yi
-; 	plp			; pop flags
 
-
-; ###############################################################
-; 	php			; push flags
-; 	sta Acc			; Save A (Absolute @)
-; 	lda #$ioaddr		; Load the io port address index
-; 	jsr ldaioroutine
-; 	plp			; pop flags
-
-; ldaioroutine:
-; 	stx Xi
-; 	sty Yi	
-; 	clc			; Native mode, 8bits
-; 	xce
-; 	;; Change the direct page to $0800
-; ; 	rep #$20
-; ; 	sta Acc16
-; ; 	lda #$0800
-; ; 	tcd			; Direct page register changed
-; 	;;
-; 	;; Jump to the routine
-; 	rep #10
-; 	ldx #$0000
-; 	tax
-; 	;; Stack is on 10FF to 0F00 to 0E00 -> Do not care if it overflows
-; 	;; it must just return to his previous value
-; 	rep #20
-; 	tsc
-; 	ora #$1000		; SP is now ant $10SP instead of $00SP
-; 	tcs			; going to emulation will restore it to $00SP
-; 	;;
-; 	lda Acc
-; 	jmp routine,X
-; Wreturn:
-; 	sec
-; 	xce			; Emulation mode
-; 	ldx Xi
-; 	ldy Yi
-; 	rts
 ; ###############################################################
 	
 ;; Converts a 16bits io port address in IOAddr to an io port index in 0-30
