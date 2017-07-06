@@ -137,15 +137,20 @@ testPPUCtrl1Chg:
 	eor PPUcontrolreg1
 	and #$01
 	beq NoScrollChange
-	; Update the scroll register bit 8
+	;----------------------------------------------------------
+	; Set the TMP VRAM registers
+	lda tH
+	and #$F3
+	sta tH
 	txa
-	pha
-	and #$01
-	ldx NESHSCROLL
-	stx BG1HOFS		        ; This register must be written twice
-	sta BG1HOFS 		    ; High byte's lower bit comes from PPU control 1 lower bit when scrolling horizontally
-	pla
-	tax
+	and #$03  ; 2 first bits
+	asl
+	asl
+	ora tH
+	sta tH
+	;----------------------------------------------------------
+	; Update the scroll register bit 8
+	jsr UpdateHScroll
 	;
 NoScrollChange:
 	txa
@@ -303,8 +308,7 @@ RPPUSTATUS:
 	beq PowerUp     ; If 1, then it is power up (always here, even on reset)
 	jsr updateSprite0Flag
 	; The scroll registers latches are cleared by a read to this register
-	stz CurScrolRegister
-	;stz PPUmemaddrB
+	stz WriteToggle
 
 	; If the nes NMI on Vblank is disabled it does not mean that VBlank is not occuring
 	; Just compare the counter value
@@ -548,10 +552,10 @@ convert_sprflags_to_nes:
 ; ------+-----+---------------------------------------------------------------
 ; $2005 | W   | Screen Scroll Offsets
 ;       |     | There are two scroll registers, vertical and horizontal, 
-;       |     | which are both written via this port. The first value written
+;       |     | which are both written via this port. The first value will
+;       |     | appear in the Horizontal Scroll Register. The second value written
 ;       |     | will go into the Vertical Scroll Register (unless it is >239,
-;       |     | then it will be ignored). The second value will appear in the
-;       |     | Horizontal Scroll Register. Name Tables are assumed to be
+;       |     | then it will be ignored). Name Tables are assumed to be
 ;       |     | arranged in the following way:
 ;       |     |
 ;       |     |           +-----------+-----------+
@@ -566,30 +570,100 @@ convert_sprflags_to_nes:
 WSCROLOFFSET:
 	sep #$30		; All 8b
 	tax
-	lda CurScrolRegister
+	lda WriteToggle
 	beq horizontal_scroll   ; 0 horizontal, 1 vertical
 vertical_scroll:
+	;----------------------------------------------------------
+	; Set the TMP VRAM registers
+	;jmp forg2
+	lda tL
+	and #$E0
+	sta tL
+	txa
+	and #$03
+	sta tX
+	txa
+	lsr
+	lsr
+	lsr
+	and #$1F
+	sta tL
+forg2:
+	;----------------------------------------------------------
+	; Set the Vscroll value but only updated  during vblank
 	txa
 	sta NESVSCROLL
 	cmp #240		; > 239?
-	bcs ignorescrollvalue
+	bcs ignorescrollvalue	
+	; Update vscroll only during vblank?
+	;lda NESVSCROLL
 	sta BG1VOFS             ; This register must be written twice
 	stz BG1VOFS 		    ; High byte is 0
 	jmp chgscrollregister
 horizontal_scroll:
 	sep #$30		; All 8b
+	;----------------------------------------------------------
+	; Set the TMP VRAM registers
+	;jmp forg1
+	lda tL
+	and #$1F
+	sta tL
+	txa
+	asl
+	asl
+	and #$E0
+	ora tL
+	sta tL
+	; H byte
+	lda tH
+	and #$0C
+	sta tH
+	txa
+	ror
+	ror
+	ror
+	and #$E0
+	ora tH
+	sta tH
+	txa
+	rol
+	rol
+	and #$03
+	ora tH
+	sta tH
+forg1:
+	;----------------------------------------------------------
+	; Change the horisontal scroll values
 	BREAK2
 	stx NESHSCROLL
-	lda PPUcontrolreg1  ; FIXME works only with horizontal mappers
-	and #$01
-	stx BG1HOFS		        ; This register must be written twice
-	sta BG1HOFS 		    ; High byte's lower bit comes from PPU control 1 lower bit when scrolling horizontally
+	jsr UpdateHScroll
 ignorescrollvalue:          ; ignore the value but change the register state
 chgscrollregister:
-	lda CurScrolRegister
+	lda WriteToggle
 	eor #$01		        ; Change the acessed scroll register
-	sta CurScrolRegister
+	sta WriteToggle
 	RETW
+	
+SetSCrollRegister:
+	rts
+
+UpdateHScroll:
+	pha
+	stx XsavScroll
+	ldx NESHSCROLL
+	lda tH                  ; Load the tmp register
+	and #$C0
+	beq BanlXScroll
+	lda #$01
+	jmp Ban2XScroll	
+BanlXScroll:
+	lda #$00
+Ban2XScroll:
+	stx BG1HOFS		        ; This register must be written twice
+	sta BG1HOFS 		    ; High byte's lower bit comes from PPU control 1 lower bit when scrolling horizontally	
+	ldx XsavScroll
+	pla
+	rts
 
 ; ------+-----+---------------------------------------------------------------
 ; $2006 | W   | PPU Memory Address
@@ -604,19 +678,55 @@ chgscrollregister:
 	;; Name table, Attribute table, Palette, ou empty
 WPPUMEMADDR:
 	sep #$30            ; All 8b
-	ldy PPUmemaddrB     ; Get the adressed byte
-	sta PPUmemaddrL,Y	; Store the address in this byte
-	tya
+	ldy WriteToggle     ; Get the adressed byte
+	beq HighAddressByte ; 0 = hight address byte
+	sta PPUmemaddrL     ; Low address byte
+	jmp toggleW
+HighAddressByte:
+	and #$3F
+	sta PPUmemaddrH
+toggleW:
+	lda WriteToggle
 	eor #$01
-	sta PPUmemaddrB		; Toggle the accessed byte (0 or 1)
-	ora #$00	        ; Test if address update is finished (byte 1) or not finished (byte 0). Return if not finished (0).
-	beq ppumaddret
+	sta WriteToggle		; Toggle the accessed byte (0 or 1)
+	ora #$00	        ; Test if address update is finished. Return if not finished (WriteToggle == 1).
+	bne ppumaddret
 	;; -----------------------------------------------
 	;; The address write is completed here
-	; Set the latch for the next read operation
+	; Set the latch for the next read operation, it will return nothing important
 	lda #$01
 	sta PPUReadLatch
-	;; Select the routine for it's address range
+	;; -----------------------------------------------
+	; Set the TMP VRAM registers
+	;jmp forg3
+	lda PPUmemaddrH
+	and #$3F
+	sta tH
+	lda PPUmemaddrL
+	sta tL
+	; Update the scroll registers
+	; H scroll
+	;lda tX
+	;sta NESHSCROLL
+	;lda tL
+	;clc
+	;asl
+	;asl
+	;asl
+	;ora NESHSCROLL
+	;sta NESHSCROLL
+	; Update Horizontal scrolling
+	;jsr UpdateHScroll
+endRefreshScroll:
+	; V scroll
+	;lda tH
+	;sta NESVSCROLL
+	;sta BG1VOFS             ; This register must be written twice
+	;stz BG1VOFS 
+forg3:
+
+	;; -----------------------------------------------
+	;; Select the routine for the address range
 	lda PPUmemaddrH
 	;; Find the address range
 	cmp #$20		     ; On the nes, below $2000, it is CHR data

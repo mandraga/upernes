@@ -77,7 +77,7 @@
 
 .DEFINE PPUmemaddrL				IOBASE + 4	; Current ppu vram address
 .DEFINE PPUmemaddrH				IOBASE + 5
-.DEFINE PPUmemaddrB				IOBASE + 6	; Low/Hight byte write
+.DEFINE WriteToggle				IOBASE + 6	; Low/Hight byte write for the vertical scroll register od PPU address regster
 
 .DEFINE tmp_addr				IOBASE + 8	; Word, tmp address storage
 .DEFINE tmp_dat 				IOBASE + 10	; Word, tmp data storage
@@ -86,13 +86,12 @@
 .DEFINE PPUcontrolreg2			IOBASE + 12
 .DEFINE PPUStatus               IOBASE + 13 ; Used to check visually with the debugger
 .DEFINE	SpriteMemoryAddress		IOBASE + 14
-.DEFINE	NESVSCROLL              IOBASE + 15
+.DEFINE	NESVSCROLL              IOBASE + 15 ; Equal to ppu mem Addr.
 .DEFINE	NESHSCROLL              IOBASE + 16
 .DEFINE PPTMP                   IOBASE + 17
 .DEFINE StarPPUStatus           IOBASE + 18 ; 1 on start
 .DEFINE VCOUNTL                 IOBASE + 19 ;
 .DEFINE VCOUNTH                 IOBASE + 20 ;
-.DEFINE CurScrolRegister        IOBASE + 21 ; 0 or 1 selects the vertical scroll register
 
 .DEFINE attributeaddr           IOBASE + 22	; Used as the nes attribute table
 
@@ -141,6 +140,13 @@
 .DEFINE PalettebufferSz         32
 .DEFINE UpdatePalette           IOBASE + 144 ; Update palette flags, one bit for each one of the 8 palettes
 .DEFINE UpdateFlags             IOBASE + 145 ; Used to build the flag (8 bytes)
+
+; Vram/X Y scrolling registers
+.DEFINE tL                      IOBASE + 160 ; tmp vram address Low
+.DEFINE tH                      IOBASE + 161 ; tmp vram address hi
+.DEFINE tX                      IOBASE + 162 ; tmp X 'fine' scroll
+;.DEFINE updateVscroll           IOBASE + 163 ; boolean, update vscroll during NMI it when set
+.DEFINE XsavScroll              IOBASE + 164 ;
 
 ;--------------------------------------------------------------------
 .DEFINE SpriteMemoryBase		$0A00       ; 256 bytes

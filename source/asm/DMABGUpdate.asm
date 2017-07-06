@@ -4,7 +4,7 @@
 .BANK 0
 .ORG 0
 .SECTION "DmaBackgroundUpdate"
-
+	
 UpdateBackgrounds:
 	;BREAK2
 	;jsr UpdateNametables

@@ -118,13 +118,12 @@ eraseNesRamLoop:
 	
 	; Initialises the nes port emulation vars
 	;; -----------------------------------------------
-	stz PPUmemaddrB
-	inc PPUmemaddrB   ; The first adressed PPU adresse byte is the most significant byte.
+	lda #$00
+	sta WriteToggle   ; The first adressed PPU adresse byte is the most significant byte.
 	stz StarPPUStatus
 	inc StarPPUStatus ; Boot state in vblank flag of PPUSTATUS
 	stz PPUmemaddrL
 	stz PPUmemaddrH
-	stz CurScrolRegister
 	stz PPUcontrolreg2
 	stz PPUStatus
     stz	SpriteMemoryAddress
@@ -145,7 +144,6 @@ eraseNesRamLoop:
 	sta NESNMIENABLED
 	stz VblankState
 	stz NMI_occurred
-
 	
 	lda SNESNMITMP
 	ora #%00100000 ; Enable V timer

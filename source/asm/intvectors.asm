@@ -79,7 +79,7 @@ DMAUpdateHandler:
 	;NATIVE
 	clc			; native 65816 mode
 	xce
-	
+
 	jsr UpdatePalettes
 	jsr UpdateSpritesDMA
 	jsr UpdateBackgrounds       ; Copy changed bytes to the VRAMdddfffgcxcvsfgggcxxxcv
