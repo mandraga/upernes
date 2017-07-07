@@ -127,34 +127,44 @@ IORroutinestable:
 ;       |   7 | Enable VBlank as NMI irq trigger, 1 = generate interrupts on VBlank.
 
 WPPUC1:
-	sep #$30		     ; All 8 bit
-	cmp PPUcontrolreg1 	; Anything changed?
-	bne testPPUCtrl1Chg
-	jmp vblankend
-testPPUCtrl1Chg:
-	tax
+	sep #$30		    ; All 8 bit
+	;cmp PPUcontrolreg1 	; Anything changed?
+	;bne testPPUCtrl1Chg
+	;jmp vblankend
+	sta PPUcontrolreg1   ; Save the written value
+;testPPUCtrl1Chg:
+;	tax
 	; If the lower bit changed, then change the screen hscrolling
-	eor PPUcontrolreg1
-	and #$01
-	beq NoScrollChange
+	;eor PPUcontrolreg1
+	;and #$01
+	; Also check the bits in Th
+	;lda tH
+	;lsr
+	;lsr
+	;eor PPUcontrolreg1
+	;beq NoScrollChange
 	;----------------------------------------------------------
 	; Set the TMP VRAM registers
+	BREAK3
 	lda tH
-	and #$F3
+	and #$F3  ; Clear the 2 bits
 	sta tH
-	txa
+	lda PPUcontrolreg1
 	and #$03  ; 2 first bits
 	asl
 	asl
 	ora tH
 	sta tH
 	;----------------------------------------------------------
+;	txa
+;	sta PPUcontrolreg1   ; Save the written value
+	;----------------------------------------------------------
 	; Update the scroll register bit 8
 	jsr UpdateHScroll
 	;
 NoScrollChange:
-	txa
-	sta PPUcontrolreg1   ; Save the written value
+;	txa
+
 	;; ------------------------------------------
 	;; Test Nametable @ bits
 	;; Mirroring is the default value. FIXME add cartridge nametables?
@@ -258,7 +268,7 @@ RPPUC1:
 ;       |     | Do not use any other numbers as you may damage PPU hardware.
 
 WPPUC2:
-	BREAK
+	;BREAK
 	cmp PPUcontrolreg2 	; Anything changed?
 	beq endWPPUC2
 	sta PPUcontrolreg2
@@ -350,7 +360,6 @@ PowerUp:
 	lda #$80          ; return boot PPUSTATUS
 EndRPPUSTATUS:
 	sta PPUStatus
-	;BREAK
 	RETR
 	
 ; ------+-----+---------------------------------------------------------------
@@ -575,7 +584,7 @@ WSCROLOFFSET:
 vertical_scroll:
 	;----------------------------------------------------------
 	; Set the TMP VRAM registers
-	;jmp forg2
+	jmp forg2
 	lda tL
 	and #$E0
 	sta tL
@@ -604,7 +613,7 @@ horizontal_scroll:
 	sep #$30		; All 8b
 	;----------------------------------------------------------
 	; Set the TMP VRAM registers
-	;jmp forg1
+	jmp forg1
 	lda tL
 	and #$1F
 	sta tL
@@ -634,7 +643,6 @@ horizontal_scroll:
 forg1:
 	;----------------------------------------------------------
 	; Change the horisontal scroll values
-	BREAK2
 	stx NESHSCROLL
 	jsr UpdateHScroll
 ignorescrollvalue:          ; ignore the value but change the register state
@@ -650,9 +658,12 @@ SetSCrollRegister:
 UpdateHScroll:
 	pha
 	stx XsavScroll
+	lda tH
+	and #$0C
+	BREAK2
 	ldx NESHSCROLL
 	lda tH                  ; Load the tmp register
-	and #$C0
+	and #$0C
 	beq BanlXScroll
 	lda #$01
 	jmp Ban2XScroll	
@@ -714,7 +725,7 @@ toggleW:
 	;asl
 	;asl
 	;ora NESHSCROLL
-	;sta NESHSCROLL
+	;lda PPUmemaddrH
 	; Update Horizontal scrolling
 	;jsr UpdateHScroll
 endRefreshScroll:

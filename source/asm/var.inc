@@ -110,8 +110,20 @@
 	pla
 .ENDM
 
-.DEFINE VideoIncrementL         IOBASE + 26  ; Video increment value
-.DEFINE VideoIncrementH         IOBASE + 27  ; Video increment value
+.DEFINE BreakPointAddr3         IOBASE + 26  ; Video increment value
+.DEFINE BreakPointAddr4         IOBASE + 27  ; Video increment value
+
+.MACRO BREAK3
+	pha
+	lda $091A
+	pla
+.ENDM
+
+.MACRO BREAK4
+	pha
+	lda $091B
+	pla
+.ENDM
 
 .DEFINE NamesBank1UpdateCounter IOBASE + 28  ; Counts the updated tiles in the background bank 1
 .DEFINE NamesBank2UpdateCounter IOBASE + 29  ; Counts the updated tiles in the background bank 2

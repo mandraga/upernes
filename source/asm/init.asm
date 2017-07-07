@@ -128,8 +128,6 @@ eraseNesRamLoop:
 	stz PPUStatus
     stz	SpriteMemoryAddress
 	stz attributeaddr
-	stz VideoIncrementL
-	stz VideoIncrementH
 	lda #$80
 	sta SNESNMITMP     ; NMI on Vblank always enabled
 	stz HCOUNTERL
