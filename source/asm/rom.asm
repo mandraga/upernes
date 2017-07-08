@@ -15,7 +15,7 @@
 
 ;; Part 2
 .ORG    $7FD6
-.DB     $02			; Contents ($00=ROM only, $01=ROM and RAM, $02=ROM and Save RAM)
+.DB     $00			; Contents ($00=ROM only, $01=ROM and RAM, $02=ROM and Save RAM)
 .DB     $08			; ROM Size ($08=2Mbit, $09=4Mbit, $0A=8Mbit, $0B=16Mbit... etc)
 .DB     $00			; SRAM Size ($00=0bits, $01=16kbits, $02=32kbits, $03=64kbits)
 .DB     $01			; Country ($01=USA)

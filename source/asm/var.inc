@@ -65,7 +65,8 @@
 .DEFINE NMI_occurred       RAMBASE + 44 ; To one when nmi occured
 .DEFINE UpdateSprites      RAMBASE + 45 ; Update sprite in the Vblank interval
 
-
+.DEFINE IOCallCOUNTER      RAMBASE + 48 ; Stores the shit from hell (counts Io calls)
+.DEFINE COUNTCALLS                     ; Enables counting IO accesses on the previous RAM area
 
 ;--------------------------------------------------------------------
 ; 
@@ -157,8 +158,9 @@
 .DEFINE tL                      IOBASE + 160 ; tmp vram address Low
 .DEFINE tH                      IOBASE + 161 ; tmp vram address hi
 .DEFINE tX                      IOBASE + 162 ; tmp X 'fine' scroll
-;.DEFINE updateVscroll           IOBASE + 163 ; boolean, update vscroll during NMI it when set
-.DEFINE XsavScroll              IOBASE + 164 ;
+.DEFINE tmpV                    IOBASE + 163 ; 
+.DEFINE tmpPPUcontrolreg1       IOBASE + 164 ; 
+.DEFINE XsavScroll              IOBASE + 165 ;
 
 ;--------------------------------------------------------------------
 .DEFINE SpriteMemoryBase		$0A00       ; 256 bytes

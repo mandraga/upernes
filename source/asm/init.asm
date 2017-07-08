@@ -5,6 +5,9 @@
 .include "cartridge.inc"
 
 .include "rom.asm"
+
+.BASE $80 ; Fast ROM
+
 .include "patchedPrg.asm"
 .include "CHR.asm"
 .include "PaletteUpdate.asm"
@@ -203,6 +206,8 @@ copyRamCode:
 	lda #$0F		  ;Turn on screen, 100% brightness
 	sta INIDISP
 
+	;; -----------------------------------------------
+	; Use fast rom
 	lda #$01 
 	sta MEMSEL
 

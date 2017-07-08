@@ -62,10 +62,11 @@ updateSprite0Flag:
 	;
 	sep #$20    ; A 8bits
 	lda #$00
+	BREAK2
 	sta TMPVCOUNTH
 	lda SpriteMemoryBase + 1 ; sprite 0's Y
 	clc
-	adc #$03 ; Ack fixme
+	adc #$05 ; Ack fixme
 	sta TMPVCOUNTL
 
 	; Read the vertical line counter position

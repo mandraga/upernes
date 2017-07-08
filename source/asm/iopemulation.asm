@@ -32,6 +32,7 @@ IOWroutinestable:
 .DW	WSCROLOFFSET		; $2005
 .DW	WPPUMEMADDR			; $2006
 .DW	WPPUMEMDATA			; $2007
+; 8
 ;; Sound registers
 .DW	WSNDSQR1CTRL		; $4000
 .DW	WSNDSQR1E
@@ -41,6 +42,7 @@ IOWroutinestable:
 .DW	WSNDSQR2E
 .DW	WSNDSQR2PERIOD
 .DW	WSNDSQR2LENPH
+; 16
 .DW	WSNDTRIACTRL		; $4008
 .DW     $0000
 .DW	WSNDTRIAPERIOD		; $400A
@@ -49,6 +51,7 @@ IOWroutinestable:
 .DW     $0000
 .DW	WSNDNOISESHM		; $400E
 .DW	WSNDNOISELEN		; $400F
+; 24
 .DW	WSNDDMCCTRL			; $4010
 .DW	WSNDDMCDAC			; $4011
 .DW	WSNDDMCSADDR		; $4012
@@ -60,6 +63,7 @@ IOWroutinestable:
 ;; Joystick but not replaced
 .DW	WJOYSTICK1			; $4016 WJOYSTICK1
 .DW	WSNDSEQUENCER		; WSNDSEQUENCER / WJOYSTICK2
+; 32
 
 ;; Read ports
 IORroutinestable:
@@ -131,7 +135,8 @@ WPPUC1:
 	;cmp PPUcontrolreg1 	; Anything changed?
 	;bne testPPUCtrl1Chg
 	;jmp vblankend
-	sta PPUcontrolreg1   ; Save the written value
+	sta tmpPPUcontrolreg1
+	;sta PPUcontrolreg1   ; Save the written value
 ;testPPUCtrl1Chg:
 ;	tax
 	; If the lower bit changed, then change the screen hscrolling
@@ -147,14 +152,17 @@ WPPUC1:
 	; Set the TMP VRAM registers
 	BREAK3
 	lda tH
+	sta tmpV
 	and #$F3  ; Clear the 2 bits
 	sta tH
-	lda PPUcontrolreg1
+	lda tmpPPUcontrolreg1
 	and #$03  ; 2 first bits
 	asl
 	asl
 	ora tH
 	sta tH
+	cmp tmpV
+	beq NoScrollChange
 	;----------------------------------------------------------
 ;	txa
 ;	sta PPUcontrolreg1   ; Save the written value
@@ -181,9 +189,14 @@ firstnametableaddress:
     sta BG1SC
 endnametableaddress:
 	;; ------------------------------------------
+	lda tmpPPUcontrolreg1
+	eor PPUcontrolreg1
+	and #$08
+	beq Spritebankend
+	;; ------------------------------------------
 	;; Sprite pattern table address
 	lda #$08
-	bit PPUcontrolreg1	; test bit 3 (#$08), zero if not set ("bit and" result)
+	bit tmpPPUcontrolreg1	; test bit 3 (#$08), zero if not set ("bit and" result)
 	bne Spritesinsecondbank
 	; Do not update the bank all the time, only if it changes
 	lda SpriteCHRChg
@@ -212,6 +225,8 @@ Spritesinsecondbank:
 	jmp Spritebankend
 Spritebankend:
 	sep #$30		; All 8 bit
+	lda tmpPPUcontrolreg1
+	sta PPUcontrolreg1
 	;; ------------------------------------------
 	;; Test Screen Pattern Table Address (BG chr 4kB bank 0 or 1)
 	lda #$10 ; FIXME it should be bit 0?
@@ -660,7 +675,7 @@ UpdateHScroll:
 	stx XsavScroll
 	lda tH
 	and #$0C
-	BREAK2
+	;BREAK2
 	ldx NESHSCROLL
 	lda tH                  ; Load the tmp register
 	and #$0C
@@ -713,8 +728,8 @@ toggleW:
 	lda PPUmemaddrH
 	and #$3F
 	sta tH
-	lda PPUmemaddrL
-	sta tL
+	;lda PPUmemaddrL
+	;sta tL
 	; Update the scroll registers
 	; H scroll
 	;lda tX
@@ -728,13 +743,13 @@ toggleW:
 	;lda PPUmemaddrH
 	; Update Horizontal scrolling
 	;jsr UpdateHScroll
-endRefreshScroll:
+;endRefreshScroll:
 	; V scroll
 	;lda tH
 	;sta NESVSCROLL
 	;sta BG1VOFS             ; This register must be written twice
 	;stz BG1VOFS 
-forg3:
+;forg3:
 
 	;; -----------------------------------------------
 	;; Select the routine for the address range
@@ -747,14 +762,21 @@ forg3:
 	;; #$20 <= @ < #$30
 	;; $2000 to $23C0 = Nametables  $23C0 to $2400 = Attributes
 	;jsr set_tilemap_addr
-	lda PPUmemaddrL      ; xxxx xx11 11xx xxxx means attribute table
-	and #$C0		     ; Lo bits $C0 11xx.  Keep only bits 6-7
-	sta tmp_addr
-	lda PPUmemaddrH
-	and #$03             ; Hi bits $03 xx11
-    ora tmp_addr
-	cmp #$C3             ; Test if all 4 bits are set
-	beq attributetables	 ; == it is an attribute table: above $x3C00
+	
+	rep #$20             ; A 16b
+	lda PPUmemaddrL
+	and #$03C0
+	cmp #$03C0
+	bcs attributetables
+	
+	;lda PPUmemaddrL      ; xxxx xx11 11xx xxxx means attribute table
+	;and #$C0		     ; Lo bits $C0 11xx.  Keep only bits 6-7
+	;sta tmp_addr
+	;lda PPUmemaddrH
+	;and #$03             ; Hi bits $03 xx11
+    ;ora tmp_addr
+	;cmp #$C3             ; Test if all 4 bits are set
+	;beq attributetables	 ; == it is an attribute table: above $x3C00
 	jmp nametables       ; else it is a nametable
 ppumaddret:
 	RETW
@@ -791,6 +813,7 @@ attributetables:
 	;jsr ppuAddToVram
 	;; Attributes routines
 	rep #$20 ; A 16bits
+	;lda #NametableW
 	lda #AttrtableW
 	sta PPUW_RAM_routineAddr
 	lda #AttrtableR
@@ -849,14 +872,14 @@ SetNametableOffset:
 	pha
 	rep #$20		; A 16bits
 	lda PPUmemaddrL
-	and #$03FF		; Lower address value
+	and #$07FF		; Lower address value
 	asl             ; word adress
 	; The adress is in word count (should be $(3/7)000 to $(3/7)003F)
 	sta NameAddresL
 	sep #$20		; A 8bits
 	pla
 	rts
-	
+
 ;; -------------------------------------------------------------------------
 afternametables:
 	sep #$30		; 8bit total
@@ -1069,25 +1092,37 @@ IncAttrAddr:
 	;; -------------------------------------------------------------------------
 	;; Name tables
 NametableW:
+	;RETW
 	sep #$20		; A 8bit
 	rep #$10        ; X Y are 16bits
 	; Store the byte
-
-	jsr SetNametableOffset
-	ldx NameAddresL
+	;; -----------------------------------
+	;jsr SetNametableOffset
 	pha
-	lda PPUmemaddrH
-	and #$04 ; Look at bit 2 for BANK 1 or 2
-	beq NameBank1W
+	rep #$20		; A 16bits
+	lda PPUmemaddrL
+	and #$07FF		; Lower address value
+	asl             ; word adress
+	; The adress is in word count (should be $(3/7)000 to $(3/7)003F)
+	tax
+	;sta NameAddresL
+	sep #$20		; A 8bits
 	pla
-	cmp NametableBaseBank2,X
-	beq NoMoreUpdates  ; Same value, do nothing
-	sta NametableBaseBank2,X
+	;; -----------------------------------
+	;ldx NameAddresL
+;	pha
+;	lda PPUmemaddrH
+;	and #$04 ; Look at bit 2 for BANK 1 or 2
+;	beq NameBank1W
+;	pla
+	;cmp NametableBaseBank2,X
+	;beq NoMoreUpdates  ; Same value, do nothing
+;	sta NametableBaseBank2,X
 	;BREAK
 	;jsr UpdateNametablesBitsBank2
-	jmp NoMoreUpdates
-NameBank1W:
-	pla
+;	jmp NoMoreUpdates
+;NameBank1W:
+;	pla
 	sta NametableBaseBank1,X   ; Write to VRAM. This is the lower nametable byte, the character code number.
 	;BREAK
 	;jsr UpdateNametablesBitsBank1
@@ -1104,8 +1139,26 @@ NameBank1W:
 	;sta NamesBank1UpdateCounter
 NoMoreUpdates:
 	; Increment
+	; Test bit 2 of PPUCTRL: 1 or 32 nametable increment
+	lda #$04
+	bit PPUcontrolreg1	; test bit 2, zero if not set ("bit and" result)
+	bne Name_name_incr_32
 	rep #$20		; A 16bit
-	jsr IncPPUmemaddrL
+	inc PPUmemaddrL
+	jmp ensfsf
+Name_name_incr_32
+	rep #$20		; A 16bit
+	lda PPUmemaddrL
+	clc
+	adc #32
+	sta PPUmemaddrL
+ensfsf:
+	lda PPUmemaddrL
+	cmp #$3000
+	BCC nextWr
+	jmp emptyrange
+	;jsr IncPPUmemaddrL
+nextWr:
 	RETW
 
 	; Enable the update of the column
@@ -1317,43 +1370,30 @@ IncPPUmemaddrL:
 	bit PPUcontrolreg1	; test bit 2, zero if not set ("bit and" result)
 	bne name_incr_32
 	; +1
-	rep #$30		; All 16bits
-	lda PPUmemaddrL
-	and #$FFC0
+	rep #$20		; A 16bits
+	lda PPUmemaddrL ; Used to skip the updates
+	;and #$FFC0
 	sta TMPPPUAL
+	inc PPUmemaddrL ; 16bits increment by one if A is 16bit wide
 	lda PPUmemaddrL
-	clc
-	adc #$0001
-	sta PPUmemaddrL
-	; If only the lower bits changed, do nothing with the routines
-	;txa
-	;and #$FFC0
-	;sta tmp_addr
-	;lda PPUmemaddrL
-	;and #$FFC0
-	;cmp tmp_addr
-	;beq IncPPUmemaddrEnd
 	jmp IncPPUmemaddrLEnds
 name_incr_32:
 	; +32
 	; Vram increments 32 by 32 after VMDATAL write (words on the snes)
 	rep #$20		; A 16bits
-	;lda NameAddresL
-	;clc
-	;adc #$0040
-	;sta NameAddresL
-	; Other than nametables
 	lda PPUmemaddrL
-	and #$FFC0
 	sta TMPPPUAL
-	lda PPUmemaddrL
 	clc
 	adc #$0020
 	sta PPUmemaddrL
 IncPPUmemaddrLEnds:
-	and #$FFC0
-	ora PPUmemaddrL
+	; If only the lower bits changed, do nothing with the routines
+	eor TMPPPUAL
+	and #$FFC0    ; If only the lower bits changed, do nothing
 	beq IncPPUmemaddrEnd
+	; Test the address
+	lda PPUmemaddrL
+	and #$FFC0
 	; Check if the adress is greater or equal to $2000
 	cmp #$2000
 	bcc CHRSpace

@@ -110,6 +110,11 @@ ldaioportroutine:
 	sty YiLeveL1
 	;; Native mode
 	NATIVE
+.IFDEF COUNTCALLS
+	rep #$20
+	inc IOCallCOUNTER + 1, X
+	sep #$20
+.ENDIF
 	;; --------------------------------------------------------
 	;; Go to the IO address read routine
 	;; Jump to the routine
@@ -140,6 +145,11 @@ staioportroutine:
 	sty YiLeveL1
 	;; Native mode
 	NATIVE
+.IFDEF COUNTCALLS
+	rep #$20
+	inc IOCallCOUNTER, X
+	sep #$20
+.ENDIF
 	;; --------------------------------------------------------
 	;; Go to the IO address write routine
 	;; Jump to the routine

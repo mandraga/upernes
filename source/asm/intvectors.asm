@@ -33,11 +33,18 @@
 
 ; ============================================
 
+;.BASE $80 ; Fast ROM
+
 .BANK 0 SLOT 0
 .org 0
 .SECTION "EmptyVectors" SEMIFREE
 
 DMAUpdateHandler:
+
+	; Fast ROM execution
+	jml FastDMAUpdateHandler
+FastDMAUpdateHandler:
+
 	; V blank NMI
 	;jsr InitSprite0
 
@@ -58,6 +65,7 @@ DMAUpdateHandler:
 	;sta TMPVCOUNTL + 2
 
 	; If the nes nmi is enables, call it
+	BREAK4
 	pha
 	lda NESNMIENABLED
 	beq QuitNMI
@@ -79,7 +87,18 @@ DMAUpdateHandler:
 	;NATIVE
 	clc			; native 65816 mode
 	xce
-
+	
+.IFDEF COUNTCALLS
+	; Reset the routine counters
+	ldx #00
+ClrShit:
+	stz IOCallCOUNTER, X
+	inx
+	txa
+	cmp #64
+	bne ClrShit
+.ENDIF	
+	
 	jsr UpdatePalettes
 	jsr UpdateSpritesDMA
 	jsr UpdateBackgrounds       ; Copy changed bytes to the VRAMdddfffgcxcvsfgggcxxxcv
