@@ -192,7 +192,7 @@ endnametableaddress:
 	lda tmpPPUcontrolreg1
 	eor PPUcontrolreg1
 	and #$08
-	beq Spritebankend
+	beq Spritebankend   ; Jump over if nothing changed
 	;; ------------------------------------------
 	;; Sprite pattern table address
 	lda #$08

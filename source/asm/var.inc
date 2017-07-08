@@ -66,7 +66,7 @@
 .DEFINE UpdateSprites      RAMBASE + 45 ; Update sprite in the Vblank interval
 
 .DEFINE IOCallCOUNTER      RAMBASE + 48 ; Stores the shit from hell (counts Io calls)
-.DEFINE COUNTCALLS                     ; Enables counting IO accesses on the previous RAM area
+;.DEFINE COUNTCALLS                     ; Enables counting IO accesses on the previous RAM area
 
 ;--------------------------------------------------------------------
 ; 

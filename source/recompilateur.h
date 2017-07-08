@@ -68,7 +68,7 @@ private:
   // patchPrgRom.cpp
   void patchBRK(t_pinstr pinstr, Copcodes *popcode_list, unsigned char *pPRG, unsigned int PRGSize, std::vector<t_PatchRoutine>& Routines, Cmapper *pmapper);
   void writeRoutineVector(FILE *fp, Copcodes *popcode_list, std::vector<t_PatchRoutine>& Patches, int readIndex, int indJmpIndex);
-  void writeRamRoutineBinary(const char *fileName, std::vector<t_PatchRoutine>& Patches);
+  unsigned int writeRamRoutineBinary(const char *fileName, std::vector<t_PatchRoutine>& Patches);
   void sortRoutines(std::vector<t_PatchRoutine>& Patches, int& readIndex, int& indJmpIndex);
   bool isIn(t_pinstr pinstr, t_instrlist& instrList);
   
