@@ -162,6 +162,10 @@
 .DEFINE tmpPPUcontrolreg1       IOBASE + 164 ; 
 .DEFINE XsavScroll              IOBASE + 165 ;
 
+.DEFINE BGUpdateFIFOSZ          IOBASE + 166 ; Number of element in the fifo, if less than 16, update them. Else update all.
+.DEFINE BGUpdateFIFO            IOBASE + 168 ;
+.DEFINE BGFifoMax                 32
+
 ;--------------------------------------------------------------------
 .DEFINE SpriteMemoryBase		$0A00       ; 256 bytes
 

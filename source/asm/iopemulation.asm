@@ -150,7 +150,6 @@ WPPUC1:
 	;beq NoScrollChange
 	;----------------------------------------------------------
 	; Set the TMP VRAM registers
-	BREAK3
 	lda tH
 	sta tmpV
 	and #$F3  ; Clear the 2 bits
@@ -962,6 +961,7 @@ AttrtableW:
 	
 	;BREAK ; break at $0918
 	;RETW
+	jsr AddElementToBGFifo ; Add it to the fifo
 	sep #$30		; Acc X Y 8bits
 	tay
 	; First save the value for the next read in the table
@@ -1090,9 +1090,30 @@ IncAttrAddr:
 	;RETW
 
 	;; -------------------------------------------------------------------------
+	;; Adds a byte in A and 16bit address in X to the fifo
+AddElementToBGFifo:
+	pha
+	;BREAK3
+	sep #$30        ; 8bits
+	lda BGUpdateFIFOSZ
+	cmp #BGFifoMax
+	bcs endAddFifo
+	asl ; x2
+	tax
+	inc BGUpdateFIFOSZ
+	rep #$20        ; A 16bits
+	lda PPUmemaddrL ; This @ must be updated
+	sta BGUpdateFIFO,X
+	sep #$30
+endAddFifo: ; The fifo is full, it will be a full update with the DMA
+	pla
+	rts
+
+	;; -------------------------------------------------------------------------
 	;; Name tables
 NametableW:
 	;RETW
+	jsr AddElementToBGFifo ; Add it to the fifo
 	sep #$20		; A 8bit
 	rep #$10        ; X Y are 16bits
 	; Store the byte
@@ -1140,24 +1161,24 @@ NametableW:
 NoMoreUpdates:
 	; Increment
 	; Test bit 2 of PPUCTRL: 1 or 32 nametable increment
-	lda #$04
-	bit PPUcontrolreg1	; test bit 2, zero if not set ("bit and" result)
-	bne Name_name_incr_32
-	rep #$20		; A 16bit
-	inc PPUmemaddrL
-	jmp ensfsf
-Name_name_incr_32
-	rep #$20		; A 16bit
-	lda PPUmemaddrL
-	clc
-	adc #32
-	sta PPUmemaddrL
-ensfsf:
-	lda PPUmemaddrL
-	cmp #$3000
-	BCC nextWr
-	jmp emptyrange
-	;jsr IncPPUmemaddrL
+;	lda #$04
+;	bit PPUcontrolreg1	; test bit 2, zero if not set ("bit and" result)
+;	bne Name_name_incr_32
+;	rep #$20		; A 16bit
+;	inc PPUmemaddrL
+;	jmp ensfsf
+;Name_name_incr_32
+;	rep #$20		; A 16bit
+;	lda PPUmemaddrL
+;	clc
+;	adc #32
+;	sta PPUmemaddrL
+;ensfsf:
+;	lda PPUmemaddrL
+;	cmp #$3000
+;	BCC nextWr
+;	jmp emptyrange
+	jsr IncPPUmemaddrL
 nextWr:
 	RETW
 

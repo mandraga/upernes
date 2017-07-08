@@ -5,7 +5,78 @@
 .ORG 0
 .SECTION "DmaBackgroundUpdate"
 	
+;--------------------------------------------------------------------------
+; Local update or full DAM update
 UpdateBackgrounds:
+	jmp fullDMAUpdate
+	;---------------------------------------------------
+	; Fifo update only
+	sep #$20	      ; A 8bits
+	lda BGUpdateFIFOSZ
+	beq EndBGupdate ; if zero quit
+	jmp fullDMAUpdate ;  shortcut
+	cmp #BGFifoMax
+	bcs fullDMAUpdate
+	; Get each value and copy it
+EmpyTheFifo:
+	BREAK3
+	lda BGUpdateFIFOSZ
+	sep #$20	      ; A 8bits
+	lda #$80
+	sta VMAINC	;set VRAM transfer mode to word-access, increment by 1
+	lda BGUpdateFIFOSZ
+	asl
+	tax
+	rep #$20
+	lda BGUpdateFIFO, X ; PPU Address
+	and #$7FE
+	;asl
+	sta VMADDL
+	lda NametableBaseBank1,X
+	sta VMDATAL
+	dec BGUpdateFIFOSZ
+	bne EmpyTheFifo
+	jmp EndBGupdate
+	;---------------------------------------------------
+	; Full update
+fullDMAUpdate:
+	rep #$10	; X/Y = 16 bit
+	stz MDMAEN	;Clear the DMA control register
+	
+	ldx #$1000
+    stx DMA2A1SRCL	  ; DMA source
+	sep #$20	      ; A 8bits
+	ldy #$1000        ; 4k
+	sty DMA2SZL 	  ; Store the size of the data block
+	lda #$00
+    sta DMA2A1SRCBNK  ;Store the data bank of the source data
+
+	lda #$80
+	sta VMAINC	;set VRAM transfer mode to word-access, increment by 1
+
+    lda #$01	;Set the DMA mode (word, normal increment)
+    sta DMA2CTL
+    lda #$18	;Set the destination register (VRAM gate)
+    sta DMA2BDEST
+	
+	ldy #$7000
+	sty VMADDL
+	sep #$20
+
+    lda #$04	;Initiate the DMA2 transfer
+    sta MDMAEN
+	
+EndBGupdate:
+	sep #$20	      ; A 8bits
+	stz BGUpdateFIFOSZ
+	stz BGUpdateFIFOSZ + 1
+	rts
+
+;--------------------------------------------------------------------------
+; Rolling update
+; This takes less time per frame and update everything, but the update is slow.
+UpdateBackgroundsRolling:
+;UpdateBackgrounds:
 	;BREAK2
 	;jsr UpdateNametables
 	;jmp labs ; Jumps over the DMA update

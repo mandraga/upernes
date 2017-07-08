@@ -145,6 +145,8 @@ eraseNesRamLoop:
 	sta NESNMIENABLED
 	stz VblankState
 	stz NMI_occurred
+	stz BGUpdateFIFOSZ
+	stz BGUpdateFIFOSZ + 1
 	
 	lda SNESNMITMP
 	ora #%00100000 ; Enable V timer
