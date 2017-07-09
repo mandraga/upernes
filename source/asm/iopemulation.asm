@@ -265,6 +265,24 @@ novblank:
 	sta NMITIMEN
 	sta SNESNMITMP
 vblankend:
+	;; ------------------------------------------
+	; Test bit 2 of PPUCTRL: 1 or 32 nametable increment
+	lda #$04
+	bit PPUcontrolreg1	; test bit 2, zero if not set ("bit and" result)
+	bne name_incr_32
+	; +1
+	rep #$20		; A 16bits
+	lda #$0001
+	sta PPURW_IncrementL
+	jmp PPUIncEnds
+name_incr_32:
+	; +32
+	; Vram increments 32 by 32 after VMDATAL write (words on the snes)
+	rep #$20		; A 16bits
+	lda #$0020
+	sta PPURW_IncrementL
+PPUIncEnds:	
+	sep #$20		; A 8bits
 	RETW
 
 RPPUC1:
@@ -324,7 +342,7 @@ RPPUC2:
 ;       |     | This flag resets to 0 when VBlank ends or CPU reads $2002
 ;       |     |
 RPPUSTATUS:
-	BREAK
+	;BREAK
 	sep #$20
 	;; vblank
 	lda #$01
@@ -703,12 +721,36 @@ Ban2XScroll:
 	;; Name table, Attribute table, Palette, ou empty
 WPPUMEMADDR:
 	sep #$30            ; All 8b
+	pha
+	lda WriteToggle
+	bne Relative
+	inc WriteToggle
+	pla
+	sta PPUmemaddrH
+	RETW
+Relative:
+	pla
+	sta PPUmemaddrL
+	pha
+	stz WriteToggle
+	lda #$01
+	sta PPUReadLatch
+	lda PPUmemaddrH
+	and #$3F
+	sta tH
+	pla
+	RETW
+
+
+
+	sep #$30            ; All 8b
+	; Because of a special routine, if we are here, WriteToggle must be one
 	ldy WriteToggle     ; Get the adressed byte
 	beq HighAddressByte ; 0 = hight address byte
 	sta PPUmemaddrL     ; Low address byte
 	jmp toggleW
 HighAddressByte:
-	and #$3F
+	;and #$3F
 	sta PPUmemaddrH
 toggleW:
 	lda WriteToggle
@@ -749,75 +791,8 @@ toggleW:
 	;sta BG1VOFS             ; This register must be written twice
 	;stz BG1VOFS 
 ;forg3:
-
-	;; -----------------------------------------------
-	;; Select the routine for the address range
-	lda PPUmemaddrH
-	;; Find the address range
-	cmp #$20		     ; On the nes, below $2000, it is CHR data
-	bcc CHRdata          ; A < #$20
-	cmp #$30
-	bcs afternametablesj ; A >= #$30  Past $3000 empty or palette
-	;; #$20 <= @ < #$30
-	;; $2000 to $23C0 = Nametables  $23C0 to $2400 = Attributes
-	;jsr set_tilemap_addr
-	
-	rep #$20             ; A 16b
-	lda PPUmemaddrL
-	and #$03C0
-	cmp #$03C0
-	bcs attributetables
-	
-	;lda PPUmemaddrL      ; xxxx xx11 11xx xxxx means attribute table
-	;and #$C0		     ; Lo bits $C0 11xx.  Keep only bits 6-7
-	;sta tmp_addr
-	;lda PPUmemaddrH
-	;and #$03             ; Hi bits $03 xx11
-    ;ora tmp_addr
-	;cmp #$C3             ; Test if all 4 bits are set
-	;beq attributetables	 ; == it is an attribute table: above $x3C00
-	jmp nametables       ; else it is a nametable
 ppumaddret:
-	RETW
-emptyrangej:
-	jmp emptyrange
-afternametablesj:
-	jmp afternametables
-CHRdata:
-;; -------------------------------------------------------------------------
-	; CHR data on the other bus can be read using the PPU port.
-	rep #$20 ; A 16bits
-	lda #emptyW ; This is assumed to be a ROM
-	sta PPUW_RAM_routineAddr
-	lda #CHRDataR
-	sta PPUR_RAM_routineAddr
 	RETW	
-;; -------------------------------------------------------------------------
-attributetables:
-	; attribute table addresses are not directly equivalent
-	; For a given attribute address the line and column of the first tile of a 4x4 group is:
-	; line   = 4 * ((attr@ - base@) / 8)
-	; column = 4 * ((attr@ - base@) % 8) = 4 * ((attr@ - base) & $03)
-	;
-	; 32/4 = 8 blocks per line, 8 blocks vertically
-	; writing at 0 4 8 12 16 20 24 28 ; and then 32 * 4 + 32, + 36...
-	; First tile = ((offset / 8) * 128) + ((offset % 8) * 4)
-	;            = ((offset >> 3) << 7) + ((offset & $07) << 2)
-	;
-	; A row of nes attributes (8bytes) covers 128 tiles (4 rows of 32 tiles = 128 tiles)
-	; line is (@ / 8)  row is (@ & $07)
-	; Snes @ = line * 32 * 4 * 2 + row * 4 * 2
-	; So first of, @ * 8, then masks, then add
-	;RETW
-	;jsr ppuAddToVram
-	;; Attributes routines
-	rep #$20 ; A 16bits
-	;lda #NametableW
-	lda #AttrtableW
-	sta PPUW_RAM_routineAddr
-	lda #AttrtableR
-	sta PPUR_RAM_routineAddr
-	RETW
 	
 ppuAddToVram:
 	sep #$30		; Acc X Y 8bits
@@ -854,54 +829,6 @@ ppuAddToVram:
 	pla
 	rts
 
-;; -------------------------------------------------------------------------
-nametables:
-	;jsr SetNametableOffset
-	;
-set_nametables_routines:
-	;; Tile map routines
-	rep #$20		; A 16bits
-	lda #NametableW
-	sta PPUW_RAM_routineAddr
-	lda #NametableR
-	sta PPUR_RAM_routineAddr
-	RETW
-	
-SetNametableOffset:
-	pha
-	rep #$20		; A 16bits
-	lda PPUmemaddrL
-	and #$07FF		; Lower address value
-	asl             ; word adress
-	; The adress is in word count (should be $(3/7)000 to $(3/7)003F)
-	sta NameAddresL
-	sep #$20		; A 8bits
-	pla
-	rts
-
-;; -------------------------------------------------------------------------
-afternametables:
-	sep #$30		; 8bit total
-	cmp #$3F
-	bcc emptyrange	; empty area before palette data
-	lda PPUmemaddrL
-	cmp #$20		; End of the palette area
-	bcs emptyrange	; if greater than $20, then it is an empty area
-	rep #$30		; All 16bits
-	;; palette routines
-	lda #paletteW
-	sta PPUW_RAM_routineAddr
-	lda #paletteR
-	sta PPUR_RAM_routineAddr
-	RETW
-;; -------------------------------------------------------------------------
-emptyrange:
-	;; empty routines
-	lda #emptyW
-	sta PPUW_RAM_routineAddr
-	lda #emptyR
-	sta PPUR_RAM_routineAddr
-	RETW
 
 ;; -------------------------------------------------------------------------
 ; Select where goes the name table data in VRAM
@@ -936,7 +863,26 @@ emptyR:
 ;       |     |	16 colors Background and Sprites Palettes
 
 WPPUMEMDATA:
-	jmp (PPUW_RAM_routineAddr)   ; Indirect jump to the routine for the address.
+	sep #$20 ; A 8bits
+	pha
+	; Use the WRAM buffer of PPU@ routines.
+	; Got to bank 7F
+	phb
+	lda #WRamBank
+	pha
+	rep #$20 ; A 16bits
+	lda PPUmemaddrL ; Load the PPUADDRESS
+	plb ; change the data bank
+	and #$3FF0 ; Clear the 2 upper and lower bits
+	lsr
+	lsr ; >> 2
+	tax
+	lda WRamPPUADDRJmps,X
+	plb
+	sta tmp_addr
+	sep #$20 ; A 8bits
+	pla
+	jmp (tmp_addr)   ; indirect jump to the routine for the PPU address.
 
 	;; -------------------------------------------------------------------------	
 	;; Attribute tables
@@ -961,7 +907,7 @@ AttrtableW:
 	
 	;BREAK ; break at $0918
 	;RETW
-	jsr AddElementToBGFifo ; Add it to the fifo
+	;jsr AddElementToBGFifo ; Add it to the fifo
 	sep #$30		; Acc X Y 8bits
 	tay
 	; First save the value for the next read in the table
@@ -1113,14 +1059,14 @@ endAddFifo: ; The fifo is full, it will be a full update with the DMA
 	;; Name tables
 NametableW:
 	;RETW
-	jsr AddElementToBGFifo ; Add it to the fifo
+	;jsr AddElementToBGFifo ; Add it to the fifo
 	sep #$20		; A 8bit
-	rep #$10        ; X Y are 16bits
+	;rep #$10        ; X Y are 16bits
 	; Store the byte
 	;; -----------------------------------
 	;jsr SetNametableOffset
 	pha
-	rep #$20		; A 16bits
+	rep #$30		; A X Y 16bits
 	lda PPUmemaddrL
 	and #$07FF		; Lower address value
 	asl             ; word adress
@@ -1256,14 +1202,7 @@ paletteW:
 endwpumem:
 	;; Increments the index equally as CGDATA
 	jsr IncPPUmemaddrL
-	;; Test for address oveflow
-	rep #$20		; 16bit A
-	lda PPUmemaddrL
-	cmp #$3F20
-	beq changewrfunction
 	RETW
-changewrfunction:
-	jmp emptyrange
 
 	; The first palette index is mirrored on every palette
 UpdateAllMirrorColors:
@@ -1281,11 +1220,30 @@ UpdateAllMirrorColors:
 	sta UpdatePalette
 	jmp	endwpumem
 
-	
+
 ;----------------------------------------------------------------------
 ; 
 RPPUMEMDATA:
-	jmp (PPUR_RAM_routineAddr)   ; Indirect jump to the routine for the address.
+	sep #$20 ; A 8bits
+	pha
+	; Use the WRAM buffer of PPU@ routines.
+	; Got to bank 7F
+	phb
+	lda #WRamBank
+	pha
+	rep #$20 ; A 16bits
+	lda PPUmemaddrL ; Load the PPUADDRESS
+	plb ; change the data bank
+	and #$3FF0 ; Clear the 2 upper and lower bits
+	lsr
+	lsr ; >> 2
+	tax
+	lda WRamPPUADDRJmps + 2,X
+	plb
+	sta tmp_addr
+	sep #$20 ; A 8bits
+	pla
+	jmp (tmp_addr)   ; indirect jump to the routine for the PPU address.	
 
 AttrtableR:
 	; Read it from the sram buffer
@@ -1314,6 +1272,18 @@ LatchedAttrValue:
 AttrtableRend:
 	RETR
 
+SetNametableOffset:
+	pha
+	rep #$20		; A 16bits
+	lda PPUmemaddrL
+	and #$07FF		; Lower address value
+	asl             ; word adress
+	; The adress is in word count (should be $(3/7)000 to $(3/7)003F)
+	sta NameAddresL
+	sep #$20		; A 8bits
+	pla
+	rts
+	
 NametableR:
 	; Read it from the sram buffer
 	sep #$20		; A 8bit
@@ -1385,67 +1355,12 @@ CHRDataRend:
 ;----------------------------------------------------------
 ; Increments the adress register
 IncPPUmemaddrL:
-	sep #$20		; A 8bits
-	; Test bit 2 of PPUCTRL: 1 or 32 nametable increment
-	lda #$04
-	bit PPUcontrolreg1	; test bit 2, zero if not set ("bit and" result)
-	bne name_incr_32
-	; +1
-	rep #$20		; A 16bits
-	lda PPUmemaddrL ; Used to skip the updates
-	;and #$FFC0
-	sta TMPPPUAL
-	inc PPUmemaddrL ; 16bits increment by one if A is 16bit wide
-	lda PPUmemaddrL
-	jmp IncPPUmemaddrLEnds
-name_incr_32:
-	; +32
-	; Vram increments 32 by 32 after VMDATAL write (words on the snes)
 	rep #$20		; A 16bits
 	lda PPUmemaddrL
-	sta TMPPPUAL
 	clc
-	adc #$0020
+	adc PPURW_IncrementL
 	sta PPUmemaddrL
-IncPPUmemaddrLEnds:
-	; If only the lower bits changed, do nothing with the routines
-	eor TMPPPUAL
-	and #$FFC0    ; If only the lower bits changed, do nothing
-	beq IncPPUmemaddrEnd
-	; Test the address
-	lda PPUmemaddrL
-	and #$FFC0
-	; Check if the adress is greater or equal to $2000
-	cmp #$2000
-	bcc CHRSpace
-	; Check if the adress is greater or equal to $23C0 in order to set the proper routines.
-	and #$F3FF      ; Get an @ in all the banks: $2000 $2400 $2800 $2C00
-	cmp #$23C0
-	bcc NametableSpace
-	;cmp $3F00
-	cmp #$3000
-	bcs PaletteSpace
-	; Change the address to attribute tables
-	lda #AttrtableW
-	sta PPUW_RAM_routineAddr
-	lda #AttrtableR
-	sta PPUR_RAM_routineAddr
-	jmp IncPPUmemaddrEnd
-CHRSpace:
-	lda #emptyW ; This is assumed to be a ROM
-	sta PPUW_RAM_routineAddr
-	lda #CHRDataR
-	sta PPUR_RAM_routineAddr
-	jmp IncPPUmemaddrEnd
-NametableSpace:
-	lda #NametableW
-	sta PPUW_RAM_routineAddr
-	lda #NametableR
-	sta PPUR_RAM_routineAddr
-	jmp IncPPUmemaddrEnd
-PaletteSpace:
-IncPPUmemaddrEnd:
-	sep #$30		; All 8bit
+	sep #$20		; A 8bit
 	rts
 
 ; ------+-----+---------------------------------------------------------------

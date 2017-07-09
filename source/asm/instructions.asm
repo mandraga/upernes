@@ -112,7 +112,7 @@ ldaioportroutine:
 	NATIVE
 .IFDEF COUNTCALLS
 	rep #$20
-	inc IOCallCOUNTER + 1, X
+	inc IOCallArray, X
 	sep #$20
 .ENDIF
 	;; --------------------------------------------------------
@@ -147,7 +147,7 @@ staioportroutine:
 	NATIVE
 .IFDEF COUNTCALLS
 	rep #$20
-	inc IOCallCOUNTER, X
+	inc IOCallArray, X
 	sep #$20
 .ENDIF
 	;; --------------------------------------------------------

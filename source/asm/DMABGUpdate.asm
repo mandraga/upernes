@@ -7,7 +7,8 @@
 	
 ;--------------------------------------------------------------------------
 ; Local update or full DAM update
-UpdateBackgrounds:
+FullUpdateBackgrounds:
+;UpdateBackgrounds:
 	jmp fullDMAUpdate
 	;---------------------------------------------------
 	; Fifo update only
@@ -75,8 +76,8 @@ EndBGupdate:
 ;--------------------------------------------------------------------------
 ; Rolling update
 ; This takes less time per frame and update everything, but the update is slow.
-UpdateBackgroundsRolling:
-;UpdateBackgrounds:
+;UpdateBackgroundsRolling:
+UpdateBackgrounds:
 	;BREAK2
 	;jsr UpdateNametables
 	;jmp labs ; Jumps over the DMA update

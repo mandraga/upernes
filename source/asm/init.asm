@@ -17,6 +17,7 @@
 .include "intvectors.asm"
 .include "LoadGraphics.asm"
 .include "zeromem.asm"
+.include "ppujmp.asm"
 .include "Strings.asm"
 .include "print.asm"
 
@@ -164,6 +165,10 @@ eraseNesRamLoop:
 	
 	;cli
 
+	;----------------------------------------------------------------------------
+	; Precalculate a PPU routine jump table
+	jsr PrecalculateJumpTable
+	
 	;----------------------------------------------------------------------------
 	; Copy the emulation patching code to the ram
 	phb

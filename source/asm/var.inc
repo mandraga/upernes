@@ -45,7 +45,7 @@
 .DEFINE RetHi              RAMBASE + 30 ;
 .DEFINE SignatureLo        RAMBASE + 31 ; Address of the signature
 .DEFINE SignatureHi        RAMBASE + 32 ;
-;.DEFINE XiLevel1           RAMBASE + 33 ; This is used to save X during IO emulation call
+;//.DEFINE XiLevel1           RAMBASE + 33 ; This is used to save X during IO emulation call
 .DEFINE YiLeveL1           RAMBASE + 34
 
 .DEFINE JumpAddress        RAMBASE + 36 ; Stores an address in order to avoid using X
@@ -59,22 +59,31 @@
 .DEFINE VblankStateOn      $01
 .DEFINE VblankStateClr     $02
 
-.DEFINE TMPPPUAL           RAMBASE + 42 ; Stores the PPUC address
+;//.DEFINE TMPPPUAL           RAMBASE + 42 ; Stores the PPUC address
 .DEFINE TMPPPUAH           RAMBASE + 43 ;
 
 .DEFINE NMI_occurred       RAMBASE + 44 ; To one when nmi occured
 .DEFINE UpdateSprites      RAMBASE + 45 ; Update sprite in the Vblank interval
 
-.DEFINE IOCallCOUNTER      RAMBASE + 48 ; Stores the shit from hell (counts Io calls)
-;.DEFINE COUNTCALLS                     ; Enables counting IO accesses on the previous RAM area
+
+
+;.DEFINE PPUmemaddrLJmp	   RAMBASE + 46	; Routine JMP address
+;.DEFINE PPUmemaddrHJmp	   RAMBASE + 47
+
+.DEFINE IOCallCOUNTER      RAMBASE + 127 ; Stores the shit from hell (counts Io calls)
+.DEFINE IOCallArray        RAMBASE + 128 ; Stores the shit from hell (counts Io calls)
+.DEFINE COUNTCALLS                     ; Enables counting IO accesses on the previous RAM area
 
 ;--------------------------------------------------------------------
 ; 
 .DEFINE IOBASE	$0900
 ;; IO Emulation state machine variables
 
-.DEFINE PPUR_RAM_routineAddr	IOBASE + 0  ; Contains the routine to read ppu ram depending on vram @
-.DEFINE PPUW_RAM_routineAddr	IOBASE + 2  ; Contains the routine to write ppu ram depending on vram @
+;//.DEFINE PPUR_RAM_routineAddr	IOBASE + 0  ; Contains the routine to read ppu ram depending on vram @
+;//.DEFINE PPUW_RAM_routineAddr	IOBASE + 2  ; Contains the routine to write ppu ram depending on vram @
+
+.DEFINE PPURW_IncrementL        IOBASE + 0  ; One or 32
+.DEFINE PPURW_IncrementH        IOBASE + 1  ; One or 32
 
 .DEFINE PPUmemaddrL				IOBASE + 4	; Current ppu vram address
 .DEFINE PPUmemaddrH				IOBASE + 5
@@ -199,6 +208,10 @@
 .DEFINE NAMETABLE1BASE          $7000
 .DEFINE NAMETABLE2BASE          $7400
 .DEFINE NAMETABLEINTERVAL       $0400
+
+.DEFINE WRamBank                $7F
+.DEFINE WRamPPUADDRJmps         $4000       ; Jump tables for all the PPU routines (PPU @ space size / 16 in word @ = $400 word@ = $800 bytes 2kBytes)
+.DEFINE PPUADDRJmps             $400
 
 ;--------------------------------------------------------------------
 ;               SNES VRAM defines (WORD addresses)
