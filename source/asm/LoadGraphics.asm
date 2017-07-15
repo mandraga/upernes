@@ -54,22 +54,22 @@ LoadVRAM:
 	php		;Preserve registers
 
 	sep #$20	;Careful not to SEP $10, or it will erase upper half of Y!
-			; X/Y = 16 bit
+	rep #$10	; X/Y = 16 bit
 
-        stz $420B	;Clear the DMA control register
-        stx $4302	;Store the data offset into DMA source offset
+    stz $420B	;Clear the DMA control register
+    stx $4302	;Store the data offset into DMA source offset
 	sty $4305	;Store the size of the data block
-        sta $4304	;Store the data bank of the source data
+    sta $4304	;Store the data bank of the source data
 
 	lda #$80
 	sta $2115	;set VRAM transfer mode to word-access, increment by 1
 
-        lda #$01	;Set the DMA mode (word, normal increment)
-        sta $4300
-        lda #$18	;Set the destination register (VRAM gate)
-        sta $4301
-        lda #$01	;Initiate the DMA transfer
-        sta $420B
+    lda #$01	;Set the DMA mode (word, normal increment)
+    sta $4300
+    lda #$18	;Set the destination register (VRAM gate)
+    sta $4301
+    lda #$01	;Initiate the DMA transfer
+    sta $420B
 
 	plp		;Restore registers
 	plb
@@ -92,13 +92,12 @@ LoadVRAM:
 ;----------------------------------------------------------------------------
 DMA_WRAMtoVRAM_sprite_bank:
 	pha
-	phx
 	phy
-	phb
 	php			;Preserve registers
-
+	
 	sep #$20		; A 8bits
-
+	rep #$10		; X Y 16bits
+	
 	; Calculate the 8KB bank number
 	adc #$01                ; Starts at 8K, therefore add 1 to the segment index
 	clc
@@ -116,28 +115,27 @@ DMA_WRAMtoVRAM_sprite_bank:
 	stz VMADDL              ; VRAM $0000 is the destination
 	stz VMADDH
 
-        stz MDMAEN		; Clear the DMA control register, all channels are disabled
+	stz MDMAEN      ; Clear the DMA control register, all channels are disabled
+
 	ldy #WMDATA
-        sty DMA1A1SRCL		; A bus data offset into DMA source offset.
+	sty DMA1A1SRCL	; A bus data offset into DMA source offset.
 	lda #$00		; any bank given the WMDATA register is accessed
-        sta DMA1A1SRCBNK	        ; Stores the A bus data bank of the source data
+    sta DMA1A1SRCBNK	        ; Stores the A bus data bank of the source data
 	ldy #$2000
 	sty DMA1SZL		; Stores the size in bytes of the data block, always 8KB
 
 	lda #$80
 	sta VMAINC		; Sets VRAM transfer mode to word-access, increment by 1
 
-        lda #$09		; DMA mode: Abus -> Bbus, absolute, Fixed src @, 2 addresses L H
-        sta DMA1CTL
-        lda #$18		; Sets the destination register (VRAM gate)
-        sta DMA1BDEST
-        lda #$02		; Initiate the DMA transfer
-        sta MDMAEN
+    lda #$09		; DMA mode: Abus -> Bbus, absolute, Fixed src @, 2 addresses L H
+    sta DMA1CTL
+    lda #$18		; Sets the destination register (VRAM gate)
+    sta DMA1BDEST
+    lda #$02		; Initiate the DMA transfer
+    sta MDMAEN
 
 	plp			; Restore registers
-	plb
 	ply
-	plx
 	pla
 	rts			; Return to caller
 ;============================================================================

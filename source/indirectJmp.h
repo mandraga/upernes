@@ -19,7 +19,8 @@ enum
     get_new_line,
     get_crc,
     jumpaddr_var,
-    jumpaddr_addr
+    jumpaddr_addr,
+    SoundEmuLine
   };
 public:
   CindirectJmpRuntimeLabels();
@@ -32,6 +33,7 @@ public:
   bool next_operand(bool first, unsigned int *pjoperand);
   bool next_indaddr(bool first, unsigned int joperand, unsigned int *paddr);
   bool GetPatchingDisabled();
+  unsigned int GetSoundEmuLine();
 private:
   int  find_config_filename(Crom_file *rom, char *cfg_file_name, char *output_path);
   bool check_crc(Crom_file *rom);
@@ -47,6 +49,7 @@ private:
   void get_8b_addr(int res);
   void get_16b_addr(int res);
   int  build_list();
+  void get_8b_line(int res);
 
 public:
   char              m_error_str[4096];
@@ -59,4 +62,5 @@ private:
   t_indirjmpiter    m_Ijopaddr;
   t_jmpaddriter     m_Iaddr;
   bool              m_bDisableIndJumpPatching;
+  unsigned int      m_SoundEmuLine;
 };

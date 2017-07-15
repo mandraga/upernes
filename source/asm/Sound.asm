@@ -37,7 +37,7 @@ WSNDSQR1LENPH:
 
 ;;############################################################################ 
 ; ------+-----+---------------------------------------------------------------
-; $4000 |  W  | Square 2, see square 1
+; $4004 |  W  | Square 2, see square 1
 
 
 WSNDSQR2CTRL:
@@ -140,3 +140,14 @@ WSNDDMCSLEN:
 
 WSNDSEQUENCER:
 	RETW
+	
+	
+	
+; ------+-----+---------------------------------------------------------------
+; This routine reads the write only register values and updates the values
+; in the SP700.
+;
+SoundAPURegUpdate:
+
+
+	rts

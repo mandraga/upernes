@@ -28,5 +28,5 @@
 #define DWORD              5003
 // Disable indirect jump patching
 #define DISJUMP            5004
-
-
+// Define the line number used to start the sound emulation update on IRQ
+#define SOUNDLINE          5005

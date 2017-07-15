@@ -29,8 +29,8 @@ Reset:
 	sei			; disable interrupts
 	clc			; native mode
 	xce
-
-	rep #$38	; all regs 16 bits, decimal mode off
+	
+	rep #$3E    ; all regs 16 bits, decimal mode off
 
 	; Direct page $00
 	pea $0000
@@ -132,8 +132,6 @@ eraseNesRamLoop:
 	stz PPUStatus
     stz	SpriteMemoryAddress
 	stz attributeaddr
-	lda #$80
-	sta SNESNMITMP     ; NMI on Vblank always enabled
 	stz HCOUNTERL
 	stz HCOUNTERH
 	stz UpdatePalette
@@ -148,22 +146,8 @@ eraseNesRamLoop:
 	stz NMI_occurred
 	stz BGUpdateFIFOSZ
 	stz BGUpdateFIFOSZ + 1
-	
-	lda SNESNMITMP
-	ora #%00100000 ; Enable V timer
-	;ora #%00010000 ; Enable H timer
-	sta NMITIMEN
-	sta SNESNMITMP	
-	;
-	; Set the first interrupt on line 261 which is the end of Vblank on the nes
-	lda #$05
-	sta VTIMEL
-	sta HCOUNTERL
-	lda #$01
-	sta VTIMEH
-	sta HCOUNTERH
-	
-	;cli
+	stz TMPVTIMEL
+	stz TMPVTIMEH
 
 	;----------------------------------------------------------------------------
 	; Precalculate a PPU routine jump table
@@ -196,6 +180,24 @@ copyRamCode:
 	sta JumpAddress + 1
 	sta JumpAddress + 2
 
+	;; -----------------------------------------------
+	; Setup the interrupt routines
+	lda #$81
+	sta SNESNMITMP     ; NMI on Vblank always enabled
+	lda SNESNMITMP
+	;ora #%00100000 ; Enable V timer
+	;ora #%00010000 ; Enable H timer
+	sta NMITIMEN
+	sta SNESNMITMP
+	;
+	; Set the first interrupt on line 261 which is the end of Vblank on the nes
+	lda #$05
+	sta VTIMEL
+	sta HCOUNTERL
+	lda #$01
+	sta VTIMEH
+	sta HCOUNTERH
+
 	; Return to emulation mode and jump to the
 	; recompiled nes reset routine.
 	;; -----------------------------------------------
@@ -223,6 +225,7 @@ copyRamCode:
 	lda SNESNMITMP
 	sta NMITIMEN
 	sta SNESNMITMP
+
 	;; -----------------------------------------------
 	; Does nothing. Just here to help finding the end of the initialisation, and the call of the nes reset vector.
 	nop

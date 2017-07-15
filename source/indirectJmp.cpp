@@ -53,7 +53,8 @@ CindirectJmpRuntimeLabels::CindirectJmpRuntimeLabels():
   m_state(get_new_line),
   m_currentjopaddr(-2),
   m_binit(false),
-  m_bDisableIndJumpPatching(false)
+  m_bDisableIndJumpPatching(false),
+  m_SoundEmuLine(150)
 {
   strcpy(m_error_str, "");
 }
@@ -263,6 +264,7 @@ void CindirectJmpRuntimeLabels::writeheader(FILE *fp, Crom_file *rom)
   fprintf(fp, "# %s\n", romname);
   fprintf(fp, "\ncrc32:\t$%08X\n\n", (unsigned int)rom->crc());
   fprintf(fp, "\n# Uncomment to disable indirect jump control.\n#DisableIndJumpPatching\n\n");
+  fprintf(fp, "\n# Sound Emulation update line.\n#SoundEmuLine: $96\n\n");
 }
 
 void CindirectJmpRuntimeLabels::writenewjumps(FILE *fp)

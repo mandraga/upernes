@@ -20,7 +20,7 @@ FullUpdateBackgrounds:
 	bcs fullDMAUpdate
 	; Get each value and copy it
 EmpyTheFifo:
-	BREAK3
+	;BREAK3
 	lda BGUpdateFIFOSZ
 	sep #$20	      ; A 8bits
 	lda #$80

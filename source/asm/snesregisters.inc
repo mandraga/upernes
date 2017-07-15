@@ -50,7 +50,7 @@
 .EQU HTIMEH   $4208
 .EQU VTIMEL   $4209 ;; Vertical timer value
 .EQU VTIMEH   $420A ;; 
-.EQU HVTIME   $4211 ;; IRQ flag register
+.EQU HVIRQFLG $4211 ;; IRQ flag register
 
 .EQU MDMAEN   $420B
 .EQU HDMAEN   $420C

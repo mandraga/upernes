@@ -30,12 +30,12 @@
 
 void Crecompilateur::print_save(FILE *fp)
 {
-  fprintf(fp, "\tphp\n\tsei\n\tstx Xi\n");
+  fprintf(fp, "\tstx Xi\n");
 }
 
 void Crecompilateur::print_restore(FILE *fp)
 {
-  fprintf(fp, "\tldx Xi\n\tplp\n");
+  fprintf(fp, "\tldx Xi\n");
 }
 
 /*
@@ -165,7 +165,8 @@ void Crecompilateur::routineLDAiop(FILE *fp, int iopaddr, Copcodes *popcode_list
   fprintf(fp, "\tldx #$%02X\n", 2 * PORT2INDEX(iopaddr));
   fprintf(fp, "\tjsr ldaioportroutine\n");
   print_restore(fp);
-  fprintf(fp, "\tora #$00		; test N Z flags without affecting A\n");
+  // In RAM  
+  //fprintf(fp, "\tora #$00		; test N Z flags without affecting A\n");
   fprintf(fp, "\trtl\n");
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }
@@ -176,14 +177,13 @@ void Crecompilateur::routineLDXiop(FILE *fp, int iopaddr, Copcodes *popcode_list
 
   snprintf(routine, LABELSZ, "rldx_%02X", iopaddr); // Print the label name);
   fprintf(fp, "\n%s:\n", routine);
-  fprintf(fp, "\tphp\n\tsei\n");
   fprintf(fp, "\tsta Acc\n");
   fprintf(fp, "\tldx #$%02X\n", 2 * PORT2INDEX(iopaddr));
   fprintf(fp, "\tjsr ldaioportroutine\n");
   fprintf(fp, "\tsta Xi\n");
   fprintf(fp, "\tlda Acc\n");
-  fprintf(fp, "\tplp\n");
-  fprintf(fp, "\tldx Xi		; x like if it has been loaded by a ldx\n");  
+  // In RAM  
+  //fprintf(fp, "\tldx Xi		; x like if it has been loaded by a ldx\n");  
   fprintf(fp, "\trtl\n");
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }
@@ -201,7 +201,8 @@ void Crecompilateur::routineLDYiop(FILE *fp, int iopaddr, Copcodes *popcode_list
   fprintf(fp, "\tsta Yi\n");
   fprintf(fp, "\tlda Acc\n");
   print_restore(fp);
-  fprintf(fp, "\tldy Yi		; y like if it has been loaded by a ldy\n");
+  // In RAM  
+  //fprintf(fp, "\tldy Yi		; y like if it has been loaded by a ldy\n");
   fprintf(fp, "\trtl\n");
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }

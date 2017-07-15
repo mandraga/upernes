@@ -61,6 +61,7 @@ cpy
 // This is 0x7000 in the org directive
 #define EMULATIONROUTINEADDRESS 0xF000
 
+#define SNDREGEMUBASE           0x0830
 /*
  * This method patches the rom binary with BRK routines.
  * - PRG contains the orignal rom.
@@ -70,44 +71,58 @@ cpy
  */
 void Crecompilateur::patchBRK(t_pinstr pinstr, Copcodes *popcode_list, unsigned char *pPRG, unsigned int PRGSize, std::vector<t_PatchRoutine>& Routines, Cmapper *pmapper)
 {
-  unsigned int i;
-  unsigned int PRGAddress;
-  unsigned int RamRoutineAddress;
+  unsigned int  i;
+  unsigned int  PRGAddress;
+  unsigned int  RamRoutineAddress;
   unsigned long instruction;
   bool          bRoutineFound;
+  unsigned int  lastRoutine;
+  unsigned int  SndRegEmuAddress;
   
   PRGAddress = pmapper->cpu2prg(pinstr->addr);
   instruction = pPRG[PRGAddress] + (pPRG[PRGAddress + 1] << 8) + (pPRG[PRGAddress + 2] << 16);
   popcode_list->print_instruction(pinstr->addr, instruction);
   printf("%02X replaced by %02X at %04X\n", pPRG[PRGAddress], 0x4C, pinstr->addr);
-  pPRG[PRGAddress] = 0x20; // JSR
-  // the next 2 bytes are a code to find the proper routine.
-  assert(Routines.size() < 256);
-  for (i = 0, bRoutineFound = false; i < Routines.size(); i++)
+  // If it is a write only sound register, then only write to a byte in the ram, it will be updated later
+  if (pinstr->operand >= 0x4000 && pinstr->operand <= 0x4013)
     {
-      if (Routines[i].opcode == pinstr->opcode && Routines[i].operand == pinstr->operand)
-	{
-	  printf("Pointing to routine %s\n", Routines[i].RoutineName);
-	  // Special case for the sta 2006 routine @
-	  if (Routines[i].opcode == 0x8D &&
-	      Routines[i].operand == 0x2006)
-	    {
-	      // Get the special routine at the end of the code
-      	      RamRoutineAddress = RAMROUTINEBASEADDRESS + Routines.size() * RAMROUTINESIZE; // Address of the code in ram
-	    }
-	  else
-	    {
-	      RamRoutineAddress = RAMROUTINEBASEADDRESS + i * RAMROUTINESIZE; // Address of the code in ram
-	    }
-	  pPRG[PRGAddress + 1] = RamRoutineAddress & 0xFF;
-	  pPRG[PRGAddress + 2] = (RamRoutineAddress >> 8) & 0xFF;
-	  bRoutineFound = true;
-	}
+      SndRegEmuAddress = pinstr->operand - 0x4000 + SNDREGEMUBASE;
+      pPRG[PRGAddress + 1] = SndRegEmuAddress & 0xFF;
+      pPRG[PRGAddress + 2] = (SndRegEmuAddress >> 8) & 0xFF;    
     }
-  if (!bRoutineFound)
+  else
     {
-      printf("Patch routine not found!\n");
-      assert(false);
+      pPRG[PRGAddress] = 0x20; // JSR
+      // the next 2 bytes are a code to find the proper routine.
+      assert(Routines.size() < 256);
+      for (i = 0, bRoutineFound = false; i < Routines.size(); i++)
+	{
+	  if (Routines[i].opcode == pinstr->opcode && Routines[i].operand == pinstr->operand)
+	    {
+	      printf("Pointing to routine %s\n", Routines[i].RoutineName);
+	      // Special case for the sta 2006 routine @
+	      if (Routines[i].opcode == 0x8D &&
+		  Routines[i].operand == 0x2006)
+		{
+		  // Get the special routine at the end of the code
+		  lastRoutine = Routines.size() - 1;
+		  RamRoutineAddress = Routines[lastRoutine].ramOffset + Routines[lastRoutine].ramSize; // Address of the code in ram, after the last routine
+		}
+	      else
+		{
+		  RamRoutineAddress = Routines[i].ramOffset; // Address of the code in ram
+		}
+	      RamRoutineAddress += RAMROUTINEBASEADDRESS;
+	      pPRG[PRGAddress + 1] = RamRoutineAddress & 0xFF;
+	      pPRG[PRGAddress + 2] = (RamRoutineAddress >> 8) & 0xFF;
+	      bRoutineFound = true;
+	    }
+	}
+      if (!bRoutineFound)
+	{
+	  printf("Patch routine not found!\n");
+	  assert(false);
+	}
     }
   //
   instruction = pPRG[PRGAddress] + (pPRG[PRGAddress + 1] << 8) + (pPRG[PRGAddress + 2] << 16);
@@ -129,15 +144,49 @@ unsigned int Crecompilateur::writeRamRoutineBinary(const char *fileName, std::ve
 #ifdef GOTOEMULATIONBANK
   unsigned int   sta2006Address;
 #endif
+  t_PatchRoutine *pPatch;
 
   for (i = 0; i < Patches.size(); i++)
     {
+      pPatch = &Patches[i];
+      pPatch->ramOffset = RamBuffer.size();
+      RamBuffer.push_back(0x08); // PHP
+      RamBuffer.push_back(0x78); // SEI We do ont want any IRQ to occur in bank 0, every IRQ must be in the patched PRG bank
       RamBuffer.push_back(0x22); // JSL
       routineAddress = EMULATIONROUTINEADDRESS + 3 * i; // The space for JMP $xxxx
       RamBuffer.push_back(routineAddress & 0xFF); // routine address
       RamBuffer.push_back((routineAddress >> 8) & 0xFF);
       RamBuffer.push_back(0x80); // $80 bank (Fast ROM)
+      RamBuffer.push_back(0x28); // PLP
+      // Add a flag update if it was reading
+      if (pPatch->type == read)
+	{
+	  switch (pPatch->opcode)
+	    {
+	    case 0xAE:  // LDX
+	      {
+		RamBuffer.push_back(0xAE); // LDX Xi
+		RamBuffer.push_back(0x02);
+		RamBuffer.push_back(0x08);
+	      }
+	      break;
+	    case 0xAC:  // LDY
+	      {
+		RamBuffer.push_back(0xAC); // LDY Yi
+		RamBuffer.push_back(0x04);
+		RamBuffer.push_back(0x08);
+	      }
+	      break;
+      	    default: // LDA
+	      {
+		RamBuffer.push_back(0x09); // ORA #$00
+		RamBuffer.push_back(0x00);
+	      }
+	      break;
+	    }
+	}
       RamBuffer.push_back(0x60); // RTS
+      pPatch->ramSize = RamBuffer.size() - pPatch->ramOffset;
 #ifdef GOTOEMULATIONBANK
       // Save the sta routine @
       if (Patches[i].opcode == 0x8D &&
@@ -224,7 +273,7 @@ unsigned int Crecompilateur::writeRamRoutineBinary(const char *fileName, std::ve
 }
 
 /*
- * Sorts the routines byt write, read, and indirectjumps
+ * Sorts the routines by write, read, and indirectjumps
  */
 void Crecompilateur::sortRoutines(std::vector<t_PatchRoutine>& Patches, int& readIndex, int& indJmpIndex)
 {
@@ -263,7 +312,7 @@ void Crecompilateur::sortRoutines(std::vector<t_PatchRoutine>& Patches, int& rea
 /*
  * Writes the table of IO accesses and indirect jumps replacement.
  */
-void Crecompilateur::writeRoutineVector(FILE *fp, Copcodes *popcode_list, std::vector<t_PatchRoutine>& Patches, int readIndex, int indJmpIndex)
+void Crecompilateur::writeRoutineVector(FILE *fp, Copcodes *popcode_list, std::vector<t_PatchRoutine>& Patches, int readIndex, int indJmpIndex, int soundEmuLine)
 {
   unsigned int i;
   unsigned int size;
@@ -289,7 +338,12 @@ void Crecompilateur::writeRoutineVector(FILE *fp, Copcodes *popcode_list, std::v
     }
   // Number of io routines
   fprintf(fp, "\n.DEFINE NBIOROUTINES %d\n", (int)Patches.size());
-  size = RAMROUTINESIZE * (int)Patches.size();
+  if (Patches.size() == 0)
+    {
+      printf("Something is wrong in the PRG patching: no patches found.\n");
+      return;
+    }
+  size = Patches[(int)Patches.size() - 1].ramOffset + Patches[(int)Patches.size() - 1].ramSize;
 #ifdef GOTOEMULATIONBANK
   size += 20;
 #else
@@ -299,6 +353,8 @@ void Crecompilateur::writeRoutineVector(FILE *fp, Copcodes *popcode_list, std::v
   fprintf(fp, ".DEFINE RAMBINWSIZE  %d\n", size / 2 + (size & 1)); // Add 1 if odd in order to copy all the data 
   fprintf(fp, ".DEFINE READROUTINESINDEX %d\n", readIndex);
   fprintf(fp, ".DEFINE INDJMPINDEX %d\n", indJmpIndex);
+  // Sound emulation line
+  fprintf(fp, ".DEFINE SOUNDEMULINE %d\n", soundEmuLine);
 }
 
 /*
@@ -346,7 +402,11 @@ int Crecompilateur::patchPrgRom(const char *outName, Cprogramlisting *plisting, 
 	{
 	  fprintf(fp, "\n; Indirect jump emulation checks are disabled.\n");
 	}
-      writeRoutineVector(fp, popcode_list, PatchRoutines, readIndex, indJmpIndex);
+      // Write the ram routines here in order to have their sizes and label @
+      snprintf(filePath, cstrsz, "%sRam.bin", outName);
+      writeRamRoutineBinary(filePath, PatchRoutines);
+      // Write the Vector and size Defines
+      writeRoutineVector(fp, popcode_list, PatchRoutines, readIndex, indJmpIndex, pindjmp->GetSoundEmuLine());
       // Patch the rom buffer
       bnesIRQVect = bnesNMIVect = false;
       pinstr = plisting->get_next(true);
@@ -417,8 +477,6 @@ int Crecompilateur::patchPrgRom(const char *outName, Cprogramlisting *plisting, 
       fwrite(pPRG, 1, PRGSize, fp);
       fclose(fp);
       delete[] pPRG;
-      snprintf(filePath, cstrsz, "%sRam.bin", outName);
-      writeRamRoutineBinary(filePath, PatchRoutines);
     }
   catch (int e)
     {

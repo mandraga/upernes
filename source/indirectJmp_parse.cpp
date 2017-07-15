@@ -101,6 +101,9 @@ void CindirectJmpRuntimeLabels::get_new(int res)
     case ADDR:
       m_state = jumpaddr_addr;
       break;
+    case SOUNDLINE:
+      m_state = SoundEmuLine;
+      break;
     default:
       snprintf(m_error_str, sizeof(m_error_str), "parser line %d, unknown text", zznum_line);
       throw (1);
@@ -145,6 +148,24 @@ void CindirectJmpRuntimeLabels::get_8b_addr(int res)
     };  
 }
 
+void CindirectJmpRuntimeLabels::get_8b_line(int res)
+{
+  unsigned int out;
+
+  switch (res)
+    {
+    case BYTE:
+      sscanf(zztext + 1,"%x", &out);
+      m_SoundEmuLine = out;
+      m_state = get_new_line;
+      break;
+    default:
+      snprintf(m_error_str, sizeof(m_error_str),
+	       "parser line %d expects $hex byte", zznum_line);
+      throw (1);
+    };  
+}
+
 void CindirectJmpRuntimeLabels::get_16b_addr(int res)
 {
   unsigned int out;
@@ -162,6 +183,11 @@ void CindirectJmpRuntimeLabels::get_16b_addr(int res)
 	       "parser line %d expects $hex word", zznum_line);
       throw (1);
     };
+}
+
+unsigned int CindirectJmpRuntimeLabels::GetSoundEmuLine()
+{
+  return m_SoundEmuLine;
 }
 
 int  CindirectJmpRuntimeLabels::build_list()
@@ -186,6 +212,9 @@ int  CindirectJmpRuntimeLabels::build_list()
 	      break;
 	    case jumpaddr_addr:
 	      get_16b_addr(res);
+	      break;
+	    case SoundEmuLine:
+	      get_8b_line(res);
 	      break;
 	    };
 	}

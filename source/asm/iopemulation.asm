@@ -245,6 +245,7 @@ BGbankend:
 	;; Test Vblank
 	;bit PPUcontrolreg1
 	;bpl novblank		; Therefore bpl branches if the 7th bit is not set
+	sep #$10            ;  Acc 8Bits
 	lda PPUcontrolreg1  ; Puts the 7th bit in the n flag
 	and #$80
 	beq novblank
@@ -260,8 +261,7 @@ novblank:
 	; Vblank interrupt disabled
 	stz NESNMIENABLED
 	lda SNESNMITMP
-	;and #$7E
-	and #$00    ; Try to limitate the effect
+	and #$7E
 	sta NMITIMEN
 	sta SNESNMITMP
 vblankend:
@@ -320,6 +320,8 @@ WPPUC2:
 	;lda #$0F		  ;Turn on screen, 100% brightness
 	;sta INIDISP
 	;jmp endWPPUC2
+	; If the screen and sprites are enabled, then sprite 0 hit flag is enabled
+	jsr InitSprite0
 blankscreen:
 	;lda #$8F		  ;Turn off screen, 100% brightness
 	;sta INIDISP
@@ -344,10 +346,30 @@ RPPUC2:
 RPPUSTATUS:
 	;BREAK
 	sep #$20
-	;; vblank
+	;; Power up test
 	lda #$01
 	cmp StarPPUStatus
 	beq PowerUp     ; If 1, then it is power up (always here, even on reset)
+	; Normal operation
+	; The scroll registers latches are cleared by a read to this register
+	stz WriteToggle
+	lda PPUStatus     ; From the IRQ update	
+	jmp EndRPPUSTATUS
+PowerUp:
+	stz StarPPUStatus ; Boot passed
+	lda #$80          ; return boot PPUSTATUS
+	sta PPUStatus
+EndRPPUSTATUS:
+	RETR
+
+;;----------------------------------------
+;; Unused code
+	;BREAK
+	sep #$20
+	;; vblank
+	lda #$01
+	cmp StarPPUStatus
+	beq PowerUp2     ; If 1, then it is power up (always here, even on reset)
 	jsr updateSprite0Flag
 	; The scroll registers latches are cleared by a read to this register
 	stz WriteToggle
@@ -386,13 +408,14 @@ GetSprite0Flag:
 	sep #$20
 	;; sprite 0
 	ora SPRITE0FLAG
-	jmp EndRPPUSTATUS
-PowerUp:
+	jmp EndRPPUSTATUS2
+PowerUp2:
 	stz StarPPUStatus ; Boot passed
 	lda #$80          ; return boot PPUSTATUS
-EndRPPUSTATUS:
+EndRPPUSTATUS2:
 	sta PPUStatus
 	RETR
+;;----------------------------------------
 	
 ; ------+-----+---------------------------------------------------------------
 ; $2003 | W   | Sprite Memory Address
@@ -740,59 +763,6 @@ Relative:
 	sta tH
 	pla
 	RETW
-
-
-
-	sep #$30            ; All 8b
-	; Because of a special routine, if we are here, WriteToggle must be one
-	ldy WriteToggle     ; Get the adressed byte
-	beq HighAddressByte ; 0 = hight address byte
-	sta PPUmemaddrL     ; Low address byte
-	jmp toggleW
-HighAddressByte:
-	;and #$3F
-	sta PPUmemaddrH
-toggleW:
-	lda WriteToggle
-	eor #$01
-	sta WriteToggle		; Toggle the accessed byte (0 or 1)
-	ora #$00	        ; Test if address update is finished. Return if not finished (WriteToggle == 1).
-	bne ppumaddret
-	;; -----------------------------------------------
-	;; The address write is completed here
-	; Set the latch for the next read operation, it will return nothing important
-	lda #$01
-	sta PPUReadLatch
-	;; -----------------------------------------------
-	; Set the TMP VRAM registers
-	;jmp forg3
-	lda PPUmemaddrH
-	and #$3F
-	sta tH
-	;lda PPUmemaddrL
-	;sta tL
-	; Update the scroll registers
-	; H scroll
-	;lda tX
-	;sta NESHSCROLL
-	;lda tL
-	;clc
-	;asl
-	;asl
-	;asl
-	;ora NESHSCROLL
-	;lda PPUmemaddrH
-	; Update Horizontal scrolling
-	;jsr UpdateHScroll
-;endRefreshScroll:
-	; V scroll
-	;lda tH
-	;sta NESVSCROLL
-	;sta BG1VOFS             ; This register must be written twice
-	;stz BG1VOFS 
-;forg3:
-ppumaddret:
-	RETW	
 	
 ppuAddToVram:
 	sep #$30		; Acc X Y 8bits

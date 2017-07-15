@@ -1,13 +1,13 @@
 
 ; Interrupt vector tables
 .BANK 0 SLOT 0
-.ORG    $7FE4			; = Native Mode = snes
-.DW     EmptyHandler	; COP
-.DW     EmptyHandler	; BRK
-.DW     EmptyHandler	; ABORT
-.DW     EmptyVBlank		; NMI
-.DW     $0000			; (Unused)
-.DW     VCountHandler ;EmptyHandler	; IRQ, never used in native mode. The native mode is only used for the IO callbacks.
+.ORG    $7FE4		        ; = Native Mode = snes
+.DW     NativeEmptyHandler  ; COP
+.DW     NativeEmptyHandler  ; BRK
+.DW     NativeEmptyHandler  ; ABORT
+.DW     NativeEmptyNMI      ; NMI
+.DW     $0000		        ; (Unused)
+.DW     NativeVCountHandler ; EmptyHandler	; IRQ, never used in native mode. The native mode is only used for the IO callbacks.
 
 .ORG    $7FF4				; = Emulation Mode = nes
 .DW     EmptyHandler		; COP
@@ -40,29 +40,10 @@
 .SECTION "EmptyVectors" SEMIFREE
 
 DMAUpdateHandler:
-
+	
 	; Fast ROM execution
 	jml FastDMAUpdateHandler
 FastDMAUpdateHandler:
-
-	; V blank NMI
-	;jsr InitSprite0
-
-	; Read the V value
-	;sep #$20    ; A 8bits
-	; Low first
-	;lda STAT78
-	; Latch the H and V counters
-	;lda HVLATCH
-	;lda #$00
-	;lda OPVCT   ; Low Byte
-	;swa
-	;lda HVLATCH
-	;lda OPVCT
-	;and #$01    ; Mask the open bus shit
-	;swa
-	;rep #$20    ; A 16bits
-	;sta TMPVCOUNTL + 2
 
 	; If the nes nmi is enables, call it
 	BREAK4
@@ -75,7 +56,6 @@ FastDMAUpdateHandler:
 	lda #$01
 	sta NMI_occurred
 	pla
-	
 	; Read the vertical line counter position
 	;jsr ReadHcout
 	;BREAK ; something is wrong if removed
@@ -121,73 +101,39 @@ ClrShit:
 	;BREAK2
 	jml NESNMI ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called form emulation
 QuitNMI:
+	; Prepare the stack for an RTL instead of RTI
 	pla
-	sta AccNmi
+	sta AccNmi    ; Pop and save Acc
 	pla
-	sta NmiStatus
+	sta NmiStatus ; Pop the rti values from the stack
 	pla
 	sta NmiRetLo
 	pla
 	sta NmiRetHi
-	lda #$01      ; Bank
+	; Add bank
+	;lda #$81      ; Bank 1 in fast rom mode
+	lda #$01      ; Bank 1
 	pha
 	lda NmiRetHi
 	pha
 	lda NmiRetLo
 	pha
+	; Restore A and status flag
 	lda AccNmi
+	pha
+	; Restore status
+	lda NmiStatus
+	pha
+	plp ; Restore Status
+	pla ; Restore Acc
 	rtl
 ;;; put this on vblank
 
+
 NESIRQBRKHandler:
-	jmp NESIRQBRK ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called from emulation
+	BREAK2
+	jml NESIRQBRK ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called from emulation
 
-; Called by the Native IRQ handler
-VCountHandler:
-	sei ; Disable interrupts at start ot it will flood the stack
-	php
-	sep #$20		; A 8b
-	pha
-	lda SNESNMITMP
-	and #%00100000  ; Check the V count interrupt enabled flag
-	beq NoVcountIntEnabled
-	lda HVTIME      ; Vertical timer IRQ flag, cleared here
-	and #$80        ; Get rid of the open bus value (MDR in bsnes emulator's source code)
-	beq HCountFlagCleared ; If not set, do nothing
-	; Check the line of the interrupt
-	rep #$20		; A 16bits
-
-	lda HCOUNTERL
-	cmp #$0105      ; Is it line 261?
-	beq VBlankEnds
-	lda #$0105
-	sta VTIMEL
-	sta HCOUNTERL    ; The next interrupt will be on the line 261, at the end of vblank
-	sep #$20		; A 8b
-	; Sprite 0 hit
-	; Set the Sprite 0 flag bit to one
-	lda #SPRITE0FLGAG_VALUE
-	sta SPRITE0FLAG
-	jmp Sprite0HitEnds
-VBlankEnds:
-	sep #$20		; A 8b
-	; Set the sprite zero flag to 0
-	stz SPRITE0FLAG
-	; Set the counter for the sprite zero hit
-	lda SpriteMemoryBase + 1 ; Loads sprite 0 Y position
-	sta VTIMEL
-	sta HCOUNTERL
-	stz VTIMEH
-	stz HCOUNTERH   ; The next interrupt will be on the sprite zero Y position (0 to 255)
-	;
-NoVcountIntEnabled:
-HCountFlagCleared:
-Sprite0HitEnds:
-	sep #$20		; A 8b
-	pla
-	plp  ; A length restored to whatever value it was: 8 or 16bits
-	cli
-	rti
 
 
 	;; Used in Supersleuth to stop somewhere using a brk instruction and setting break points on the nops
@@ -200,8 +146,6 @@ DebugHandler:
 	pha
 	lda $0916    ; use this to set a breakpoint
 	pla
-	lda HVTIME   ; Vertical timer IRQ flag
-	and #$80     ; Get rid of the open bus value (the MDR)
 	nop
 	nop
 	nop
@@ -210,23 +154,58 @@ DebugHandler:
 	rti
 
 EmptyHandler:
-		pha
-		lda $0917    ; use this to set a breakpoint
-		nop
-		nop
-		pla
-        rti
-
-EmptyVBlank:
-	rep #30
-    pha
-    php          ; Push status
-	sep #$20     ; Acc/Mem 8bits
-	lda NMIFLAG ; Clear NMI Flag
-    plp
-    pla
+	sei ; Disable interrupts at start ot it will flood the stack
+	pha
+	lda $0918   ; use this to set a breakpoint
+	nop
+	nop
+	pla
     rti
 
-	
+;----------------------------------------------------------------
+; Same handlers but RTI pops also the bank
+NativeEmptyHandler:
+	sei ; Disable interrupts at start ot it will flood the stack
+	pha
+	php         ; Push status
+	;sep #$20    ; Acc/Mem 8bits
+	;lda $0918   ; use this to set a breakpoint
+	;lda $0919   ; use this to set a breakpoint
+	nop
+	nop
+	plp
+	pla
+    rti
+
+NativeEmptyNMI:
+	sei ; Disable interrupts at start ot it will flood the stack
+    pha
+    php         ; Push status
+	;sep #$20    ; Acc/Mem 8bits
+	;lda $0918   ; use this to set a breakpoint
+	;lda $0919   ; use this to set a breakpoint
+	lda NMIFLAG ; Clear NMI Flag
+	nop
+    plp
+	pla
+    rti
+
+;----------------------------------------------------------------
+; The Vcount IRQ could trigger while in emulation or native
+;
+NativeVCountHandler:
+	sei ; Disable interrupts at start ot it will flood the stack
+	pha
+	php ; Only to be able to pop A
+	BREAK3
+	jml FastVcountHandler
+FastVcountHandler:
+	jsr VCountHandler
+	plp ; Only to be able to pop A
+	pla
+	;cli                  <- RTI does it
+	;plp  ; Restore flags <- RTI does it
+	rti
+
 .ENDS
 
