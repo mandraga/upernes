@@ -145,48 +145,144 @@ unsigned int Crecompilateur::writeRamRoutineBinary(const char *fileName, std::ve
   unsigned int   sta2006Address;
 #endif
   t_PatchRoutine *pPatch;
-
+  //unsigned int    SndRegEmuAddress;
+  
   for (i = 0; i < Patches.size(); i++)
     {
       pPatch = &Patches[i];
-      pPatch->ramOffset = RamBuffer.size();
-      RamBuffer.push_back(0x08); // PHP
-      RamBuffer.push_back(0x78); // SEI We do ont want any IRQ to occur in bank 0, every IRQ must be in the patched PRG bank
-      RamBuffer.push_back(0x22); // JSL
-      routineAddress = EMULATIONROUTINEADDRESS + 3 * i; // The space for JMP $xxxx
-      RamBuffer.push_back(routineAddress & 0xFF); // routine address
-      RamBuffer.push_back((routineAddress >> 8) & 0xFF);
-      RamBuffer.push_back(0x80); // $80 bank (Fast ROM)
-      RamBuffer.push_back(0x28); // PLP
-      // Add a flag update if it was reading
-      if (pPatch->type == read)
+      // Do nothing with the sound registers here
+      // The code here is unused the routines are unused
+      if (pPatch->operand >= 0x4000 && pPatch->operand <= 0x4013)
 	{
-	  switch (pPatch->opcode)
-	    {
-	    case 0xAE:  // LDX
-	      {
-		RamBuffer.push_back(0xAE); // LDX Xi
-		RamBuffer.push_back(0x02);
-		RamBuffer.push_back(0x08);
-	      }
-	      break;
-	    case 0xAC:  // LDY
-	      {
-		RamBuffer.push_back(0xAC); // LDY Yi
-		RamBuffer.push_back(0x04);
-		RamBuffer.push_back(0x08);
-	      }
-	      break;
-      	    default: // LDA
-	      {
-		RamBuffer.push_back(0x09); // ORA #$00
-		RamBuffer.push_back(0x00);
-	      }
-	      break;
-	    }
+	  pPatch->ramOffset = RamBuffer.size();
+	  /*
+	  RamBuffer.push_back(pPatch->opcode);
+	  SndRegEmuAddress = pPatch->operand - 0x4000 + SNDREGEMUBASE;
+	  RamBuffer.push_back(SndRegEmuAddress & 0xFF);
+	  RamBuffer.push_back((SndRegEmuAddress >> 8) & 0xFF);
+	  RamBuffer.push_back(0x60); // RTS
+	  pPatch->ramSize = RamBuffer.size() - pPatch->ramOffset;
+	  */
+	  pPatch->ramSize = 0;
 	}
-      RamBuffer.push_back(0x60); // RTS
-      pPatch->ramSize = RamBuffer.size() - pPatch->ramOffset;
+      // Replace lda PPUSTATUS or ldx PPUSTATUS or ldy PPUSTATUS with a shorter version
+      else if ((pPatch->opcode == 0xAD /*|| pPatch->opcode == 0xAE*/) && pPatch->operand <= 0x2002)
+	{
+	  /*
+	  ;; Power up test
+	  lda StarPPUStatus
+	  bne PowerUp     ; If 1, then it is power up (always here, even on reset)
+          ; Normal operation
+	  ; The scroll registers latches are cleared by a read to this register
+	  lda #$00
+	  sta WriteToggle
+          lda PPUStatus     ; From the IRQ update
+	  rts
+	PowerUp:
+          lda #$00
+	  sta StarPPUStatus ; Boot passed
+	  lda #$80          ; return boot PPUSTATUS
+	  sta PPUStatus
+	  rts
+	  */
+#ifdef SELF_MOD_CODE
+	  // Remove the 2 first instructions
+#else	  
+	  pPatch->ramOffset = RamBuffer.size();
+	  RamBuffer.push_back(0xAD); // lda StarPPUStatus
+  	  RamBuffer.push_back(0x12);
+  	  RamBuffer.push_back(0x09);
+	  RamBuffer.push_back(0xD0); // bne
+	  RamBuffer.push_back(0x09);
+	  RamBuffer.push_back(0xA9); // lda #00
+	  RamBuffer.push_back(0x00);
+	  RamBuffer.push_back(0x8D); // sta WriteToggle
+  	  RamBuffer.push_back(0x06);
+  	  RamBuffer.push_back(0x09);
+	  RamBuffer.push_back(0xAD); // lda PPUStatus
+  	  RamBuffer.push_back(0x0D);
+  	  RamBuffer.push_back(0x09);
+     	  RamBuffer.push_back(0x60); // rts
+	  // PowerUp
+	  RamBuffer.push_back(0xA9); // lda #00
+	  RamBuffer.push_back(0x00);
+	  RamBuffer.push_back(0x8D); // sta StarPPUStatus
+  	  RamBuffer.push_back(0x12);
+  	  RamBuffer.push_back(0x09);
+ 	  RamBuffer.push_back(0xA9); // lda #80
+	  RamBuffer.push_back(0x80);
+	  RamBuffer.push_back(0x8D); // sta PPUStatus
+  	  RamBuffer.push_back(0x0D);
+  	  RamBuffer.push_back(0x09);	  
+     	  RamBuffer.push_back(0x60); // rts
+#endif
+	  pPatch->ramSize = RamBuffer.size() - pPatch->ramOffset;
+	}
+      else
+	{
+	  pPatch->ramOffset = RamBuffer.size();
+	  RamBuffer.push_back(0x08); // PHP
+	  RamBuffer.push_back(0x78); // SEI We do ont want any IRQ to occur in bank 0, every IRQ must be in the patched PRG bank
+	  // No we don't, disable the nmi interrupt
+#ifdef DISABLENMIDURINGIOEMULATION
+	  RamBuffer.push_back(0xAD); // LDA SNESNMITMP
+	  RamBuffer.push_back(0x13);
+	  RamBuffer.push_back(0x08);
+	  RamBuffer.push_back(0x29); // AND
+	  RamBuffer.push_back(0x7F); // #$7F
+	  RamBuffer.push_back(0x8D); // STA NMITIMEN
+	  RamBuffer.push_back(0x00);
+	  RamBuffer.push_back(0x42);
+#endif //DISABLENMIDURINGIOEMULATION
+	  // Continue with normal operation
+	  RamBuffer.push_back(0x22); // JSL
+	  routineAddress = EMULATIONROUTINEADDRESS + 3 * i; // The space for JMP $xxxx
+	  RamBuffer.push_back(routineAddress & 0xFF); // routine address
+	  RamBuffer.push_back((routineAddress >> 8) & 0xFF);
+	  RamBuffer.push_back(0x80); // $80 bank (Fast ROM)
+#ifdef DISABLENMIDURINGIOEMULATION
+	  // Restore NMI
+	  RamBuffer.push_back(0xAD); // LDA SNESNMITMP
+	  RamBuffer.push_back(0x13);
+	  RamBuffer.push_back(0x08);
+	  RamBuffer.push_back(0x8D); // STA NMITIMEN
+	  RamBuffer.push_back(0x00);
+	  RamBuffer.push_back(0x42);
+#endif //DISABLENMIDURINGIOEMULATION
+	  // Restore flags and interrupts
+	  RamBuffer.push_back(0x28); // PLP
+	  RamBuffer.push_back(0x58); // CLI for IRQ routines
+	  // Add a flag update if it was reading
+	  if (pPatch->type == read)
+	    {
+	      switch (pPatch->opcode)
+		{
+		case 0xAE:  // LDX
+		  {
+		    RamBuffer.push_back(0xAE); // LDX Xi
+		    RamBuffer.push_back(0x02);
+		    RamBuffer.push_back(0x08);
+		  }
+		  break;
+		case 0xAC:  // LDY
+		  {
+		    RamBuffer.push_back(0xAC); // LDY Yi
+		    RamBuffer.push_back(0x04);
+		    RamBuffer.push_back(0x08);
+		  }
+		  break;
+		default: // LDA
+		  {
+		    RamBuffer.push_back(0x09); // ORA #$00
+		    RamBuffer.push_back(0x00);
+		  }
+		  break;
+		}
+	    }
+	  // Return, enough of it
+	  RamBuffer.push_back(0x60); // RTS
+	  pPatch->ramSize = RamBuffer.size() - pPatch->ramOffset;
+	}
 #ifdef GOTOEMULATIONBANK
       // Save the sta routine @
       if (Patches[i].opcode == 0x8D &&
@@ -197,6 +293,7 @@ unsigned int Crecompilateur::writeRamRoutineBinary(const char *fileName, std::ve
 #endif
     }
   // Add a quicker sta write to ppuaddr
+  m_PPUAddrRoutineSize = RamBuffer.size();
   RamBuffer.push_back(0x48); // pha
   RamBuffer.push_back(0xAD); // lda
   RamBuffer.push_back(0x06); // WriteToggle $906
@@ -254,7 +351,7 @@ unsigned int Crecompilateur::writeRamRoutineBinary(const char *fileName, std::ve
   RamBuffer.push_back(0x80); // $80 bank
 #endif //GOTOEMULATIONBANK
   RamBuffer.push_back(0x60); // rts
-
+  m_PPUAddrRoutineSize = RamBuffer.size() - m_PPUAddrRoutineSize;
   // Write the binary file
   fp = fopen(fileName, "wb");
   if (fp == NULL)
@@ -334,7 +431,14 @@ void Crecompilateur::writeRoutineVector(FILE *fp, Copcodes *popcode_list, std::v
 	{
 	  fprintf(fp, "IndJumpTable:\n");
 	}
-      fprintf(fp, "jmp %s\n", Patches[i].RoutineName);
+     if (Patches[i].operand >= 0x4000 && Patches[i].operand <= 0x4013)
+       {
+	 fprintf(fp, "jmp %s\t\t; not used\n", Patches[i].RoutineName);
+       }
+     else
+       {
+	 fprintf(fp, "jmp %s\n", Patches[i].RoutineName);
+       }
     }
   // Number of io routines
   fprintf(fp, "\n.DEFINE NBIOROUTINES %d\n", (int)Patches.size());
@@ -344,11 +448,7 @@ void Crecompilateur::writeRoutineVector(FILE *fp, Copcodes *popcode_list, std::v
       return;
     }
   size = Patches[(int)Patches.size() - 1].ramOffset + Patches[(int)Patches.size() - 1].ramSize;
-#ifdef GOTOEMULATIONBANK
-  size += 20;
-#else
-  size += 36;
-#endif //GOTOEMULATIONBANK
+  size += m_PPUAddrRoutineSize;
   fprintf(fp, ".DEFINE RAMBINSIZE   %d\n", size);
   fprintf(fp, ".DEFINE RAMBINWSIZE  %d\n", size / 2 + (size & 1)); // Add 1 if odd in order to copy all the data 
   fprintf(fp, ".DEFINE READROUTINESINDEX %d\n", readIndex);

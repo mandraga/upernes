@@ -78,5 +78,6 @@ public:
   char m_error_str[128];
 private:
   t_label_list m_label_gen_list;
+  unsigned int m_PPUAddrRoutineSize;
 };
 

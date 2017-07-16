@@ -261,7 +261,7 @@ novblank:
 	; Vblank interrupt disabled
 	stz NESNMIENABLED
 	lda SNESNMITMP
-	and #$7E
+	and #$7E      ; Could be $7F but we do not need auto joystick update
 	sta NMITIMEN
 	sta SNESNMITMP
 vblankend:
@@ -347,14 +347,14 @@ RPPUSTATUS:
 	;BREAK
 	sep #$20
 	;; Power up test
-	lda #$01
-	cmp StarPPUStatus
-	beq PowerUp     ; If 1, then it is power up (always here, even on reset)
+	lda StarPPUStatus
+	bne PowerUp     ; If 1, then it is power up (always here, even on reset)
 	; Normal operation
 	; The scroll registers latches are cleared by a read to this register
 	stz WriteToggle
 	lda PPUStatus     ; From the IRQ update	
-	jmp EndRPPUSTATUS
+	;jmp EndRPPUSTATUS
+	RETR
 PowerUp:
 	stz StarPPUStatus ; Boot passed
 	lda #$80          ; return boot PPUSTATUS
@@ -362,59 +362,6 @@ PowerUp:
 EndRPPUSTATUS:
 	RETR
 
-;;----------------------------------------
-;; Unused code
-	;BREAK
-	sep #$20
-	;; vblank
-	lda #$01
-	cmp StarPPUStatus
-	beq PowerUp2     ; If 1, then it is power up (always here, even on reset)
-	jsr updateSprite0Flag
-	; The scroll registers latches are cleared by a read to this register
-	stz WriteToggle
-
-	; If the nes NMI on Vblank is disabled it does not mean that VBlank is not occuring
-	; Just compare the counter value
-	rep #$20    ; A 16bits
-	lda VCOUNTL
-	cmp #240
-	bcs InVblank ; A >= 240
-	sep #$20  ; A 8bits
-	lda #VblankStateOff
-	sta VblankState
-	lda #$00
-	jmp GetSprite0Flag
-InVblank:
-	sep #$20  ; A 8bits
-	lda VblankState
-	cmp #VblankStateOff
-	beq EnVblank
-	cmp #VblankStateOn
-	beq VblankClrFlag
-	; Already in Clr state
-	lda #$00
-	jmp GetSprite0Flag
-VblankClrFlag:
-	lda #VblankStateClr
-	sta VblankState
-	lda #$00
-	jmp GetSprite0Flag
-EnVblank:
-	lda #VblankStateOn
-	sta VblankState	
-	lda #$80   ; Vblank enabled
-GetSprite0Flag:
-	sep #$20
-	;; sprite 0
-	ora SPRITE0FLAG
-	jmp EndRPPUSTATUS2
-PowerUp2:
-	stz StarPPUStatus ; Boot passed
-	lda #$80          ; return boot PPUSTATUS
-EndRPPUSTATUS2:
-	sta PPUStatus
-	RETR
 ;;----------------------------------------
 	
 ; ------+-----+---------------------------------------------------------------
@@ -749,7 +696,7 @@ WPPUMEMADDR:
 	bne Relative
 	inc WriteToggle
 	pla
-	sta PPUmemaddrH
+	sta PPUmemaddrH          ; A copy in ram is called
 	RETW
 Relative:
 	pla
@@ -836,24 +783,29 @@ WPPUMEMDATA:
 	sep #$20 ; A 8bits
 	pha
 	; Use the WRAM buffer of PPU@ routines.
-	; Got to bank 7F
-	phb
-	lda #WRamBank
-	pha
+	; Go to bank 7F
 	rep #$20 ; A 16bits
 	lda PPUmemaddrL ; Load the PPUADDRESS
-	plb ; change the data bank
 	and #$3FF0 ; Clear the 2 upper and lower bits
 	lsr
 	lsr ; >> 2
 	tax
-	lda WRamPPUADDRJmps,X
-	plb
+	lda WRamPPUADDRJmpsLI, X
 	sta tmp_addr
 	sep #$20 ; A 8bits
 	pla
 	jmp (tmp_addr)   ; indirect jump to the routine for the PPU address.
 
+.MACRO INCPPUADDR
+	rep #$20		; A 16bits
+	lda PPUmemaddrL
+	clc
+	adc PPURW_IncrementL
+	sta PPUmemaddrL
+	sep #$20		; A 8bit
+.ENDM
+
+	
 	;; -------------------------------------------------------------------------	
 	;; Attribute tables
 	;; write the highter 6bits of the words at $A000 4x4 tiles at time.
@@ -929,7 +881,7 @@ AttBank2W:
 	sta NametableBaseBank2+135,X
 	sta NametableBaseBank2+197,X
 	sta NametableBaseBank2+199,X
-	jsr IncPPUmemaddrL
+	INCPPUADDR ; jsr IncPPUmemaddrL
 	RETW
 	
 AttBank1W:
@@ -987,7 +939,7 @@ AttBank1W:
 
 IncAttrAddr:
 	;; Increment the Attribute address
-	jsr IncPPUmemaddrL
+	INCPPUADDR ; jsr IncPPUmemaddrL
 	;rep #$20		; Acc 16bits
 	;lda attributeaddr
 	;clc
@@ -1062,39 +1014,9 @@ NametableW:
 ;	pla
 	sta NametableBaseBank1,X   ; Write to VRAM. This is the lower nametable byte, the character code number.
 	;BREAK
-	;jsr UpdateNametablesBitsBank1
-	; If room is available for a HDMA transfer, store the word to be updated
-	;tay
-	;lda NamesBank1UpdateCounter
-	;sbc MaxNameHDMAUpdates
-	;beq NoMoreUpdates
-	; Add the word to be updated to the HDMA table
-	;tya ; Restore Acc
-	
-	;clc
-	;adc #$0001	
-	;sta NamesBank1UpdateCounter
 NoMoreUpdates:
 	; Increment
-	; Test bit 2 of PPUCTRL: 1 or 32 nametable increment
-;	lda #$04
-;	bit PPUcontrolreg1	; test bit 2, zero if not set ("bit and" result)
-;	bne Name_name_incr_32
-;	rep #$20		; A 16bit
-;	inc PPUmemaddrL
-;	jmp ensfsf
-;Name_name_incr_32
-;	rep #$20		; A 16bit
-;	lda PPUmemaddrL
-;	clc
-;	adc #32
-;	sta PPUmemaddrL
-;ensfsf:
-;	lda PPUmemaddrL
-;	cmp #$3000
-;	BCC nextWr
-;	jmp emptyrange
-	jsr IncPPUmemaddrL
+	INCPPUADDR ; jsr IncPPUmemaddrL
 nextWr:
 	RETW
 
@@ -1171,7 +1093,7 @@ paletteW:
 	; Adr
 endwpumem:
 	;; Increments the index equally as CGDATA
-	jsr IncPPUmemaddrL
+	INCPPUADDR ; jsr IncPPUmemaddrL
 	RETW
 
 	; The first palette index is mirrored on every palette
@@ -1230,11 +1152,11 @@ AttrtableR:
 	beq AttBank1R
 AttBank2R:
 	lda Attributebuffer2,X
-	jsr IncPPUmemaddrL
+	INCPPUADDR ; jsr IncPPUmemaddrL
 	jmp AttrtableRend
 AttBank1R:
 	lda Attributebuffer1,X
-	jsr IncPPUmemaddrL
+	INCPPUADDR ; jsr IncPPUmemaddrL
 	jmp AttrtableRend
 LatchedAttrValue:
 	lda #$00  ; Return zero at the first read after the write to $2006
@@ -1275,7 +1197,7 @@ NameBank1R:
 NameBankREnd:	
 	tax
 	; Increment the PPU address
-	jsr IncPPUmemaddrL
+	INCPPUADDR ; jsr IncPPUmemaddrL
 	; Done
 	sep #$20		; A 8bit
 	txa
@@ -1293,7 +1215,7 @@ paletteR:
 	and #$1F
 	tax
 	lda Palettebuffer,X
-	jsr IncPPUmemaddrL
+	INCPPUADDR ; jsr IncPPUmemaddrL
 	RETR
 
 CHRDataR:
@@ -1312,7 +1234,7 @@ CHRDataR:
 	plb			; Restore data bank	
 	tax
 	; Increment the PPU address
-	jsr IncPPUmemaddrL
+	INCPPUADDR ; jsr IncPPUmemaddrL
 	txa
 	jmp CHRDataRend
 LatchedCHRDataValue:
@@ -1413,6 +1335,46 @@ sprconversionloop:
 ;    jsr UpdateSpritesDMA	
 	pld
 	RETW
+
+
+sprconversionloopO:	
+	;lda $00,X	  ; Read Y, direct page  *(DP + $00 + X)
+	;sta SpriteMemoryBase + 1,X    ; Store it
+	;lda $01,X	  ; Read cccccc (tile index)
+	;sta SpriteMemoryBase + 2,X    ; Store it
+	ldx $02,X	  ; Read the flags
+	lda ConverTedFlags,X ;jsr convert_sprflags_to_snes  ; Acc converted from NES vhoxxxpp to SNES vhoopppN
+	sta SpriteMemoryBase + 4 + 3,X    ; Store them
+	lda $03,X	  ; Read X
+	sta SpriteMemoryBase - 1,X    ; Store it
+	;----------------------------
+	ldx $02 + 4,X	  ; Read the flags
+	lda ConverTedFlags,X ;jsr convert_sprflags_to_snes  ; Acc converted from NES vhoxxxpp to SNES vhoopppN
+	sta SpriteMemoryBase + 4 + 3,X    ; Store them
+	lda $03 + 4,X	  ; Read X
+	sta SpriteMemoryBase + 4 - 1,X    ; Store it
+	;----------------------------
+	ldx $02,X	  ; Read the flags
+	lda ConverTedFlags,X ;jsr convert_sprflags_to_snes  ; Acc converted from NES vhoxxxpp to SNES vhoopppN
+	sta SpriteMemoryBase + 8 + 3,X    ; Store them
+	lda $03,X	  ; Read X
+	sta SpriteMemoryBase + 8 - 1,X    ; Store it
+	;----------------------------
+	ldx $02 + 4,X	  ; Read the flags
+	lda ConverTedFlags,X ;jsr convert_sprflags_to_snes  ; Acc converted from NES vhoxxxpp to SNES vhoopppN
+	sta SpriteMemoryBase + 12 + 3,X    ; Store them
+	lda $03 + 4,X	  ; Read X
+	sta SpriteMemoryBase + 12 - 1,X    ; Store it
+	;----------------------------
+	txa
+	clc
+	adc #$10
+	tax
+	;inx
+	;inx
+	;inx
+	;inx
+	bne sprconversionloopO	; loop if not zero	(passed 256)	
 	
 ;; NES
 ; Sprite Attribute RAM:

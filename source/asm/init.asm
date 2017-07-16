@@ -148,6 +148,8 @@ eraseNesRamLoop:
 	stz BGUpdateFIFOSZ + 1
 	stz TMPVTIMEL
 	stz TMPVTIMEH
+	lda #$40     ; RTI
+	sta LocalRTI
 
 	;----------------------------------------------------------------------------
 	; Precalculate a PPU routine jump table
@@ -181,15 +183,7 @@ copyRamCode:
 	sta JumpAddress + 2
 
 	;; -----------------------------------------------
-	; Setup the interrupt routines
-	lda #$81
-	sta SNESNMITMP     ; NMI on Vblank always enabled
-	lda SNESNMITMP
-	;ora #%00100000 ; Enable V timer
-	;ora #%00010000 ; Enable H timer
-	sta NMITIMEN
-	sta SNESNMITMP
-	;
+	; Setup the timer interrupt routines
 	; Set the first interrupt on line 261 which is the end of Vblank on the nes
 	lda #$05
 	sta VTIMEL
@@ -197,6 +191,18 @@ copyRamCode:
 	lda #$01
 	sta VTIMEH
 	sta HCOUNTERH
+	
+	stz HTIMEL
+	stz HTIMEH
+
+	; Enable
+	lda #$81
+	sta SNESNMITMP     ; NMI on Vblank always enabled
+	lda SNESNMITMP
+	;ora #%00100000 ; Enable V timer
+	;ora #%00010000 ; Enable H timer
+	sta NMITIMEN
+	sta SNESNMITMP
 
 	; Return to emulation mode and jump to the
 	; recompiled nes reset routine.

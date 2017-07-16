@@ -99,10 +99,21 @@
 
 .DEFINE TMPVTIMEL          RAMBASE + 96
 .DEFINE TMPVTIMEH          RAMBASE + 97
+;;----------------------------------------------
+;; Do not move this variable
+.DEFINE LocalRTI           RAMBASE + 98
+;;----------------------------------------------
+; Sprite Zero comparison values
+.DEFINE SPR0Y0             RAMBASE + 100
+.DEFINE SPR0Y1             RAMBASE + 102
+.DEFINE SPR0Y2             RAMBASE + 104
+.DEFINE SPR0Y3             RAMBASE + 106
+.DEFINE SPR0Y4             RAMBASE + 108
+
 
 .DEFINE IOCallCOUNTER      RAMBASE + 127 ; Stores the shit from hell (counts Io calls)
 .DEFINE IOCallArray        RAMBASE + 128 ; Stores the shit from hell (counts Io calls)
-.DEFINE COUNTCALLS                     ; Enables counting IO accesses on the previous RAM area
+;.DEFINE COUNTCALLS                     ; Enables counting IO accesses on the previous RAM area
 
 ;--------------------------------------------------------------------
 ; 
@@ -241,6 +252,7 @@
 
 .DEFINE WRamBank                $7F
 .DEFINE WRamPPUADDRJmps         $4000       ; Jump tables for all the PPU routines (PPU @ space size / 16 in word @ = $400 word@ = $800 bytes 2kBytes)
+.DEFINE WRamPPUADDRJmpsLI     $7F4000       ; Long indexed value of the same @
 .DEFINE PPUADDRJmps             $400
 
 ;--------------------------------------------------------------------

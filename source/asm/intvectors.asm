@@ -44,10 +44,19 @@ DMAUpdateHandler:
 	; Fast ROM execution
 	jml FastDMAUpdateHandler
 FastDMAUpdateHandler:
-
+	
 	; If the nes nmi is enables, call it
 	BREAK4
 	pha
+	;-----------------------------------
+	; Vblank bit update
+	sep #$20		; A 8b
+	lda PPUStatus
+	; Set the Vblank flag to one
+	ora #$80
+	sta PPUStatus ; PPUSTATUS updated
+	;-----------------------------------
+	; Id NMI disabled, return
 	lda NESNMIENABLED
 	beq QuitNMI
 	;lda PPUcontrolreg1  ; Puts the 7th bit in the n flag
@@ -101,38 +110,50 @@ ClrShit:
 	;BREAK2
 	jml NESNMI ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called form emulation
 QuitNMI:
-	; Prepare the stack for an RTL instead of RTI
 	pla
-	sta AccNmi    ; Pop and save Acc
-	pla
-	sta NmiStatus ; Pop the rti values from the stack
-	pla
-	sta NmiRetLo
-	pla
-	sta NmiRetHi
+	; No interrupt can occur in bank 0, it is designed like this
+	; But the code is in bank1 and the rti must go to bank $81
+	;rti
+	;; Go to an RTI in ram
+	jml $810862   ; This address ocntains an RTI
+	
+	;;Prepare the stack for an RTL instead of RTI
+	; pla
+	; sta AccNmi    ; Pop and save Acc
+	; pla
+	; sta NmiStatus ; Pop the rti values from the stack
+	; pla
+	; sta NmiRetLo
+	; pla
+	; sta NmiRetHi
 	; Add bank
-	;lda #$81      ; Bank 1 in fast rom mode
-	lda #$01      ; Bank 1
-	pha
-	lda NmiRetHi
-	pha
-	lda NmiRetLo
-	pha
+	; lda #$81      ; Bank 1 in fast rom mode
+	;;lda #$01      ; Bank 1
+	; pha
+	; lda NmiRetHi
+	; pha
+	; lda NmiRetLo
+	; pha
 	; Restore A and status flag
-	lda AccNmi
-	pha
+	; lda AccNmi
+	; pha
 	; Restore status
-	lda NmiStatus
-	pha
-	plp ; Restore Status
-	pla ; Restore Acc
-	rtl
+	; lda NmiStatus
+	; pha
+	; plp ; Restore Status
+	; pla ; Restore Acc
+	; nop
+	; rtl
 ;;; put this on vblank
 
 
 NESIRQBRKHandler:
-	BREAK2
-	jml NESIRQBRK ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called from emulation
+	BREAK3
+	nop
+	jsr VCountHandler
+	jml $810862   ; This address ocntains an RTI
+	;rti
+	;jml NESIRQBRK ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called from emulation
 
 
 
@@ -151,7 +172,8 @@ DebugHandler:
 	nop
 	nop
 	nop
-	rti
+	jml $810862   ; This address ocntains an RTI
+	;rti
 
 EmptyHandler:
 	sei ; Disable interrupts at start ot it will flood the stack
@@ -160,33 +182,35 @@ EmptyHandler:
 	nop
 	nop
 	pla
-    rti
+	jml $810862   ; This address ocntains an RTI
+    ;rti
 
 ;----------------------------------------------------------------
 ; Same handlers but RTI pops also the bank
 NativeEmptyHandler:
 	sei ; Disable interrupts at start ot it will flood the stack
-	pha
-	php         ; Push status
+	;pha
+	;php         ; Push status
+	BREAK3
 	;sep #$20    ; Acc/Mem 8bits
 	;lda $0918   ; use this to set a breakpoint
 	;lda $0919   ; use this to set a breakpoint
 	nop
 	nop
-	plp
-	pla
+	;plp
+	;pla
     rti
 
 NativeEmptyNMI:
-	sei ; Disable interrupts at start ot it will flood the stack
+	sei ; Disable interrupts at start
     pha
-    php         ; Push status
+    ;php         ; Push status
 	;sep #$20    ; Acc/Mem 8bits
 	;lda $0918   ; use this to set a breakpoint
 	;lda $0919   ; use this to set a breakpoint
-	lda NMIFLAG ; Clear NMI Flag
+	lda NMIFLAG  ; Clear NMI Flag
 	nop
-    plp
+    ;plp
 	pla
     rti
 
