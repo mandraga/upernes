@@ -39,7 +39,6 @@ InitSprite0:
 	beq spr0Enabled        ; If Zero, quit
 	jmp EndInitSprite0
 spr0Enabled:
-	BREAK2
 	;;--------------------------------------------------
 	; Configure the timer on the nex encountered line.
 	; It will set the IRQ flag on the line Y and therefore emulate the sprite 0 for basic usage
@@ -148,7 +147,6 @@ Sprite0NotSet:
 
 ; Called by the Native IRQ handler
 VCountHandler:
-	BREAK
 	sep #$20		; A 8b
 	pha
 	lda HVIRQFLG    ; Vertical timer IRQ flag, cleared here

@@ -255,6 +255,8 @@
 .DEFINE WRamPPUADDRJmpsLI     $7F4000       ; Long indexed value of the same @
 .DEFINE PPUADDRJmps             $400
 
+.DEFINE WRamSpriteFlagConvLI  $7F7000       ; 256 Bytes of nes to snes sprite flags conversion <- could be in rom
+
 ;--------------------------------------------------------------------
 ;               SNES VRAM defines (WORD addresses)
 ;--------------------------------------------------------------------
@@ -262,6 +264,7 @@
 .DEFINE TEXTCHRBASE             $1000
 .DEFINE TEXTNAMEBASE            $1800
 .DEFINE SPRITECHRBASE           $2000  ; OBSEL has 8K granularity
+
 .DEFINE BGCHRBASE               $3000
 
 

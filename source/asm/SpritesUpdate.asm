@@ -57,9 +57,21 @@ sprtransfertloop:
 EndTransferSprites:
 	rts		;Return to caller
 
-
-
-
+;----------------------------------------------------------------------------
+; Fills a 256Bytes buffer with the sprite flags conversion values
+;----------------------------------------------------------------------------	
+InitSpriteFlagsConversions:
+	BREAK
+	sep #$30
+	ldx #00
+ConversionLoop:
+	txa
+	jsr convert_sprflags_to_snes  ; Acc converted from NES vhoxxxpp to SNES vhoopppN
+	sta WRamSpriteFlagConvLI, X
+	inx
+	bne ConversionLoop
+	rts
+	
 ;----------------------------------------------------------------------------
 ; HideLast64Sprites -- Hites the last 64 sprites somewhere
 ; In: None

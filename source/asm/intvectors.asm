@@ -46,7 +46,6 @@ DMAUpdateHandler:
 FastDMAUpdateHandler:
 	
 	; If the nes nmi is enables, call it
-	BREAK4
 	pha
 	;-----------------------------------
 	; Vblank bit update
@@ -148,7 +147,6 @@ QuitNMI:
 
 
 NESIRQBRKHandler:
-	BREAK3
 	nop
 	jsr VCountHandler
 	jml $810862   ; This address ocntains an RTI
@@ -191,7 +189,6 @@ NativeEmptyHandler:
 	sei ; Disable interrupts at start ot it will flood the stack
 	;pha
 	;php         ; Push status
-	BREAK3
 	;sep #$20    ; Acc/Mem 8bits
 	;lda $0918   ; use this to set a breakpoint
 	;lda $0919   ; use this to set a breakpoint
@@ -221,7 +218,6 @@ NativeVCountHandler:
 	sei ; Disable interrupts at start ot it will flood the stack
 	pha
 	php ; Only to be able to pop A
-	BREAK3
 	jml FastVcountHandler
 FastVcountHandler:
 	jsr VCountHandler

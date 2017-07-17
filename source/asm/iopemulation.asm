@@ -1305,25 +1305,87 @@ WDMASPRITEMEMACCESS:
 	tcd
 	;;------------------------------------------------------------------------------
 	;; First convert the 256 bytes of the memory area to 256bytes of snes oam data
-	sep #$30    ; All 8b
-	ldx #0
-	;;;;ldy SpriteMemoryAddress ; Origin of the data OAMADDR not in use here 256 bytes
-	; It uses a direct page indexed address, meaning it reads from the 256Bytes page with X as index.
-sprconversionloop:	
-	lda $00,X	  ; Read Y, direct page  *(DP + $00 + X)
+	;
+	; Simple copy for the bytes 1 and 2
+testit:
+	rep #$30    ; All 16b
+	and #$0000  ;  X = 0
+	tax
+EzSprconversionloop:	
+	lda $00,X	  ; Read Y, direct page  *(DP + $00 + X) and tile index
 	sta SpriteMemoryBase + 1,X    ; Store it
-	lda $01,X	  ; Read cccccc (tile index)
-	sta SpriteMemoryBase + 2,X    ; Store it
-	lda $02,X	  ; Read the flags
-	jsr convert_sprflags_to_snes  ; Acc converted from NES vhoxxxpp to SNES vhoopppN
+	lda $00 + 4,X	  ; Read Y, and tile index
+	sta SpriteMemoryBase + 5,X    ; Store it
+	lda $00 + 8,X	  ; Read Y, and tile index
+	sta SpriteMemoryBase + 9,X    ; Store it
+	lda $00 + 12,X	  ; Read Y, and tile index
+	sta SpriteMemoryBase + 13,X    ; Store it
+	lda $00 + 16,X	  
+	sta SpriteMemoryBase + 17,X    ; Store it
+	lda $00 + 20,X	  
+	sta SpriteMemoryBase + 21,X    ; Store it
+	lda $00 + 24,X	  
+	sta SpriteMemoryBase + 25,X    ; Store it
+	lda $00 + 28,X	  
+	sta SpriteMemoryBase + 29,X    ; Store it
+	; Increment
+	txa
+	clc
+	adc #32
+	and #$00FF
+	tax
+	bne EzSprconversionloop	; loop if not zero	(passed 256)
+
+	; Conversion
+	sep #$30    ; All 8b
+	;;;;ldy SpriteMemoryAddress ; Origin of the data OAMADDR not in use here 256 bytes
+	; It uses a direct page indexed address, meaning it reads from the 256Bytes page with X as index.	
+	ldx #$00
+sprconversionloope:	
+	lda $02,X	  ; Read the flags (direct page indexed)
+	txy
+	tax              ; Should be in rom to use Y on it
+	lda WRamSpriteFlagConvLI,X    ; Acc converted from NES vhoxxxpp to SNES vhoopppN
+	tyx
 	sta SpriteMemoryBase + 3,X    ; Store them
 	lda $03,X	  ; Read X
-	sta SpriteMemoryBase + 0,X    ; Store it	
-	inx
-	inx
-	inx
-	inx
-	bne sprconversionloop	; loop if not zero	(passed 256)	
+	sta SpriteMemoryBase + 0,X    ; Store it
+	;-------------------------------------------------------------
+	lda $02 + 4,X	  ; Read the flags (direct page indexed)
+	txy
+	tax
+	lda WRamSpriteFlagConvLI,X    ; Acc converted from NES vhoxxxpp to SNES vhoopppN
+	tyx
+	sta SpriteMemoryBase + 7,X    ; Store them
+	lda $03 + 4,X	  ; Read X
+	sta SpriteMemoryBase + 4,X    ; Store it
+	;-------------------------------------------------------------
+	lda $02 + 8,X	  ; Read the flags (direct page indexed)
+	txy
+	tax
+	lda WRamSpriteFlagConvLI,X    ; Acc converted from NES vhoxxxpp to SNES vhoopppN
+	tyx
+	sta SpriteMemoryBase + 11,X   ; Store them
+	lda $03 + 8,X	  ; Read X
+	sta SpriteMemoryBase + 8,X    ; Store it
+	;-------------------------------------------------------------
+	lda $02 + 12,X	  ; Read the flags (direct page indexed)
+	txy
+	tax
+	lda WRamSpriteFlagConvLI,X    ; Acc converted from NES vhoxxxpp to SNES vhoopppN
+	tyx
+	sta SpriteMemoryBase + 15,X   ; Store them
+	lda $03 + 12,X	  ; Read X
+	sta SpriteMemoryBase + 12,X   ; Store it
+	;-------------------------------------------------------------
+	; Increment
+	txa
+	clc
+	adc #16
+	tax
+	beq EndSprconversionloop	; loop if not zero	(passed 256)	
+	jmp sprconversionloope
+EndSprconversionloop:
 	;;------------------------------------------------------------------------------
 	;; Then copy the 256 bytes into the OAM memory
 	sep #$20	; A 8b
@@ -1336,45 +1398,6 @@ sprconversionloop:
 	pld
 	RETW
 
-
-sprconversionloopO:	
-	;lda $00,X	  ; Read Y, direct page  *(DP + $00 + X)
-	;sta SpriteMemoryBase + 1,X    ; Store it
-	;lda $01,X	  ; Read cccccc (tile index)
-	;sta SpriteMemoryBase + 2,X    ; Store it
-	ldx $02,X	  ; Read the flags
-	lda ConverTedFlags,X ;jsr convert_sprflags_to_snes  ; Acc converted from NES vhoxxxpp to SNES vhoopppN
-	sta SpriteMemoryBase + 4 + 3,X    ; Store them
-	lda $03,X	  ; Read X
-	sta SpriteMemoryBase - 1,X    ; Store it
-	;----------------------------
-	ldx $02 + 4,X	  ; Read the flags
-	lda ConverTedFlags,X ;jsr convert_sprflags_to_snes  ; Acc converted from NES vhoxxxpp to SNES vhoopppN
-	sta SpriteMemoryBase + 4 + 3,X    ; Store them
-	lda $03 + 4,X	  ; Read X
-	sta SpriteMemoryBase + 4 - 1,X    ; Store it
-	;----------------------------
-	ldx $02,X	  ; Read the flags
-	lda ConverTedFlags,X ;jsr convert_sprflags_to_snes  ; Acc converted from NES vhoxxxpp to SNES vhoopppN
-	sta SpriteMemoryBase + 8 + 3,X    ; Store them
-	lda $03,X	  ; Read X
-	sta SpriteMemoryBase + 8 - 1,X    ; Store it
-	;----------------------------
-	ldx $02 + 4,X	  ; Read the flags
-	lda ConverTedFlags,X ;jsr convert_sprflags_to_snes  ; Acc converted from NES vhoxxxpp to SNES vhoopppN
-	sta SpriteMemoryBase + 12 + 3,X    ; Store them
-	lda $03 + 4,X	  ; Read X
-	sta SpriteMemoryBase + 12 - 1,X    ; Store it
-	;----------------------------
-	txa
-	clc
-	adc #$10
-	tax
-	;inx
-	;inx
-	;inx
-	;inx
-	bne sprconversionloopO	; loop if not zero	(passed 256)	
 	
 ;; NES
 ; Sprite Attribute RAM:

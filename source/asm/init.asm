@@ -154,6 +154,10 @@ eraseNesRamLoop:
 	;----------------------------------------------------------------------------
 	; Precalculate a PPU routine jump table
 	jsr PrecalculateJumpTable
+
+	;----------------------------------------------------------------------------
+	; A table to convert sprite flags, could be in ROM	
+	jsr InitSpriteFlagsConversions
 	
 	;----------------------------------------------------------------------------
 	; Copy the emulation patching code to the ram
