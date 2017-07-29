@@ -53,6 +53,8 @@ nes2snespalette:
 	.INCBIN "data/palette.dat"
 RamEmulationCode:
 	.INCBIN "patchedPrgRam.bin"
+SPC700_APU_Emulation:
+	.INCBIN "Memblers_2a03.bin"
 .ENDS
 
 ; --------------------------------------------------------------------

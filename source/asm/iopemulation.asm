@@ -437,7 +437,9 @@ WRITE_SPR_FLAGS:
 	ora #03
 	tax
 	tya
-	jsr convert_sprflags_to_snes ; Acc converted from NES vhoxxxpp to SNES vhoopppN
+	tax              ; Should be in rom to use Y on it
+	lda WRamSpriteFlagConvLI,X	
+	;jsr convert_sprflags_to_snes ; Acc converted from NES vhoxxxpp to SNES vhoopppN
 	tay
 	sta SpriteMemoryBase,X
 	jmp sprwrdoneHi
@@ -476,26 +478,6 @@ IncSprAddr:
 	sty SpriteMemoryAddress ; Incrementd by one
 endWSPRDATA:
 	RETW
-
-; Acc contains the byte
-; NES vhoxxxpp   SNES vhoopppN
-convert_sprflags_to_snes:
-	; pp
-	tay
-	and #$03
-	asl
-	;lda #$00 ; Force to palete 0
-	sta PPTMP
-	tya
-	; vh
-	and #$E0		; Keep vh and 0
-	eor #$30  ; On the nes: 0 for front or 1 for back. On the Snes 2 or 3 for front or 0 for back of BG 1.  Reverse the value
-	;ora #$30 ; Force to max prior
-	ora PPTMP		; Add pp
-	;; o (priority flag) will be 2 or 0. If 1 the sprite will be above BG3 and 4
-	;; maximum priority: 3 = over everything but the printf BG must be on top, so use 2
-	; force priority lda #$34
-	rts
 
 ;; --------------------------------------------------------------------
 RD_OAMconversionroutines:
@@ -1119,23 +1101,19 @@ RPPUMEMDATA:
 	sep #$20 ; A 8bits
 	pha
 	; Use the WRAM buffer of PPU@ routines.
-	; Got to bank 7F
-	phb
-	lda #WRamBank
-	pha
+	; Go to bank 7F
 	rep #$20 ; A 16bits
 	lda PPUmemaddrL ; Load the PPUADDRESS
-	plb ; change the data bank
 	and #$3FF0 ; Clear the 2 upper and lower bits
 	lsr
 	lsr ; >> 2
 	tax
-	lda WRamPPUADDRJmps + 2,X
-	plb
+	lda WRamPPUADDRJmpsLI + 2, X
 	sta tmp_addr
 	sep #$20 ; A 8bits
 	pla
-	jmp (tmp_addr)   ; indirect jump to the routine for the PPU address.	
+	jmp (tmp_addr)   ; indirect jump to the routine for the PPU address.
+
 
 AttrtableR:
 	; Read it from the sram buffer
@@ -1304,6 +1282,9 @@ WDMASPRITEMEMACCESS:
 	;pld			; Here every zero page read is in the indicated page
 	tcd
 	;;------------------------------------------------------------------------------
+	; This conversion could be made in the Sound IRQ on line 150, it takes 16 lines.
+
+	;;------------------------------------------------------------------------------
 	;; First convert the 256 bytes of the memory area to 256bytes of snes oam data
 	;
 	; Simple copy for the bytes 1 and 2
@@ -1455,9 +1436,11 @@ EndSprconversionloop:
 ;	|   7 | DMC IRQ
 
 WSNDCHANSWITCH:
+	sta SNDCHANSW4015
 	RETW
 
 RSNDCHANSWITCH:
+	lda SNDCHANSW4015
 	RETR
 
 ; ;------+-----+---------------------------------------------------------------

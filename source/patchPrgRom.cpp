@@ -82,16 +82,18 @@ void Crecompilateur::patchBRK(t_pinstr pinstr, Copcodes *popcode_list, unsigned 
   PRGAddress = pmapper->cpu2prg(pinstr->addr);
   instruction = pPRG[PRGAddress] + (pPRG[PRGAddress + 1] << 8) + (pPRG[PRGAddress + 2] << 16);
   popcode_list->print_instruction(pinstr->addr, instruction);
-  printf("%02X replaced by %02X at %04X\n", pPRG[PRGAddress], 0x4C, pinstr->addr);
   // If it is a write only sound register, then only write to a byte in the ram, it will be updated later
   if (pinstr->operand >= 0x4000 && pinstr->operand <= 0x4013)
     {
+      printf("%02X kept at %04X\n", pPRG[PRGAddress], pinstr->addr);
       SndRegEmuAddress = pinstr->operand - 0x4000 + SNDREGEMUBASE;
       pPRG[PRGAddress + 1] = SndRegEmuAddress & 0xFF;
-      pPRG[PRGAddress + 2] = (SndRegEmuAddress >> 8) & 0xFF;    
+      pPRG[PRGAddress + 2] = (SndRegEmuAddress >> 8) & 0xFF;
+      printf("Using register %04X\n", pinstr->addr);
     }
   else
     {
+      printf("%02X replaced by %02X at %04X\n", pPRG[PRGAddress], 0x4C, pinstr->addr);
       pPRG[PRGAddress] = 0x20; // JSR
       // the next 2 bytes are a code to find the proper routine.
       assert(Routines.size() < 256);

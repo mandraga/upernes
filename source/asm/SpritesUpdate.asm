@@ -58,10 +58,33 @@ EndTransferSprites:
 	rts		;Return to caller
 
 ;----------------------------------------------------------------------------
+; Converts a nes sprite flag to a snes sprite flag
+;
+; Acc contains the byte
+; NES vhoxxxpp   SNES vhoopppN
+;----------------------------------------------------------------------------	
+convert_sprflags_to_snes:
+	; pp
+	tay
+	and #$03
+	asl
+	;lda #$00 ; Force to palete 0
+	sta PPTMP
+	tya
+	; vh
+	and #$E0		; Keep vh and 0
+	eor #$30  ; On the nes: 0 for front or 1 for back. On the Snes 2 or 3 for front or 0 for back of BG 1.  Reverse the value
+	;ora #$30 ; Force to max prior
+	ora PPTMP		; Add pp
+	;; o (priority flag) will be 2 or 0. If 1 the sprite will be above BG3 and 4
+	;; maximum priority: 3 = over everything but the printf BG must be on top, so use 2
+	; force priority lda #$34
+	rts
+	
+;----------------------------------------------------------------------------
 ; Fills a 256Bytes buffer with the sprite flags conversion values
 ;----------------------------------------------------------------------------	
 InitSpriteFlagsConversions:
-	BREAK
 	sep #$30
 	ldx #00
 ConversionLoop:

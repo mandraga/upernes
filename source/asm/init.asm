@@ -89,7 +89,10 @@ eraseNesRamLoop:
 	
 	; Load the APU simulator into the SPC700
 	;; -----------------------------------------------
-	;; TODO
+	stz APUInit
+	jsr setup_spc ; Membler's Nes Apu emulator on the SPC700
+	lda #$0F
+    sta SNDCHANSW4015
 
 	; Video mode settings
 	;; -----------------------------------------------
@@ -148,8 +151,9 @@ eraseNesRamLoop:
 	stz BGUpdateFIFOSZ + 1
 	stz TMPVTIMEL
 	stz TMPVTIMEH
+	; Do not touch this it is hardcoded
 	lda #$40     ; RTI
-	sta LocalRTI
+	sta LocalRTI ; used to call an irq close to NMI
 
 	;----------------------------------------------------------------------------
 	; Precalculate a PPU routine jump table

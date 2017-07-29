@@ -19,6 +19,7 @@ cp ../asm/*.inc ./
 cp ../asm/linkfile.prj ./
 cp ../opcodes.txt ./
 cp ../asm/data/* ./data/
+cp ../asm/Memblers_2a03.bin ./
 
 # Runs uppernes on the nes rom
 set +vx
@@ -57,3 +58,4 @@ rm ./zeromem.asm
 rm ./sprite0.asm
 rm ./*.inc
 rm ./opcodes.txt
+rm ./Memblers_2a03.bin
