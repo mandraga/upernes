@@ -114,7 +114,7 @@ QuitNMI:
 	; But the code is in bank1 and the rti must go to bank $81
 	;rti
 	;; Go to an RTI in ram
-	jml $810862   ; This address ocntains an RTI
+	jml $810862   ; This address contains an RTI
 	
 	;;Prepare the stack for an RTL instead of RTI
 	; pla

@@ -17,6 +17,7 @@
 .ENDM
 
 .include "cartridge.inc"
+.include "mapper.inc"
 
 .BANK 0
 .ORG 0
@@ -787,6 +788,48 @@ WPPUMEMDATA:
 	sep #$20		; A 8bit
 .ENDM
 
+; Inc the colum or line update counter
+.MACRO UPDATEBUFFERATTR_BANK1
+	php
+	rep #$10
+	txa
+	and #$07
+	asl
+	asl   ; x4 because it's attributes
+.IFDEF HORIZONTALSCROLLING
+	; Boost the column counter
+	lda #$0F
+	sta LineColUpdate + 0,X
+	sta LineColUpdate + 1,X
+	sta LineColUpdate + 2,X
+	sta LineColUpdate + 3,X
+.ELSE
+	; Vertical scrolling
+	; Update the line counter
+.ENDIF
+	plp
+.ENDM
+
+.MACRO UPDATEBUFFERATTR_BANK2
+	php
+	rep #$10
+	txa
+	and #$07
+	asl
+	asl   ; x4 because it's attributes
+.IFDEF HORIZONTALSCROLLING
+	; Boost the column counter
+	lda #$0F
+	sta LineColUpdate + 32,X
+	sta LineColUpdate + 33,X
+	sta LineColUpdate + 34,X
+	sta LineColUpdate + 35,X
+.ELSE
+	; Vertical scrolling
+	; Update the line counter
+.ENDIF
+	plp
+.ENDM
 	
 	;; -------------------------------------------------------------------------	
 	;; Attribute tables
@@ -826,6 +869,9 @@ AttrtableW:
 AttBank2W:
 	tya
 	sta Attributebuffer2,X
+
+	;UPDATEBUFFERATTR_BANK2
+		
 	jsr ppuAddToVram
 	rep #$10        ; X Y are 16bits
 	tya
@@ -833,6 +879,7 @@ AttBank2W:
 	asl A
 	and #$0C		; 00
 	ldx attributeaddr
+
 	sta NametableBaseBank2+1,X    ; Store the value in the ram buffer
 	sta NametableBaseBank2+3,X
 	sta NametableBaseBank2+65,X   ; the line below
@@ -869,6 +916,8 @@ AttBank2W:
 AttBank1W:
 	tya
 	sta Attributebuffer1,X
+	
+	;UPDATEBUFFERATTR_BANK1
 
 	; Translate the address
 	;lda AttrAddressTranslation,X ; Could be quicker with a 2*128byte table in wram
@@ -885,6 +934,7 @@ AttBank1W:
 	asl A
 	and #$0C		; 00
 	ldx attributeaddr
+
 	sta NametableBaseBank1+1,X    ; Store the value in the ram buffer
 	sta NametableBaseBank1+3,X
 	sta NametableBaseBank1+65,X   ; the line below
@@ -959,6 +1009,56 @@ endAddFifo: ; The fifo is full, it will be a full update with the DMA
 	pla
 	rts
 
+.MACRO UPDATEBUFFER_BANK1
+	php
+	rep #$10
+	txa
+	lsr
+.IFDEF HORIZONTALSCROLLING
+	; Update the column counter
+	and #$1F        ; Keep the column
+	tax
+	sep #$10
+	lda LineColUpdate,X
+	ina
+	sta LineColUpdate,X
+.ELSE
+	; Vertical scrolling
+	; Update the line counter
+	lsr        ; Keep the line
+	lsr
+	lsr
+	lsr
+	lsr        ; / 32
+	and #$1F
+	lda LineColUpdate,X
+	ina
+	sta LineColUpdate,X	
+.ENDIF
+	plp
+.ENDM
+
+.MACRO UPDATEBUFFER_BANK2
+	php
+	rep #$10
+	txa
+	lsr
+.IFDEF HORIZONTALSCROLLING
+	; Update the column counter
+	and #$1F        ; Keep the column
+	tax
+	sep #$10
+	lda LineColUpdate + 32,X
+	ina
+	sta LineColUpdate + 32,X
+.ELSE
+	; Vertical scrolling
+	; Update the line counter
+
+.ENDIF
+	plp
+.ENDM
+
 	;; -------------------------------------------------------------------------
 	;; Name tables
 NametableW:
@@ -995,6 +1095,16 @@ NametableW:
 ;NameBank1W:
 ;	pla
 	sta NametableBaseBank1,X   ; Write to VRAM. This is the lower nametable byte, the character code number.
+
+	;lda PPUmemaddrH
+	;and #$04 ; Look at bit 2 for BANK 1 or 2
+	;beq UpdBank1
+	;UPDATEBUFFER_BANK2
+	;bra UpdEnd
+;UpdBank1:
+	;UPDATEBUFFER_BANK1
+;UpdEnd:
+	
 	;BREAK
 NoMoreUpdates:
 	; Increment

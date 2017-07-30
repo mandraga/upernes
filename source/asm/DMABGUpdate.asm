@@ -4,11 +4,249 @@
 .BANK 0
 .ORG 0
 .SECTION "DmaBackgroundUpdate"
+
+
+;---------------------------------------------------------------------
+; Updates a column of 30 tiles using the CPU
+; X is the colum first name object in RAM
+; All registers must be in 16 bits wide
+ColumnUpdateBank1:
+	rep #$30
+	; X is the column from 0 to 32
+	txa
+	; The address in VRAM
+	clc
+	adc #$7000
+	sta VMADDL
+	txa                   ; Column offset
+	asl                   ; In words (attr, name)
+	tax
+	; 30 lines
+	lda NametableBaseBank1, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 1, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 2, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 3, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 4, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 5, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 6, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 7, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 8, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 9, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 10, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 11, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 12, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 13, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 14, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 15, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 16, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 17, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 18, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 19, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 20, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 21, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 22, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 23, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 24, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 25, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 26, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 27, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 28, X
+	sta VMDATAL
+	lda NametableBaseBank1 + 64 * 29, X
+	sta VMDATAL
+	; End column
+	rts
+
+ColumnUpdateBank2:
+	rep #$30
+	; X is the column from 0 to 32
+	txa
+	; The address in VRAM
+	clc
+	adc #$7400
+	sta VMADDL
+	txa                   ; Column offset
+	asl                   ; In words (attr, name)
+	tax
+	; 30 lines
+	lda NametableBaseBank2, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 1, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 2, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 3, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 4, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 5, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 6, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 7, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 8, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 9, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 10, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 11, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 12, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 13, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 14, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 15, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 16, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 17, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 18, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 19, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 20, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 21, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 22, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 23, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 24, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 25, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 26, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 27, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 28, X
+	sta VMDATAL
+	lda NametableBaseBank2 + 64 * 29, X
+	sta VMDATAL
+	; End column
+	rts
+
 	
+.IFDEF HORIZONTALSCROLLING
+UpdateBackgroundsS:
+	BREAK
+	;
+	; Set increment to 32 words
+	sep #$20
+	lda #%10000001 ; Addres increments by 32
+	sta VMAINC	
+	;
+	rep #$30   ; All 16bits
+	ldx #$0000
+	; Will update each colume form 0 to 32
+	; Bank 1
+UpdateNextColumns:
+	lda LineColUpdate, X
+	beq nextColumns
+	; Something to update
+	and #$00FF
+	beq NextCol
+	; Set the addresses
+	phx
+	jsr ColumnUpdateBank1
+	plx
+NextCol:
+	lda LineColUpdate, X
+	and #$FF00
+	beq nextColumns
+	; Set the addresses
+	phx
+	inx
+	jsr ColumnUpdateBank1
+	plx	
+nextColumns:
+	stz LineColUpdate, X  ; Cleared
+	inx
+	inx
+	cpx #32
+	bne UpdateNextColumns
+	; Will update each colume form 32 to 64
+	; Bank 2
+UpdateNextColumnsB2:
+	lda LineColUpdate, X
+	beq nextColumnsB2
+	; Something to update
+	and #$00FF
+	beq NextColB2
+	; Set the addresses
+	phx
+	jsr ColumnUpdateBank2
+	plx
+NextColB2:
+	lda LineColUpdate, X
+	and #$FF00
+	beq nextColumnsB2
+	; Set the addresses
+	phx
+	jsr ColumnUpdateBank2
+	plx	
+nextColumnsB2:
+	stz LineColUpdate, X  ; Cleared
+	inx
+	inx
+	cpx #64
+	bne UpdateNextColumnsB2	
+	rts
+.ELSE
+UpdateBackgrounds:
+	rts
+.ENDIF
+
+
 ;--------------------------------------------------------------------------
-; Local update or full DAM update
+; Local update or full DMA update
 FullUpdateBackgrounds:
 ;UpdateBackgrounds:
+	BREAK
+	
+	rep #$30   ; All 16bits
+	ldx #$0000
+UpdateNextColumns22:
+	stz LineColUpdate, X
+
+	inx
+	inx
+	cpx #64
+	bne UpdateNextColumns22
 	jmp fullDMAUpdate
 	;---------------------------------------------------
 	; Fifo update only
@@ -75,8 +313,8 @@ EndBGupdate:
 
 ;--------------------------------------------------------------------------
 ; Rolling update
-; This takes less time per frame and update everything, but the update is slow.
-;UpdateBackgroundsRolling:
+; This takes less time per frame and update everything, but the full screen update is delayed.
+UpdateBackgroundsRolling:
 UpdateBackgrounds:
 	;BREAK2
 	;jsr UpdateNametables
@@ -208,6 +446,7 @@ EndInitTransfertTables:
 ;---------------------------------------------------------------------
 ; Looks for the colums to be updated
 ;
+.IFDEF MOREJUNKCODE
 HeighColumnsUpdate:
 	rep #$30	; All 16 bit
 	bit #$01
@@ -396,32 +635,8 @@ B2third8col:
 	;
 endNameTableUpdate:
 	rts
+.ENDIF
 
-
-;---------------------------------------------------------------------
-; Updates a column of 30 tiles using the CPU
-; A is the colum first name object
-ColumnUpdate:
-	rep #$30	; All 16 bit
-	asl
-	tax
-	; 30 lines
-	ldy #30
-	clc
-ColumnCopyLoop:
-	lda NametableBaseBank1, X
-	sta VMDATAL
-	txa
-	adc #64
-	tax
-	dey
-	bne ColumnCopyLoop
-	; End column
-	lda UpdateCtr
-	sec
-	sbc #01
-	sta UpdateCtr
-	rts
 
 ;---------------------------------------------------------------------
 ; Updates a column of 30 tiles

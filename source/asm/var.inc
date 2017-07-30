@@ -102,6 +102,7 @@
 .DEFINE SNDSTATUS          RAMBASE + 72
 .DEFINE APUInit            RAMBASE + 73
 .DEFINE SPC700CodeBank     $02
+;.DEFINE DISABLESOUND
 
 .DEFINE SNDTMP4000         RAMBASE + 74
 .DEFINE SNDTMP4001         RAMBASE + 75
@@ -247,6 +248,7 @@
 .DEFINE BGUpdateFIFOSZ          IOBASE + 166 ; Number of element in the fifo, if less than 16, update them. Else update all.
 .DEFINE BGUpdateFIFO            IOBASE + 168 ;
 .DEFINE BGFifoMax                 32
+.DEFINE LineColUpdate           IOBASE + 200 ; Array of write count per column or per line depending on the scrolling mode
 
 ;--------------------------------------------------------------------
 .DEFINE SpriteMemoryBase		$0A00       ; 256 bytes

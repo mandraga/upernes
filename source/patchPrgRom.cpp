@@ -567,6 +567,18 @@ int Crecompilateur::patchPrgRom(const char *outName, Cprogramlisting *plisting, 
 	}
       fprintf(fp, "\n\n.ENDS\n");
       fclose(fp);
+      // Save info about the cartridge
+      snprintf(filePath, cstrsz, "mapper.inc");
+      fp = fopen(filePath, "w");
+      if (prom->m_Vertical_mirroring)
+	{
+	  fprintf(fp, "\n\n.DEFINE HORIZONTALSCROLLING");
+	}
+      else
+	{
+	  fprintf(fp, "\n\n.DEFINE VETICALSCROLLING");	  
+	}
+      fclose(fp);
       // Write the patched PRG rom.
       snprintf(filePath, cstrsz, "%s.bin", outName);
       fp = fopen(filePath, "wb");

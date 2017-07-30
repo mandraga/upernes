@@ -56,6 +56,8 @@ rm ./Sound.asm
 rm ./Strings.asm
 rm ./zeromem.asm
 rm ./sprite0.asm
-rm ./*.inc
+rm ./cartridge.inc
+rm ./var.inc
+rm ./snesregisters.inc
 rm ./opcodes.txt
 rm ./Memblers_2a03.bin

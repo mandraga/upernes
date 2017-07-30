@@ -3,6 +3,7 @@
 
 .include "var.inc"
 .include "cartridge.inc"
+.include "mapper.inc"
 
 .include "rom.asm"
 
