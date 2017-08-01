@@ -108,32 +108,33 @@
 ; Sound backup registers
 .DEFINE SNDTMP4000         RAMBASE + 74
 .DEFINE SNDTMP4001         RAMBASE + 75
-;
-;
-.DEFINE SNDTMP4004         RAMBASE + 76
-.DEFINE SNDTMP4005         RAMBASE + 77
-;
-.DEFINE SNDTMP4007         RAMBASE + 78    ; No backup
-.DEFINE SNDTMP4008         RAMBASE + 79
-.DEFINE SNDTMP4009         RAMBASE + 80
-.DEFINE SNDTMP400A         RAMBASE + 81
-.DEFINE SNDTMP400B         RAMBASE + 82    ; No backup
-.DEFINE SNDTMP400C         RAMBASE + 83
-.DEFINE SNDTMP400D         RAMBASE + 84
-.DEFINE SNDTMP400E         RAMBASE + 85
-.DEFINE SNDTMP400F         RAMBASE + 86    ; No backup
-.DEFINE SNDTMP4011         RAMBASE + 87
-;
-.DEFINE SNDTMP4015         RAMBASE + 88
-.DEFINE SNDTMP4016         RAMBASE + 89
+.DEFINE SNDTMP4002         RAMBASE + 76 
+.DEFINE SNDTMP4003         RAMBASE + 77 
+.DEFINE SNDTMP4004         RAMBASE + 78
+.DEFINE SNDTMP4005         RAMBASE + 79
+.DEFINE SNDTMP4006         RAMBASE + 80 
+.DEFINE SNDTMP4007         RAMBASE + 81    ; No backup
+.DEFINE SNDTMP4008         RAMBASE + 82
+.DEFINE SNDTMP4009         RAMBASE + 83
+.DEFINE SNDTMP400A         RAMBASE + 84
+.DEFINE SNDTMP400B         RAMBASE + 85    ; No backup
+.DEFINE SNDTMP400C         RAMBASE + 86
+.DEFINE SNDTMP400D         RAMBASE + 87
+.DEFINE SNDTMP400E         RAMBASE + 88
+.DEFINE SNDTMP400F         RAMBASE + 89    ; No backup
+.DEFINE SNDTMP4011         RAMBASE + 90
+.DEFINE SNDTMP4012         RAMBASE + 91
+.DEFINE SNDTMP4013         RAMBASE + 92
+.DEFINE SNDTMP4015         RAMBASE + 93
+.DEFINE SNDTMP4016         RAMBASE + 94
 
-.DEFINE noise_length       RAMBASE + 90
-.DEFINE triangle_length    RAMBASE + 91
-.DEFINE square0_length     RAMBASE + 92
-.DEFINE square1_length     RAMBASE + 93
+.DEFINE noise_length       RAMBASE + 95
+.DEFINE triangle_length    RAMBASE + 96
+.DEFINE square0_length     RAMBASE + 97
+.DEFINE square1_length     RAMBASE + 110
 
-.DEFINE TMPVTIMEL          RAMBASE + 96
-.DEFINE TMPVTIMEH          RAMBASE + 97
+.DEFINE TMPVTIMEL          RAMBASE + 111
+.DEFINE TMPVTIMEH          RAMBASE + 112
 ;;----------------------------------------------
 ;; Do not move this variable
 .DEFINE LocalRTI           RAMBASE + 98
@@ -144,7 +145,7 @@
 .DEFINE SPR0Y2             RAMBASE + 104
 .DEFINE SPR0Y3             RAMBASE + 106
 .DEFINE SPR0Y4             RAMBASE + 108
-
+; 110 - 112 already used
 
 .DEFINE IOCallCOUNTER      RAMBASE + 127 ; Stores the shit from hell (counts Io calls)
 .DEFINE IOCallArray        RAMBASE + 128 ; Stores the shit from hell (counts Io calls)

@@ -143,8 +143,7 @@ WSNDSEQUENCER:
 	
 	
 ; ------+-----+---------------------------------------------------------------
-; This routine reads the write only register values and updates the values
-; in the SP700.
+; This routine sends the program to the SP700.
 ;
 ; It comes from the source code of Mermblers nes Apu emulator
 ;
@@ -223,123 +222,25 @@ SoundAPURegUpdate:
 .IFDEF DISABLESOUND
 	rts
 .ENDIF
-	jsr update_dsp
+	phx
+	phy
+	jsr detect_changes
+    jsr emulate_length_counter
+    jsr backup_regs
+    jsr update_dsp
+	; Last piece of code
+	lda SNDTMP4016
+	and #$20
+	sta SNDTMP4016
+	ply
+	plx
 	rts
 
 	
 ; ------+-----+---------------------------------------------------------------
-; I do not know exactly what this is
-;
-;
-; To be called in the order: 
-;
-;        jsr detect_changes
-;        jsr emulate_length_counter
-;        jsr backup_regs
-;        jsr update_dsp
-;
-;.DEFINE SOUNDWORKINPROGRESS
-
-.IFDEF SOUNDWORKINPROGRESS
-
-; look at $83A9
-
-
-
-
-
-; Last piece of code
-0083b5 lda $7f4116
-0083b9 and #$20
-0083bb sta $7f4116
-
-
-missing:
-
-triangle_length 
-square0_length
-square1_length
-noise_length
-
-.ENDIF
-
-; ------+-----+---------------------------------------------------------------
-; This routine reads the write only register values and updates the values
-; in the SP700.
-; Code from Memblers APU emulator
-;
-; update_dsp from the NSF player ROM, 100% ok
-; 
-update_dsp:
-		lda APUInit
-		bne ContinueAPUUpdate
-		rts
-ContinueAPUUpdate:
-        php
-        sep #$30 ; All 8b
-		phx
-WaitSPC700Ready:
-        lda $2140
-        cmp #$7D                ; wait for SPC ready
-        bne WaitSPC700Ready
-
-        lda #$D7
-        sta $2140               ; tell SPC that CPU is ready
-WSPC700Reply:
-        cmp $2140               ; wait for reply
-        bne WSPC700Reply
-
-        ldx #0
-        stx $2140               ; clear port 0
-xfer:
-		lda SNDSQR1CTRL4000, X
-        sta $2141               ; send data to port 1
-WSPC700Reply2:
-        cpx $2140               ; wait for reply on port 0
-        bne WSPC700Reply2
-        inx
-        cpx #$17
-        beq NesRegLoadEnds
-        stx $2140
-        bra xfer
-NesRegLoadEnds:
-		plx
-        plp
-        rts
-
-
-.IFDEF SOUNDWORKINPROGRESS
-; ------+-----+---------------------------------------------------------------
-; Backup of some APU registers
-; backup_regs from the NSF player ROM, 100% ok
-backup_regs:
-        lda SNDSQR1CTRL4000
-        sta SNDTMP4000
-        lda SNDSQR1E4001
-        sta SNDTMP4001
-        lda SNDSQR2CTRL4004
-        sta SNDTMP4004
-        lda SNDSQR2E4005
-        sta SNDTMP4005
-        lda SNDTRIACTRL4008
-        sta SNDTMP4008
-        lda SNDTRIAPERIOD4009
-        sta SNDTMP4009
-        lda $SNDTRIALENPH400A
-        sta SNDTMP400A
-        lda SNDNOISESHM400C
-        sta SNDTMP400C
-        lda SNDNOISELEN400D
-        sta SNDTMP400D
-        lda SNDDMCCTRL400E
-        sta SNDTMP400E
-        lda SNDDMCSLEN4011
-        sta SNDTMP4011
-        rts
-		
-; ------+-----+---------------------------------------------------------------
 ; Does something with the audio registers
 detect_changes:
+		sep #$30 ; All 8b
         lda SNDSQR1CTRL4000
         and #%00100000
         bne decay_disabled0
@@ -518,6 +419,8 @@ length_d3_1:
         .db $09,$0A,$0B,$0C,$0D,$0E,$0F,$10
 		
 emulate_length_counter:
+		sep #$30 ; All 8b
+		
         lda #0
         sta SNDTMP4015
                                 ; square 0
@@ -540,8 +443,8 @@ emulate_length_counter:
         lda #0
         xba
 
-        tax
-        lda length_d3_1,x
+        tay
+        lda length_d3_1, Y
         sta square0_length
         bra sq0_load_end
 
@@ -552,8 +455,8 @@ sq0_d3_0:
         lsr a
         lsr a
 
-        tax
-        lda length_d3_0,x
+        tay
+        lda length_d3_0, Y
         sta square0_length        
 
 sq0_load_end:
@@ -603,8 +506,8 @@ sq0_counter_disabled:
         lda #0
         xba
 
-        tax
-        lda length_d3_1,x
+        tay
+        lda length_d3_1, Y
         sta square1_length
         bra sq1_load_end
 
@@ -615,8 +518,8 @@ sq1_d3_0:
         lsr a
         lsr a
 
-        tax
-        lda length_d3_0,x
+        tay
+        lda length_d3_0, Y
         sta square1_length        
 
 sq1_load_end:
@@ -667,8 +570,8 @@ sq1_counter_disabled:
         lda #0
         xba
 
-        tax
-        lda length_d3_1,x
+        tay
+        lda length_d3_1, Y
         sta triangle_length
         bra tri_load_end
 
@@ -679,8 +582,8 @@ tri_d3_0:
         lsr a
         lsr a
 
-        tax
-        lda length_d3_0,x
+        tay
+        lda length_d3_0, Y
         sta triangle_length        
 
 tri_load_end:
@@ -731,8 +634,8 @@ tri_counter_disabled:
         lda #0
         xba
 
-        tax
-        lda length_d3_1,x
+        tay
+        lda length_d3_1, Y
         sta noise_length
 
         bra load_end
@@ -744,8 +647,8 @@ d3_0:
         lsr a
         lsr a
 
-        tax
-        lda length_d3_0,x
+        tay
+        lda length_d3_0, Y
         sta noise_length
 
 load_end:
@@ -781,4 +684,77 @@ noise_counter_disabled:
         sta SNDTMP4015
 
         rts
-.ENDIF		
+		
+; ------+-----+---------------------------------------------------------------
+; Backup of some APU registers
+; backup_regs from the NSF player ROM, 100% ok
+backup_regs:
+        lda SNDSQR1CTRL4000
+        sta SNDTMP4000
+        lda SNDSQR1E4001
+        sta SNDTMP4001
+        lda SNDSQR2CTRL4004
+        sta SNDTMP4004
+        lda SNDSQR2E4005
+        sta SNDTMP4005
+        lda SNDTRIACTRL4008
+        sta SNDTMP4008
+        lda SNDTRIAPERIOD4009
+        sta SNDTMP4009
+        lda SNDTRIALENPH400A
+        sta SNDTMP400A
+        lda SNDNOISESHM400C
+        sta SNDTMP400C
+        lda SNDNOISELEN400D
+        sta SNDTMP400D
+        lda SNDDMCCTRL400E
+        sta SNDTMP400E
+        lda SNDDMCSLEN4011
+        sta SNDTMP4011
+        rts
+
+; ------+-----+---------------------------------------------------------------
+; This routine reads the write only register values and updates the values
+; in the SP700.
+; Code from Memblers APU emulator
+;
+; update_dsp from the NSF player ROM, 100% ok
+; 
+update_dsp:
+		lda APUInit
+		bne ContinueAPUUpdate
+		rts
+ContinueAPUUpdate:
+        php
+        sep #$30 ; All 8b
+		phx
+WaitSPC700Ready:
+        lda $2140
+        cmp #$7D                ; wait for SPC ready
+        bne WaitSPC700Ready
+
+        lda #$D7
+        sta $2140               ; tell SPC that CPU is ready
+WSPC700Reply:
+        cmp $2140               ; wait for reply
+        bne WSPC700Reply
+
+        ldx #0
+        stx $2140               ; clear port 0
+xfer:
+		lda SNDTMP4000, X
+        sta $2141               ; send data to port 1
+WSPC700Reply2:
+        cpx $2140               ; wait for reply on port 0
+        bne WSPC700Reply2
+        inx
+        cpx #$17
+        beq NesRegLoadEnds
+        stx $2140
+        bra xfer
+NesRegLoadEnds:
+		plx
+        plp
+        rts
+
+

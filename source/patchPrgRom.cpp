@@ -83,7 +83,7 @@ void Crecompilateur::patchBRK(t_pinstr pinstr, Copcodes *popcode_list, unsigned 
   instruction = pPRG[PRGAddress] + (pPRG[PRGAddress + 1] << 8) + (pPRG[PRGAddress + 2] << 16);
   popcode_list->print_instruction(pinstr->addr, instruction);
   // If it is a write only sound register, then only write to a byte in the ram, it will be updated later
-  if (pinstr->operand >= 0x4000 && pinstr->operand <= 0x4013)
+  if ((pinstr->operand >= 0x4000 && pinstr->operand <= 0x4013) || pinstr->operand == 0x4015)
     {
       printf("%02X kept at %04X\n", pPRG[PRGAddress], pinstr->addr);
       SndRegEmuAddress = pinstr->operand - 0x4000 + SNDREGEMUBASE;
@@ -154,7 +154,7 @@ unsigned int Crecompilateur::writeRamRoutineBinary(const char *fileName, std::ve
       pPatch = &Patches[i];
       // Do nothing with the sound registers here
       // The code here is unused the routines are unused
-      if (pPatch->operand >= 0x4000 && pPatch->operand <= 0x4013)
+      if ((pPatch->operand >= 0x4000 && pPatch->operand <= 0x4013) || pPatch->operand == 0x4015)
 	{
 	  pPatch->ramOffset = RamBuffer.size();
 	  /*
@@ -433,9 +433,9 @@ void Crecompilateur::writeRoutineVector(FILE *fp, Copcodes *popcode_list, std::v
 	{
 	  fprintf(fp, "IndJumpTable:\n");
 	}
-     if (Patches[i].operand >= 0x4000 && Patches[i].operand <= 0x4013)
+      if ((Patches[i].operand >= 0x4000 && Patches[i].operand <= 0x4013) || Patches[i].operand == 0x4015)
        {
-	 fprintf(fp, "jmp %s\t\t; not used\n", Patches[i].RoutineName);
+	 fprintf(fp, "jmp %s\t\t; not used, Sound regs\n", Patches[i].RoutineName);
        }
      else
        {
