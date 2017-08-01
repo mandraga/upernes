@@ -743,6 +743,7 @@ WSPC700Reply:
         stx $2140               ; clear port 0
 xfer:
 		lda SNDTMP4000, X
+		;lda SNDSQR1CTRL4000, X
         sta $2141               ; send data to port 1
 WSPC700Reply2:
         cpx $2140               ; wait for reply on port 0
