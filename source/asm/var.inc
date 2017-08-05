@@ -150,6 +150,10 @@
 .DEFINE SPR0Y4             RAMBASE + 108
 ; 110 - 115 already used
 
+
+.DEFINE ATTRV              RAMBASE + 120 ; Attributes conversion storage
+.DEFINE BGUPDTCOUNTER      RAMBASE + 124 ;
+
 .DEFINE IOCallCOUNTER      RAMBASE + 127 ; Stores the shit from hell (counts Io calls)
 .DEFINE IOCallArray        RAMBASE + 128 ; Stores the shit from hell (counts Io calls)
 ;.DEFINE COUNTCALLS                     ; Enables counting IO accesses on the previous RAM area

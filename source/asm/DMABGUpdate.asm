@@ -163,7 +163,7 @@ ColumnUpdateBank2:
 	
 .IFDEF HORIZONTALSCROLLING
 UpdateBackgroundsS:
-	BREAK
+	;BREAK
 	;
 	; Set increment to 32 words
 	sep #$20
@@ -236,7 +236,15 @@ UpdateBackgrounds:
 ; Local update or full DMA update
 FullUpdateBackgrounds:
 ;UpdateBackgrounds:
-	BREAK
+	;BREAK
+	sep #$20
+	lda BGUPDTCOUNTER
+	cmp #8
+	bcs UpdateALL
+	stz BGUPDTCOUNTER
+	rts
+UpdateALL:
+	stz BGUPDTCOUNTER
 	
 	rep #$30   ; All 16bits
 	ldx #$0000

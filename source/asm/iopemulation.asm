@@ -857,6 +857,30 @@ AttrtableW:
 	;jsr AddElementToBGFifo ; Add it to the fifo
 	sep #$30		; Acc X Y 8bits
 	tay
+.DEFINE ATTRBUP
+.IFDEF ATTRBUP
+.ELSE
+	;--- Attr storage
+	asl A			; Attibute palette are at bits 2 3 4 on snes, so shift the data.
+	asl A
+	and #$0C		; 00
+	sta ATTRV + 0
+	tya
+	and #$0C		; 11
+	sta ATTRV + 1
+	tya
+	lsr A
+	lsr A
+	and #$0C		; 22
+	sta ATTRV + 2
+	tya
+	lsr A
+	lsr A
+	lsr A
+	lsr A
+	and #$0C		; 33
+	sta ATTRV + 3
+.ENDIF
 	; First save the value for the next read in the table
 	lda PPUmemaddrL
 	sec
@@ -865,7 +889,8 @@ AttrtableW:
 	tax
 	lda PPUmemaddrH
 	and #$04 ; Look at bit 2 for BANK 1 or 2
-	beq AttBank1W
+	bne AttBank2W
+	jmp AttBank1W
 AttBank2W:
 	tya
 	sta Attributebuffer2,X
@@ -874,12 +899,13 @@ AttBank2W:
 		
 	jsr ppuAddToVram
 	rep #$10        ; X Y are 16bits
+	ldx attributeaddr
+
+.IFDEF ATTRBUP
 	tya
 	asl A			; Attibute palette are at bits 2 3 4 on snes, so shift the data.
 	asl A
 	and #$0C		; 00
-	ldx attributeaddr
-
 	sta NametableBaseBank2+1,X    ; Store the value in the ram buffer
 	sta NametableBaseBank2+3,X
 	sta NametableBaseBank2+65,X   ; the line below
@@ -910,6 +936,66 @@ AttBank2W:
 	sta NametableBaseBank2+135,X
 	sta NametableBaseBank2+197,X
 	sta NametableBaseBank2+199,X
+.ELSE
+	;--- @
+	lda #$80
+	sta VMAINC      ; increment on VMDATAH
+	rep #$20		; A 16bits
+	txa
+	lsr
+	clc
+	adc #$7400
+VramATTRLoad:
+	BREAK2
+	tax
+	stx VMADDL
+	adc #96
+	pha
+	sec
+	sbc #32
+	pha
+	sec
+	sbc #32
+	pha
+	;--- Data Line 0
+	sep #$20		; A 8bits
+	lda ATTRV + 0 
+	sta VMDATAH
+	sta VMDATAH
+	lda ATTRV + 1
+	sta VMDATAH
+	sta VMDATAH
+	;--- Data Line 1
+	plx
+	stx VMADDL
+	lda ATTRV + 0 
+	sta VMDATAH
+	sta VMDATAH
+	lda ATTRV + 1
+	sta VMDATAH
+	sta VMDATAH
+	;--- Data Line 2
+	plx
+	stx VMADDL
+	lda ATTRV + 2
+	sta VMDATAH
+	sta VMDATAH
+	lda ATTRV + 3
+	sta VMDATAH
+	sta VMDATAH
+	;--- Data Line 3
+	plx
+	stx VMADDL
+	lda ATTRV + 2
+	sta VMDATAH
+	sta VMDATAH
+	lda ATTRV + 3
+	sta VMDATAH
+	sta VMDATAH
+	; Update all if too many write were made. Because VRAM writes cannot be made during rendering
+	;inc BGUPDTCOUNTER
+.ENDIF	
+
 	INCPPUADDR ; jsr IncPPUmemaddrL
 	RETW
 	
@@ -929,12 +1015,13 @@ AttBank1W:
 	; 33|22|11|00
 	; Copy the values in the name tables
 	rep #$10        ; X Y are 16bits
+	ldx attributeaddr
+
+.IFDEF ATTRBUP
 	tya
 	asl A			; Attibute palette are at bits 2 3 4 on snes, so shift the data.
 	asl A
 	and #$0C		; 00
-	ldx attributeaddr
-
 	sta NametableBaseBank1+1,X    ; Store the value in the ram buffer
 	sta NametableBaseBank1+3,X
 	sta NametableBaseBank1+65,X   ; the line below
@@ -968,6 +1055,17 @@ AttBank1W:
 	sta NametableBaseBank1+197,X
 	sta NametableBaseBank1+199,X
 	;; Add the updated tile data to the tiles to be updated by dma
+.ELSE
+	;--- @
+	lda #$80
+	sta VMAINC      ; increment on VMDATAH
+	rep #$20		; A 16bits
+	txa
+	lsr
+	clc
+	adc #$7000
+	jmp VramATTRLoad
+.ENDIF
 
 IncAttrAddr:
 	;; Increment the Attribute address
@@ -1069,43 +1167,37 @@ NametableW:
 	; Store the byte
 	;; -----------------------------------
 	;jsr SetNametableOffset
-	pha
+	tay
 	rep #$30		; A X Y 16bits
 	lda PPUmemaddrL
 	and #$07FF		; Lower address value
-	asl             ; word adress
 	; The adress is in word count (should be $(3/7)000 to $(3/7)003F)
+	asl             ; word adress
 	tax
 	;sta NameAddresL
 	sep #$20		; A 8bits
-	pla
+	tya
 	;; -----------------------------------
-	;ldx NameAddresL
-;	pha
-;	lda PPUmemaddrH
-;	and #$04 ; Look at bit 2 for BANK 1 or 2
-;	beq NameBank1W
-;	pla
-	;cmp NametableBaseBank2,X
-	;beq NoMoreUpdates  ; Same value, do nothing
-;	sta NametableBaseBank2,X
-	;BREAK
-	;jsr UpdateNametablesBitsBank2
-;	jmp NoMoreUpdates
-;NameBank1W:
-;	pla
 	sta NametableBaseBank1,X   ; Write to VRAM. This is the lower nametable byte, the character code number.
-
-	;lda PPUmemaddrH
-	;and #$04 ; Look at bit 2 for BANK 1 or 2
-	;beq UpdBank1
-	;UPDATEBUFFER_BANK2
-	;bra UpdEnd
-;UpdBank1:
-	;UPDATEBUFFER_BANK1
-;UpdEnd:
-	
+	; Update directly in vram
 	;BREAK
+	;jmp NoMoreUpdates
+	;BREAK
+	lda #$00
+	sta VMAINC      ; Increment on the lower byte
+	rep #$20		; A 16bits
+	txa
+	lsr
+	clc
+	adc #$7000
+	sta VMADDL
+	sep #$20		; A 8bits
+	tya
+	sta VMDATAL
+	;inc BGUPDTCOUNTER
+	;swa
+	;sta VMDATAH
+
 NoMoreUpdates:
 	; Increment
 	INCPPUADDR ; jsr IncPPUmemaddrL
