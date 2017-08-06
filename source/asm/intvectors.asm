@@ -89,7 +89,7 @@ ClrShit:
 	
 	jsr UpdatePalettes
 	jsr UpdateSpritesDMA
-	jsr UpdateBackgrounds       ; Copy changed bytes to the VRAMdddfffgcxcvsfgggcxxxcv
+	;jsr UpdateBackgrounds       ; Copy changed bytes to the VRAMdddfffgcxcvsfgggcxxxcv
 	
 	;-------------------------------------------------------------------
 	;EMULATION

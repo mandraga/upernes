@@ -316,18 +316,22 @@ WPPUC2:
 	lda PPUcontrolreg2
 	and #$10                ; Keep only the 4rth bit
 	ora tmp_dat
-	sta TM			; BG1 enabled as a main screen, Sprite enable (also bit 4)	
-	;beq blankscreen
-	;lda #$0F		  ;Turn on screen, 100% brightness
-	;sta INIDISP
-	;jmp endWPPUC2
+	sta TM			; Sprite enable (also bit 4)	
+	; BG1 enabled?
+	lda PPUcontrolreg2
+	and #$08                ; Keep only the 3rd bit
+	beq blankscreen
+	lda #$0F		  ;Turn on screen, 100% brightness
+	sta INIDISP
 	; If the screen and sprites are enabled, then sprite 0 hit flag is enabled
-	jsr InitSprite0
+	;jsr InitSprite0
+	jmp endWPPUC2
 blankscreen:
-	;lda #$8F		  ;Turn off screen, 100% brightness
-	;sta INIDISP
+	lda #$80		  ;Turn off screen
+	sta INIDISP
 
 endWPPUC2:
+	jsr InitSprite0
 	RETW
 
 RPPUC2:
@@ -857,7 +861,7 @@ AttrtableW:
 	;jsr AddElementToBGFifo ; Add it to the fifo
 	sep #$30		; Acc X Y 8bits
 	tay
-.DEFINE ATTRBUP
+;.DEFINE ATTRBUP
 .IFDEF ATTRBUP
 .ELSE
 	;--- Attr storage
@@ -881,6 +885,8 @@ AttrtableW:
 	and #$0C		; 33
 	sta ATTRV + 3
 .ENDIF
+	; Update all if too many write were made. Because VRAM writes cannot be made during rendering
+	inc BGUPDTCOUNTER
 	; First save the value for the next read in the table
 	lda PPUmemaddrL
 	sec
@@ -992,8 +998,6 @@ VramATTRLoad:
 	lda ATTRV + 3
 	sta VMDATAH
 	sta VMDATAH
-	; Update all if too many write were made. Because VRAM writes cannot be made during rendering
-	;inc BGUPDTCOUNTER
 .ENDIF	
 
 	INCPPUADDR ; jsr IncPPUmemaddrL
@@ -1182,7 +1186,6 @@ NametableW:
 	; Update directly in vram
 	;BREAK
 	;jmp NoMoreUpdates
-	;BREAK
 	lda #$00
 	sta VMAINC      ; Increment on the lower byte
 	rep #$20		; A 16bits
@@ -1194,7 +1197,7 @@ NametableW:
 	sep #$20		; A 8bits
 	tya
 	sta VMDATAL
-	;inc BGUPDTCOUNTER
+	inc BGUPDTCOUNTER
 	;swa
 	;sta VMDATAH
 

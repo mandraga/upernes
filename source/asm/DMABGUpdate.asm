@@ -227,7 +227,7 @@ nextColumnsB2:
 	bne UpdateNextColumnsB2	
 	rts
 .ELSE
-UpdateBackgrounds:
+UpdateBackgroundsS:
 	rts
 .ENDIF
 
@@ -235,11 +235,11 @@ UpdateBackgrounds:
 ;--------------------------------------------------------------------------
 ; Local update or full DMA update
 FullUpdateBackgrounds:
-;UpdateBackgrounds:
+UpdateBackgrounds:
 	;BREAK
 	sep #$20
 	lda BGUPDTCOUNTER
-	cmp #8
+	cmp #32
 	bcs UpdateALL
 	stz BGUPDTCOUNTER
 	rts
@@ -323,7 +323,7 @@ EndBGupdate:
 ; Rolling update
 ; This takes less time per frame and update everything, but the full screen update is delayed.
 UpdateBackgroundsRolling:
-UpdateBackgrounds:
+;UpdateBackgrounds:
 	;BREAK2
 	;jsr UpdateNametables
 	;jmp labs ; Jumps over the DMA update
