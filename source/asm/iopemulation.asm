@@ -775,7 +775,60 @@ WPPUMEMDATA:
 	sta PPUmemaddrL
 	sep #$20		; A 8bit
 .ENDM
+
+
+	;; -------------------------------------------------------------------------
+	;;  Converts an attribute address to a VRAM address start of a 4x4 block
+ppuAttrAddToVram:
+	;
+	rep #$30		; A 16bits XY 16bits
+	lda PPUmemaddrL	; Load the ppu memory address suposed to be in the attribute range: $23C0 to $2400 or 27C0 to 2800
+	and #$FBFF      ; Get an @ in $23C0 to $2400
+	sec        ; Set carry otherwise the result of sbc will be a two's complement.
+	sbc #$23C0 ; Substract the base @
+	bra CalculateAttrStart
+
+CalculateAttrStart:
+	tax
+	; Colum
+	and #$0007 ; 8 Blocks of 4 per line
+	asl A
+	asl A
+	asl A			; << 3  x8
+	sta tmp_addr
+	; line:
+	txa
+	and #$0038 ; line * 16 * 8 * 2 = 32 * 8 (already shifted 3 = * 8) -> *32
+	asl A
+	asl A
+	asl A
+	asl A
+	asl A			; << 5  x32
+	;
+	clc
+	adc tmp_addr
+	; Store the nametable address
+	lsr ; Word address for the PPU
+	tax
+
+	sep #$20		; A 8bits
+	; Do not optimise, it is easier to debug.
+	lda PPUmemaddrH
+	and #$04 ; Look at bit 2 for BANK 1 or 2
+	beq AttBank1
 	
+	rep #$20		; A 16bits
+	txa
+	clc
+	adc #NAMETABLEINTERVAL   ; Add the offset of the second bank
+	tax
+AttBank1:
+	rep #$20		; A 16bits
+	txa
+	sta attributeaddr
+	;sep #$30		; Acc X Y 8bits
+	rts
+
 	;; -------------------------------------------------------------------------	
 	;; Attribute tables
 	;; write the highter 6bits of the words at $A000 4x4 tiles at time.
@@ -801,7 +854,8 @@ AttrtableW:
 	;RETW
 	sep #$30		; Acc X Y 8bits
 	tay
-	;--- Attr storage
+	;------------------------------------------------------
+	; Attr storage
 	asl A			; Attibute palette are at bits 2 3 4 on snes, so shift the data.
 	asl A
 	and #$0C		; 00
@@ -821,37 +875,31 @@ AttrtableW:
 	lsr A
 	and #$0C		; 33
 	sta ATTRV + 3
-	;
+	;------------------------------------------------------
 	; First save the value for the next read in the table
+	BREAK
+	rep #$30		; Acc X Y 16bits
 	lda PPUmemaddrL
-	sec
-	sbc #$C0
-	and #$3F        ; Protect against overflow
+	and #$07FF		; Lower address value
 	tax
-	lda PPUmemaddrH
-	and #$04 ; Look at bit 2 for BANK 1 or 2
-	bne AttBank2W
-	jmp AttBank1W
-AttBank2W:
+	
+	sep #$20		; Acc 8bits
 	tya
-	sta Attributebuffer2,X
-		
-	jsr ppuAddToVram
-	rep #$10        ; X Y are 16bits
-	ldx attributeaddr
+	sta NametableBaseBank1,X
 
 	;--- @
 	lda #$80
 	sta VMAINC      ; increment on VMDATAH
-	rep #$20		; A 16bits
-	txa
-	lsr
-	clc
-	adc #$0400
 VramATTRLoad:
-	BREAK2
-	tax
+	
+	sep #$20		; Acc 8bits
+	jsr ppuAttrAddToVram
+	ldx attributeaddr
 	stx VMADDL
+	
+	rep #$20		; Acc 16bits
+	txa
+	clc
 	adc #96
 	pha
 	sec
@@ -860,8 +908,8 @@ VramATTRLoad:
 	sec
 	sbc #32
 	pha
-	;--- Data Line 0
 	sep #$20		; A 8bits
+	;--- Data Line 0
 	lda ATTRV + 0 
 	sta VMDATAH
 	sta VMDATAH
@@ -896,31 +944,9 @@ VramATTRLoad:
 	sta VMDATAH
 	sta VMDATAH	
 
-	INCPPUADDR ; jsr IncPPUmemaddrL
+	INCPPUADDR
 	RETW
-	
-AttBank1W:
-	tya
-	sta Attributebuffer1,X
 
-	; Translate the address
-	;lda AttrAddressTranslation,X ; Could be quicker with a 2*128byte table in wram
-	jsr ppuAddToVram
-	
-	; 33|22|11|00
-	; Copy the values in the name tables
-	rep #$10        ; X Y are 16bits
-	ldx attributeaddr
-
-	;--- @
-	lda #$80
-	sta VMAINC      ; increment on VMDATAH
-	rep #$20		; A 16bits
-	txa
-	lsr
-	;clc
-	;adc #$7000
-	jmp VramATTRLoad
 
 	;; -------------------------------------------------------------------------
 	;; Name tables
@@ -952,27 +978,6 @@ NoMoreUpdates:
 nextWr:
 	RETW
 
-
-UpdateNametablesBitsBank1:
-	sep #$30		; All 8bit
-	txa
-	; Find the column
-	and #$3F
-	lsr ; A/2
-	pha
-	and $07 ; Get the bit value
-	tax
-	pla
-	; Find the byte
-	lsr
-	lsr
-	lsr
-	; Set the bit
-	tay
-	lda ColumnUpdateFlags,Y
-	ora UpdateFlags,X
-	sta ColumnUpdateFlags,Y
-	rts
 
 	;; ---------------------------------------------------------------
 	;; nes palette address: write in cg ram

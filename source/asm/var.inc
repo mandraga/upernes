@@ -232,11 +232,11 @@
 .DEFINE SprCHRInit               2
 .DEFINE SpriteCHRChg            IOBASE + 48  ; Sprite chr has not changed
 
-.DEFINE ColumnUpdateFlags       IOBASE + 49  ; 8 bytes to update the colums of the 2 banks
-.DEFINE UpdateCtr               IOBASE + 57  ;
-.DEFINE ColumnTableLo           IOBASE + 58  ;
-.DEFINE ColumnTableHi           IOBASE + 59  ;
-.DEFINE COLUMUPDATENUMBER       4
+;;;.DEFINE ColumnUpdateFlags       IOBASE + 49  ; 8 bytes to update the colums of the 2 banks
+;;;.DEFINE UpdateCtr               IOBASE + 57  ;
+;;;.DEFINE ColumnTableLo           IOBASE + 58  ;
+;;;.DEFINE ColumnTableHi           IOBASE + 59  ;
+;;;.DEFINE COLUMUPDATENUMBER       4
 
 .DEFINE BGTransferStep          IOBASE + 60  ; To use dma on a group of lines only
 ; 58 unused bytes
