@@ -178,13 +178,13 @@ NoScrollChange:
 	;; Mirroring is the default value. FIXME add cartridge nametables?
 	;and #$01
 	;beq firstnametableaddress  ; If zero flag then it it the first nametable
-    ;lda #$74            ; (1k word segment $7400 / $400)=$1D << 2
+    ;lda #$04            ; (1k word segment $0400)
 	;ora #$01	         ; Right screen following the first one
     ;sta BG1SC
 	;jmp endnametableaddress
 firstnametableaddress:
 	; Always on bank 0 and add this bit to the scrolling ergister
-    lda #$70             ; (1k word segment $7000 / $400)=$1C << 2
+    lda #$00             ; (1k word segment $0000)
 	ora #$01             ; Right screen following the first one
     sta BG1SC
 endnametableaddress:
@@ -734,22 +734,6 @@ ppuAddToVram:
 	rts
 
 
-;; -------------------------------------------------------------------------
-; Select where goes the name table data in VRAM
-;set_tilemap_addr
-;.8BIT
-;	sep #$20		; A 8bit
-;	rep #$10        ; X Y are 16bits
-;	lda PPUmemaddrH	; address hight byte
-;	and #$04		; bit 11: 0 = Tables 0 & 2; 1 = Tables 1 & 3 (TODO not always mirror???)
-;	cmp #$04
-;	beq Tables1_3
-;	ldy #NAMETABLE1BASE	; snes BG1 names/attributes VRAM address: $7000 (Word addres)
-;	rts
-;Tables1_3:
-;	ldy #NAMETABLE2BASE	; snes BG1 names/attributes VRAM address: $7400 (Word addres)
-;	rts
-
 emptyW:
 	RETW
 
@@ -791,49 +775,6 @@ WPPUMEMDATA:
 	sta PPUmemaddrL
 	sep #$20		; A 8bit
 .ENDM
-
-; Inc the colum or line update counter
-.MACRO UPDATEBUFFERATTR_BANK1
-	php
-	rep #$10
-	txa
-	and #$07
-	asl
-	asl   ; x4 because it's attributes
-.IFDEF HORIZONTALSCROLLING
-	; Boost the column counter
-	lda #$0F
-	sta LineColUpdate + 0,X
-	sta LineColUpdate + 1,X
-	sta LineColUpdate + 2,X
-	sta LineColUpdate + 3,X
-.ELSE
-	; Vertical scrolling
-	; Update the line counter
-.ENDIF
-	plp
-.ENDM
-
-.MACRO UPDATEBUFFERATTR_BANK2
-	php
-	rep #$10
-	txa
-	and #$07
-	asl
-	asl   ; x4 because it's attributes
-.IFDEF HORIZONTALSCROLLING
-	; Boost the column counter
-	lda #$0F
-	sta LineColUpdate + 32,X
-	sta LineColUpdate + 33,X
-	sta LineColUpdate + 34,X
-	sta LineColUpdate + 35,X
-.ELSE
-	; Vertical scrolling
-	; Update the line counter
-.ENDIF
-	plp
-.ENDM
 	
 	;; -------------------------------------------------------------------------	
 	;; Attribute tables
@@ -858,12 +799,8 @@ AttrtableW:
 	
 	;BREAK ; break at $0918
 	;RETW
-	;jsr AddElementToBGFifo ; Add it to the fifo
 	sep #$30		; Acc X Y 8bits
 	tay
-;.DEFINE ATTRBUP
-.IFDEF ATTRBUP
-.ELSE
 	;--- Attr storage
 	asl A			; Attibute palette are at bits 2 3 4 on snes, so shift the data.
 	asl A
@@ -884,9 +821,7 @@ AttrtableW:
 	lsr A
 	and #$0C		; 33
 	sta ATTRV + 3
-.ENDIF
-	; Update all if too many write were made. Because VRAM writes cannot be made during rendering
-	inc BGUPDTCOUNTER
+	;
 	; First save the value for the next read in the table
 	lda PPUmemaddrL
 	sec
@@ -900,49 +835,11 @@ AttrtableW:
 AttBank2W:
 	tya
 	sta Attributebuffer2,X
-
-	;UPDATEBUFFERATTR_BANK2
 		
 	jsr ppuAddToVram
 	rep #$10        ; X Y are 16bits
 	ldx attributeaddr
 
-.IFDEF ATTRBUP
-	tya
-	asl A			; Attibute palette are at bits 2 3 4 on snes, so shift the data.
-	asl A
-	and #$0C		; 00
-	sta NametableBaseBank2+1,X    ; Store the value in the ram buffer
-	sta NametableBaseBank2+3,X
-	sta NametableBaseBank2+65,X   ; the line below
-	sta NametableBaseBank2+67,X
-	tya
-	and #$0C		; 11
-	sta NametableBaseBank2+5,X    ; Store the value in the ram buffer
-	sta NametableBaseBank2+7,X
-	sta NametableBaseBank2+69,X
-	sta NametableBaseBank2+71,X
-	;; Lower 2 x 4 tiles
-	tya
-	lsr A
-	lsr A
-	and #$0C		; 22
-	sta NametableBaseBank2+129,X  ; Store the value in the ram buffer
-	sta NametableBaseBank2+131,X
-	sta NametableBaseBank2+193,X
-	sta NametableBaseBank2+195,X
-	;
-	tya
-	lsr A
-	lsr A
-	lsr A
-	lsr A
-	and #$0C		; 33
-	sta NametableBaseBank2+133,X  ; Store the value in the ram buffer
-	sta NametableBaseBank2+135,X
-	sta NametableBaseBank2+197,X
-	sta NametableBaseBank2+199,X
-.ELSE
 	;--- @
 	lda #$80
 	sta VMAINC      ; increment on VMDATAH
@@ -950,7 +847,7 @@ AttBank2W:
 	txa
 	lsr
 	clc
-	adc #$7400
+	adc #$0400
 VramATTRLoad:
 	BREAK2
 	tax
@@ -997,8 +894,7 @@ VramATTRLoad:
 	sta VMDATAH
 	lda ATTRV + 3
 	sta VMDATAH
-	sta VMDATAH
-.ENDIF	
+	sta VMDATAH	
 
 	INCPPUADDR ; jsr IncPPUmemaddrL
 	RETW
@@ -1006,14 +902,9 @@ VramATTRLoad:
 AttBank1W:
 	tya
 	sta Attributebuffer1,X
-	
-	;UPDATEBUFFERATTR_BANK1
 
 	; Translate the address
 	;lda AttrAddressTranslation,X ; Could be quicker with a 2*128byte table in wram
-	;tax
-	;sta attributeaddr
-	;tya
 	jsr ppuAddToVram
 	
 	; 33|22|11|00
@@ -1021,185 +912,39 @@ AttBank1W:
 	rep #$10        ; X Y are 16bits
 	ldx attributeaddr
 
-.IFDEF ATTRBUP
-	tya
-	asl A			; Attibute palette are at bits 2 3 4 on snes, so shift the data.
-	asl A
-	and #$0C		; 00
-	sta NametableBaseBank1+1,X    ; Store the value in the ram buffer
-	sta NametableBaseBank1+3,X
-	sta NametableBaseBank1+65,X   ; the line below
-	sta NametableBaseBank1+67,X
-	tya
-	and #$0C		; 11
-	sta NametableBaseBank1+5,X    ; Store the value in the ram buffer
-	sta NametableBaseBank1+7,X
-	sta NametableBaseBank1+69,X
-	sta NametableBaseBank1+71,X
-	;; Lower 2 x 4 tiles
-	tya
-	;clc
-	lsr A
-	lsr A
-	and #$0C		; 22
-	sta NametableBaseBank1+129,X  ; Store the value in the ram buffer
-	sta NametableBaseBank1+131,X
-	sta NametableBaseBank1+193,X
-	sta NametableBaseBank1+195,X
-	;
-	tya
-	;clc
-	lsr A
-	lsr A
-	lsr A
-	lsr A
-	and #$0C		; 33
-	sta NametableBaseBank1+133,X  ; Store the value in the ram buffer
-	sta NametableBaseBank1+135,X
-	sta NametableBaseBank1+197,X
-	sta NametableBaseBank1+199,X
-	;; Add the updated tile data to the tiles to be updated by dma
-.ELSE
 	;--- @
 	lda #$80
 	sta VMAINC      ; increment on VMDATAH
 	rep #$20		; A 16bits
 	txa
 	lsr
-	clc
-	adc #$7000
+	;clc
+	;adc #$7000
 	jmp VramATTRLoad
-.ENDIF
-
-IncAttrAddr:
-	;; Increment the Attribute address
-	INCPPUADDR ; jsr IncPPUmemaddrL
-	;rep #$20		; Acc 16bits
-	;lda attributeaddr
-	;clc
-	;adc #$0008
-	;sta attributeaddr
-	;and #$003F		; addr % 64 = 0?
-	;beq add256		; If 0 then it is on the begining of the line
-	;; Done
-	RETW
-;add256:
-	;lda attributeaddr
-	;clc
-	;adc #$0100
-	;sta attributeaddr
-	;; Done
-	;RETW
-
-	;; -------------------------------------------------------------------------
-	;; Adds a byte in A and 16bit address in X to the fifo
-AddElementToBGFifo:
-	pha
-	;BREAK3
-	sep #$30        ; 8bits
-	lda BGUpdateFIFOSZ
-	cmp #BGFifoMax
-	bcs endAddFifo
-	asl ; x2
-	tax
-	inc BGUpdateFIFOSZ
-	rep #$20        ; A 16bits
-	lda PPUmemaddrL ; This @ must be updated
-	sta BGUpdateFIFO,X
-	sep #$30
-endAddFifo: ; The fifo is full, it will be a full update with the DMA
-	pla
-	rts
-
-.MACRO UPDATEBUFFER_BANK1
-	php
-	rep #$10
-	txa
-	lsr
-.IFDEF HORIZONTALSCROLLING
-	; Update the column counter
-	and #$1F        ; Keep the column
-	tax
-	sep #$10
-	lda LineColUpdate,X
-	ina
-	sta LineColUpdate,X
-.ELSE
-	; Vertical scrolling
-	; Update the line counter
-	lsr        ; Keep the line
-	lsr
-	lsr
-	lsr
-	lsr        ; / 32
-	and #$1F
-	lda LineColUpdate,X
-	ina
-	sta LineColUpdate,X	
-.ENDIF
-	plp
-.ENDM
-
-.MACRO UPDATEBUFFER_BANK2
-	php
-	rep #$10
-	txa
-	lsr
-.IFDEF HORIZONTALSCROLLING
-	; Update the column counter
-	and #$1F        ; Keep the column
-	tax
-	sep #$10
-	lda LineColUpdate + 32,X
-	ina
-	sta LineColUpdate + 32,X
-.ELSE
-	; Vertical scrolling
-	; Update the line counter
-
-.ENDIF
-	plp
-.ENDM
 
 	;; -------------------------------------------------------------------------
 	;; Name tables
 NametableW:
 	;RETW
-	;jsr AddElementToBGFifo ; Add it to the fifo
-	sep #$20		; A 8bit
-	;rep #$10        ; X Y are 16bits
+	sep #$20		; A 8bits
+	;; -----------------------------------
 	; Store the byte
 	;; -----------------------------------
-	;jsr SetNametableOffset
 	tay
 	rep #$30		; A X Y 16bits
 	lda PPUmemaddrL
 	and #$07FF		; Lower address value
 	; The adress is in word count (should be $(3/7)000 to $(3/7)003F)
-	asl             ; word adress
 	tax
-	;sta NameAddresL
 	sep #$20		; A 8bits
 	tya
 	;; -----------------------------------
 	sta NametableBaseBank1,X   ; Write to VRAM. This is the lower nametable byte, the character code number.
 	; Update directly in vram
-	;BREAK
-	;jmp NoMoreUpdates
-	lda #$00
-	sta VMAINC      ; Increment on the lower byte
-	rep #$20		; A 16bits
-	txa
-	lsr
-	clc
-	adc #$7000
-	sta VMADDL
-	sep #$20		; A 8bits
-	tya
-	sta VMDATAL
-	inc BGUPDTCOUNTER
-	;swa
-	;sta VMDATAH
+	stz VMAINC      ; VRAM Increment on the lower byte
+	stx VMADDL
+	sep #$30		; All 8bit
+	sty VMDATAL
 
 NoMoreUpdates:
 	; Increment
@@ -1207,27 +952,6 @@ NoMoreUpdates:
 nextWr:
 	RETW
 
-	; Enable the update of the column
-UpdateNametablesBitsBank2:
-	sep #$30		; All 8bit
-	txa
-	; Find the column
-	and #$3F
-	lsr ; A/2
-	pha
-	and $07 ; Get the bit value
-	tax
-	pla
-	; Find the byte
-	lsr
-	lsr
-	lsr
-	; Set the bit
-	tay
-	lda ColumnUpdateFlags + 4,Y
-	ora UpdateFlags,X
-	sta ColumnUpdateFlags + 4,Y
-	rts
 
 UpdateNametablesBitsBank1:
 	sep #$30		; All 8bit
@@ -1347,17 +1071,6 @@ LatchedAttrValue:
 AttrtableRend:
 	RETR
 
-SetNametableOffset:
-	pha
-	rep #$20		; A 16bits
-	lda PPUmemaddrL
-	and #$07FF		; Lower address value
-	asl             ; word adress
-	; The adress is in word count (should be $(3/7)000 to $(3/7)003F)
-	sta NameAddresL
-	sep #$20		; A 8bits
-	pla
-	rts
 	
 NametableR:
 	; Read it from the sram buffer
@@ -1366,8 +1079,14 @@ NametableR:
 	lda PPUReadLatch
 	bne LatchedNameValue
 	; Store the byte
-	jsr SetNametableOffset
-	ldx NameAddresL
+	rep #$20		; A 16bits
+	lda PPUmemaddrL
+	and #$07FF		; Lower address value
+	;asl             ; word adress
+	; The adress is in word count (should be $(3/7)000 to $(3/7)003F)
+	tax
+	sep #$20		; A 8bits
+
 	; Bank selection
 	lda PPUmemaddrH
 	and #$04 ; Look at bit 2 for BANK 1 or 2

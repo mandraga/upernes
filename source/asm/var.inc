@@ -152,7 +152,6 @@
 
 
 .DEFINE ATTRV              RAMBASE + 120 ; Attributes conversion storage
-.DEFINE BGUPDTCOUNTER      RAMBASE + 124 ;
 
 .DEFINE IOCallCOUNTER      RAMBASE + 127 ; Stores the shit from hell (counts Io calls)
 .DEFINE IOCallArray        RAMBASE + 128 ; Stores the shit from hell (counts Io calls)
@@ -221,8 +220,8 @@
 
 .DEFINE NamesBank1UpdateCounter IOBASE + 28  ; Counts the updated tiles in the background bank 1
 .DEFINE NamesBank2UpdateCounter IOBASE + 29  ; Counts the updated tiles in the background bank 2
-.DEFINE NameAddresL             IOBASE + 30  ; Address in the nametable
-.DEFINE NameAddresH             IOBASE + 31
+;;;;.DEFINE NameAddresL             IOBASE + 30  ; Address in the nametable
+;;;;.DEFINE NameAddresH             IOBASE + 31
 .DEFINE MaxNameHDMAUpdates      128          ; Up to 128 updated tiles, otherwise it will be a full update
 
 .DEFINE Printfbuffer            IOBASE + 32  ; 16bytes for the printf parameters
@@ -255,11 +254,6 @@
 .DEFINE tmpPPUcontrolreg1       IOBASE + 164 ; 
 .DEFINE XsavScroll              IOBASE + 165 ;
 
-.DEFINE BGUpdateFIFOSZ          IOBASE + 166 ; Number of element in the fifo, if less than 16, update them. Else update all.
-.DEFINE BGUpdateFIFO            IOBASE + 168 ;
-.DEFINE BGFifoMax                 32
-.DEFINE LineColUpdate           IOBASE + 200 ; Array of write count per column or per line depending on the scrolling mode
-
 ;--------------------------------------------------------------------
 .DEFINE SpriteMemoryBase		$0A00       ; 256 bytes
 
@@ -290,8 +284,8 @@
 ;--------------------------------------------------------------------
 .DEFINE NameTransferTables      $8000       ; Used to transfer the data with HDMA
 
-.DEFINE NAMETABLE1BASE          $7000
-.DEFINE NAMETABLE2BASE          $7400
+.DEFINE NAMETABLE1BASE          $0000
+.DEFINE NAMETABLE2BASE          $0400
 .DEFINE NAMETABLEINTERVAL       $0400
 
 .DEFINE WRamBank                $7F

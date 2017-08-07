@@ -127,9 +127,10 @@ A DMA transfer from WRAM could be interesting for simulating the sprite CHR bank
 Snes VRAM, 64kB - 32kW:
 ------------------------    Word address
 $0000
-  - Empty -       4KB 2KW
-  - Empty -       4KB 2KW
-  Ascii tiles     4KB 2KW   $0000 ascii table CHR 2K
+  BG Nametable    8KB 4KW  Starts at $0000, and $0400, $0800, $0C00
+     4 nametables of 2KB each
+$1000
+  Ascii tiles     4KB 2KW   $1000 ascii table CHR 2K
   Ascii nametable 4KB 2KW   $0800
 ------------------------
 $2000 Word @  8KW           $2000
@@ -146,8 +147,8 @@ $4000 Word @ 16KW
 $6000 Word @ 24KW
   - Empty -       8KB 4KW
 $7000
-  BG Nametable    8KB 4KW  Starts at $7000, and $7400, $7800, $7C00
-     4 nametables of 2KB each
+  - Empty -       4KB 2KW
+  - Empty -       4KB 2KW
 $7FFF
 ------------------------
 

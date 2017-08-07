@@ -121,7 +121,7 @@ eraseNesRamLoop:
 	; BG1 tilemap (fusion of the "nes name table + attibute tables")
 	; Set tile map address (Addr >> 11) << 2
 	sep #$30		;  All 8bits
-	lda #$70		; (1k word segment $7000 / $400)=$1C << 2
+	lda #$00		; (1k word segment at $0000)
 	sta BG1SC       ;  the two lower bits are the screen size and are set to 00 : only one screen
 	
 	; Initialises the nes port emulation vars
@@ -148,8 +148,6 @@ eraseNesRamLoop:
 	sta NESNMIENABLED
 	stz VblankState
 	stz NMI_occurred
-	stz BGUpdateFIFOSZ
-	stz BGUpdateFIFOSZ + 1
 	stz TMPVTIMEL
 	stz TMPVTIMEH
 	; Do not touch this it is hardcoded

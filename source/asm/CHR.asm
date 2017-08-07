@@ -184,26 +184,4 @@ clr16loopWR:
 	bne StileloopWR		; > 0 then branch
 	rts
 
-/*
-WRAMtoVRAM:
-	sep #$20		; mem/A = 8 bit
-	stz VMADDL		; Word address
-	stz VMADDH
-	stz WMADDL              ; @ lower byte to 0
-	lda #$20
-	sta WMADDM
-	stz WMADDH              ; Do not access past 64K
-	rep #$10  		; X Y 16bits
-	ldx #$1000             	; 4KW
-wvramloop:
-	lda WMDATA
-	sta VMDATAL
-	lda WMDATA
-	sta VMDATAH
-	dex
-	bne wvramloop
-	sep #$30
-	rts
-*/
-
 .ENDS
