@@ -225,7 +225,8 @@ copyRamCode:
 	sec
 	xce
 
-	lda #$0F		  ;Turn on screen, 100% brightness
+	;lda #$0F		; Turn on screen, 100% brightness
+	lda #$80	    ; Turn off screen, the real default value.
 	sta INIDISP
 
 	;; -----------------------------------------------
