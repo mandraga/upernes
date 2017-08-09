@@ -163,6 +163,11 @@ eraseNesRamLoop:
 	jsr InitSpriteFlagsConversions
 	
 	;----------------------------------------------------------------------------
+	; A table used to convert the attribute @ to VRAM 1rst tile @
+	BREAK
+	jsr InitAttrAddrConv
+	
+	;----------------------------------------------------------------------------
 	; Copy the emulation patching code to the ram
 	phb
 	sep #$20 ; A 8bits

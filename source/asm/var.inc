@@ -295,6 +295,8 @@
 
 .DEFINE WRamSpriteFlagConvLI  $7F7000       ; 256 Bytes of nes to snes sprite flags conversion <- could be in rom
 
+.DEFINE WRamAttAddrConv       $7F7100       ; 128 bytes to store the conversion from attribute table to VRAM 4x4 block @
+
 ;--------------------------------------------------------------------
 ;               SNES VRAM defines (WORD addresses)
 ;--------------------------------------------------------------------

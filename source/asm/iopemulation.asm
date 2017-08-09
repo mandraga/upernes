@@ -783,12 +783,34 @@ ppuAttrAddToVram:
 	;
 	rep #$30		; A 16bits XY 16bits
 	lda PPUmemaddrL	; Load the ppu memory address suposed to be in the attribute range: $23C0 to $2400 or 27C0 to 2800
-	and #$FBFF      ; Get an @ in $23C0 to $2400
-	sec        ; Set carry otherwise the result of sbc will be a two's complement.
-	sbc #$23C0 ; Substract the base @
-	bra CalculateAttrStart
+	;and #$FBFF      ; Get an @ in $23C0 to $2400
+	;sec        ; Set carry otherwise the result of sbc will be a two's complement.
+	;sbc #$23C0 ; Substract the base @
+	and #$003F      ; Get an @ in $23C0 to $2400
+	asl
+	tax
+	lda WRamAttAddrConv, X
+	tax
+	; Add the bank @
+	sep #$20		; A 8bits
+	lda PPUmemaddrH
+	and #$04 ; Look at bit 2 for BANK 1 or 2
+	beq AttBank1
+AttrBank2:	
+	rep #$20		; A 16bits
+	txa
+	clc
+	adc #NAMETABLEINTERVAL   ; Add the offset of the second bank
+	tax
+AttBank1:
+	rep #$20		; A 16bits
+	txa
+	sta attributeaddr
+	;sep #$30		; Acc X Y 8bits
+	rts
 
 CalculateAttrStart:
+	rep #$30		; All 16bits
 	tax
 	; Colum
 	and #$0007 ; 8 Blocks of 4 per line
@@ -809,26 +831,30 @@ CalculateAttrStart:
 	adc tmp_addr
 	; Store the nametable address
 	lsr ; Word address for the PPU
-	tax
-
-	sep #$20		; A 8bits
-	; Do not optimise, it is easier to debug.
-	lda PPUmemaddrH
-	and #$04 ; Look at bit 2 for BANK 1 or 2
-	beq AttBank1
-	
-	rep #$20		; A 16bits
+	pha
 	txa
-	clc
-	adc #NAMETABLEINTERVAL   ; Add the offset of the second bank
+	asl
 	tax
-AttBank1:
-	rep #$20		; A 16bits
-	txa
-	sta attributeaddr
-	;sep #$30		; Acc X Y 8bits
+	pla
+	sta WRamAttAddrConv, X
+	lda #00
 	rts
 
+; Inits an array in WRAM used to convert the attribute @ to VRAM start block @
+InitAttrAddrConv:
+	BREAK
+	rep #$20		; A 16bits
+	lda #00
+	sep #$20		; A 8bits
+AttrAddrLoop:
+	pha
+	jsr CalculateAttrStart
+	sep #$20		; A 8bits
+	pla
+	ina
+	bne AttrAddrLoop
+	rts
+	
 	;; -------------------------------------------------------------------------	
 	;; Attribute tables
 	;; write the highter 6bits of the words at $A000 4x4 tiles at time.
