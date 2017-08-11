@@ -1113,26 +1113,14 @@ NametableR:
 	rep #$20		; A 16bits
 	lda PPUmemaddrL
 	and #$07FF		; Lower address value
-	;asl             ; word adress
-	; The adress is in word count (should be $(3/7)000 to $(3/7)003F)
 	tax
 	sep #$20		; A 8bits
-
-	; Bank selection
-	lda PPUmemaddrH
-	and #$04 ; Look at bit 2 for BANK 1 or 2
-	beq NameBank1R
-NameBank2R:
-	lda NametableBaseBank2,X
-	jmp NameBankREnd
-NameBank1R:
 	lda NametableBaseBank1,X
-NameBankREnd:	
 	tax
 	; Increment the PPU address
 	INCPPUADDR ; jsr IncPPUmemaddrL
 	; Done
-	sep #$20		; A 8bit
+	;sep #$20		; A 8bit
 	txa
 	jmp NametableRend
 LatchedNameValue:
