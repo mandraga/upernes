@@ -63,7 +63,7 @@ cpy
 
 #define SNDREGEMUBASE           0x0830
 /*
- * This method patches the rom binary with BRK routines.
+ * This method patches the rom binary with jsr to ram routines.
  * - PRG contains the orignal rom.
  * - The Routines vector is the replacement routine array used in emulation.
  * - pinstr is the pointer to the instruction
@@ -166,6 +166,19 @@ unsigned int Crecompilateur::writeRamRoutineBinary(const char *fileName, std::ve
 	  pPatch->ramSize = RamBuffer.size() - pPatch->ramOffset;
 	  */
 	  pPatch->ramSize = 0;
+	}
+      // If it is an indirect jump, only do a jml
+      else if (pPatch->opcode == 0x6C) // Indirect jump
+	{
+  	  pPatch->ramOffset = RamBuffer.size();
+	  RamBuffer.push_back(0x08); // PHP
+	  RamBuffer.push_back(0x78); // SEI We do ont want any IRQ to occur in bank 0, every IRQ must be in the patched PRG bank
+	  RamBuffer.push_back(0x5C); // JML
+	  routineAddress = EMULATIONROUTINEADDRESS + 3 * i; // The space for JMP $xxxx
+	  RamBuffer.push_back(routineAddress & 0xFF); // routine address
+	  RamBuffer.push_back((routineAddress >> 8) & 0xFF);
+	  RamBuffer.push_back(0x80); // $80 bank (Fast ROM)
+	  pPatch->ramSize = RamBuffer.size() - pPatch->ramOffset;
 	}
       // Replace lda PPUSTATUS or ldx PPUSTATUS or ldy PPUSTATUS with a shorter version
       else if ((pPatch->opcode == 0xAD /*|| pPatch->opcode == 0xAE*/) && pPatch->operand <= 0x2002)

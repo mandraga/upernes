@@ -181,8 +181,9 @@ void CindirectJmpAsmRoutines::writeIndJumproutines(FILE *fp, CindirectJmpRuntime
 		  fprintf(fp, "\tsec                        ; return to emulation mode\n");
 		  fprintf(fp, "\txce\n");
 		  fprintf(fp, "\tlda Acc                    ; restore the Accumulator\n");
+		  fprintf(fp, "\tplp                        ; restore the Status register\n");
 		  if (get_indirect_jump_labelnumber(plabel_gen_list, addr, &indlabelnumber))
-		    fprintf(fp, "\tjml $01%04X  ; static jump to the indirect label in the PRG bank\n", addr);
+		    fprintf(fp, "\tjml $81%04X  ; static jump to the indirect label in the PRG bank\n", addr);
 		    //fprintf(fp, "\tjmp indirectlabel%04d   ; static jump to the indirect label\n", indlabelnumber);
 		  else
 		    assert(false);
