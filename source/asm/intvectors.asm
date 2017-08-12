@@ -13,7 +13,7 @@
 .DW     EmptyHandler		; COP
 .DW     $0000				; (Unused)
 .DW     EmptyHandler		; ABORT
-.DW     DMAUpdateHandler	; NMI
+.DW     NESNMIHandler	    ; NMI
 .DW     Reset				; RESET            The entire program starts here and the calls NESReset
 .DW     NESIRQBRKHandler	; NESIRQBRK IRQ/BRK
 
@@ -39,7 +39,7 @@
 .org 0
 .SECTION "EmptyVectors" SEMIFREE
 
-DMAUpdateHandler:
+NESNMIHandler:
 	
 	; Fast ROM execution
 	jml FastDMAUpdateHandler

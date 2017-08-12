@@ -91,9 +91,44 @@ void Crecompilateur::patchBRK(t_pinstr pinstr, Copcodes *popcode_list, unsigned 
       pPRG[PRGAddress + 2] = (SndRegEmuAddress >> 8) & 0xFF;
       printf("Using register %04X\n", pinstr->addr);
     }
-  else
+  else if (pinstr->opcode == 0x6C)
     {
       printf("%02X replaced by %02X at %04X\n", pPRG[PRGAddress], 0x4C, pinstr->addr);
+      pPRG[PRGAddress] = 0x4C; // JMP
+      // the next 2 bytes are a code to find the proper routine.
+      assert(Routines.size() < 256);
+      for (i = 0, bRoutineFound = false; i < Routines.size(); i++)
+	{
+	  if (Routines[i].opcode == pinstr->opcode && Routines[i].operand == pinstr->operand)
+	    {
+	      printf("Pointing to routine %s\n", Routines[i].RoutineName);
+	      // Special case for the sta 2006 routine @
+	      if (Routines[i].opcode == 0x8D &&
+		  Routines[i].operand == 0x2006)
+		{
+		  // Get the special routine at the end of the code
+		  lastRoutine = Routines.size() - 1;
+		  RamRoutineAddress = Routines[lastRoutine].ramOffset + Routines[lastRoutine].ramSize; // Address of the code in ram, after the last routine
+		}
+	      else
+		{
+		  RamRoutineAddress = Routines[i].ramOffset; // Address of the code in ram
+		}
+	      RamRoutineAddress += RAMROUTINEBASEADDRESS;
+	      pPRG[PRGAddress + 1] = RamRoutineAddress & 0xFF;
+	      pPRG[PRGAddress + 2] = (RamRoutineAddress >> 8) & 0xFF;
+	      bRoutineFound = true;
+	    }
+	}
+      if (!bRoutineFound)
+	{
+	  printf("Patch routine not found!\n");
+	  assert(false);
+	}      
+    }
+  else
+    {
+      printf("%02X replaced by %02X at %04X\n", pPRG[PRGAddress], 0x20, pinstr->addr);
       pPRG[PRGAddress] = 0x20; // JSR
       // the next 2 bytes are a code to find the proper routine.
       assert(Routines.size() < 256);

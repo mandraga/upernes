@@ -135,8 +135,6 @@ $1000
 ------------------------
 $2000 Word @  8KW           $2000
   SPRITE 4bpp CHR 16KB 8KW
-  BG CHR          4KB 2kW
-  - Empty -       4KB 2KW
 ------------------------
 $4000 Word @ 16KW
   BG CHR          4KB 2kW
