@@ -55,7 +55,9 @@ void Crecompilateur::AddPRGPatch(int iopaddr, Copcodes *popcode_list, t_pinstr p
   // FIXME it only covers lda ldx ldy but not all the possible opcodes
   else if (pinstr->opcode == 0xAD || pinstr->opcode == 0xBD || pinstr->opcode == 0xB9 || // lda
 	   pinstr->opcode == 0xAE || pinstr->opcode == 0xBE || // ldx
-	   pinstr->opcode == 0xAC || pinstr->opcode == 0xBC)   // ldy
+	   pinstr->opcode == 0xAC || pinstr->opcode == 0xBC || // ldy
+	   pinstr->opcode == 0x2C)
+	   
     {
       PatchR.type = read;
     }
@@ -203,6 +205,26 @@ void Crecompilateur::routineLDYiop(FILE *fp, int iopaddr, Copcodes *popcode_list
   print_restore(fp);
   // In RAM  
   //fprintf(fp, "\tldy Yi		; y like if it has been loaded by a ldy\n");
+  fprintf(fp, "\trtl\n");
+  AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
+}
+
+void Crecompilateur::routineBITiop(FILE *fp, int iopaddr, Copcodes *popcode_list, t_pinstr pinstr, std::vector<t_PatchRoutine> &PatchRoutines)
+{
+  char routine[LABELSZ];
+
+  snprintf(routine, LABELSZ, "rbit_%02X", iopaddr); // Print the label name);
+  fprintf(fp, "\n%s:\n", routine);
+  print_save(fp);
+  fprintf(fp, "\tsta Acc\n");
+  // Put the io port somewhere
+  fprintf(fp, "\tldx #$%02X\n", 2 * PORT2INDEX(iopaddr));
+  fprintf(fp, "\tjsr ldaioportroutine\n");
+  fprintf(fp, "\tsta Yi\n");  // Use Yi as a tmp register
+  fprintf(fp, "\tlda Acc\n");
+  print_restore(fp);
+  // In RAM
+  //fprintf(fp, "\tbit Yi\n");
   fprintf(fp, "\trtl\n");
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }
@@ -494,6 +516,22 @@ void Crecompilateur::writeiop_routines(FILE *fp, Cprogramlisting *plisting, Copc
 		case AbsX:
 		  printf("ldy AbsX addressing mode non implemented\n");
 		  assert(false);
+		  break;
+		};
+	      it++;
+	    }
+	  assert(addressing == 1);
+	}
+      if (findinstr("bit", plist, popcode_list, addressing, instrList))
+	{
+	  it = instrList.begin();
+	  while (it != instrList.end())
+	    {
+	      pinstr = *it;
+	      switch (popcode_list->addressing(pinstr->opcode))
+		{
+		case Abs:
+		  routineBITiop(fp, iopaddr, popcode_list, pinstr, PatchRoutines);
 		  break;
 		};
 	      it++;

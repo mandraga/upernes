@@ -123,6 +123,7 @@ void Crecompilateur::patchBRK(t_pinstr pinstr, Copcodes *popcode_list, unsigned 
       if (!bRoutineFound)
 	{
 	  printf("Patch routine not found!\n");
+  	  printf("opcode %02X, operand %04X\n", pinstr->opcode, pinstr->operand);
 	  assert(false);
 	}      
     }
@@ -158,6 +159,7 @@ void Crecompilateur::patchBRK(t_pinstr pinstr, Copcodes *popcode_list, unsigned 
       if (!bRoutineFound)
 	{
 	  printf("Patch routine not found!\n");
+  	  printf("opcode %02X, operand %04X\n", pinstr->opcode, pinstr->operand);
 	  assert(false);
 	}
     }
@@ -317,6 +319,13 @@ unsigned int Crecompilateur::writeRamRoutineBinary(const char *fileName, std::ve
 		case 0xAC:  // LDY
 		  {
 		    RamBuffer.push_back(0xAC); // LDY Yi
+		    RamBuffer.push_back(0x04);
+		    RamBuffer.push_back(0x08);
+		  }
+		  break;
+	      	case 0x2C:  // BIT
+		  {
+		    RamBuffer.push_back(0x2C); // BIT Yi
 		    RamBuffer.push_back(0x04);
 		    RamBuffer.push_back(0x08);
 		  }

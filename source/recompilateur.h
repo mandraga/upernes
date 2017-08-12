@@ -12,7 +12,7 @@ enum patchType
   {
     write,
     read,
-    indirectJump
+    indirectJump,
   };
 
 // Routine linked to and instruction and operand
@@ -56,6 +56,7 @@ private:
   void routineLDAiop(FILE *fp, int iopaddr, Copcodes *popcode_list, t_pinstr pinstr, std::vector<t_PatchRoutine> &PatchRoutines);
   void routineLDXiop(FILE *fp, int iopaddr, Copcodes *popcode_list, t_pinstr pinstr, std::vector<t_PatchRoutine> &PatchRoutines);
   void routineLDYiop(FILE *fp, int iopaddr, Copcodes *popcode_list, t_pinstr pinstr, std::vector<t_PatchRoutine> &PatchRoutines);
+  void routineBITiop(FILE *fp, int iopaddr, Copcodes *popcode_list, t_pinstr pinstr, std::vector<t_PatchRoutine> &PatchRoutines);
   void routineSTXiop(FILE *fp, int iopaddr, Copcodes *popcode_list, t_pinstr pinstr, std::vector<t_PatchRoutine> &PatchRoutines);
   void routineSTYiop(FILE *fp, int iopaddr, Copcodes *popcode_list, t_pinstr pinstr, std::vector<t_PatchRoutine> &PatchRoutines);
   void ReplaceAbsAddressing(FILE *fp, t_pinstr pinstr, Copcodes *popcode_list, bool &replaced);
