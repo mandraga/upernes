@@ -21,7 +21,7 @@ linkfile:
 
 # linkfile.prj
 all: linkfile $(objects)
-	wlalink -vr linkfile.prj $(ROM_NAME)
+	wlalink -vr linkfile.prj "$(ROM_NAME)"
 
 clean:
 	-rm *.obj

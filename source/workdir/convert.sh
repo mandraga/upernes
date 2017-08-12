@@ -21,9 +21,10 @@ cp ../opcodes.txt ./
 cp ../asm/data/* ./data/
 cp ../asm/Memblers_2a03.bin ./
 
+echo "romefile = " $1
 # Runs uppernes on the nes rom
 set +vx
-$UPERNES_PATH/upernes.exe $1 $OUTPUT_PATH
+$UPERNES_PATH/upernes.exe "$1" $OUTPUT_PATH
 
 # Extract the ROM name from the path
 ROM_NAME=$(echo $1 | sed "s/.*\///")
@@ -32,7 +33,7 @@ echo "Rom name = " $ROM_NAME
 # Put it in the environment for the Makefile
 export ROM_NAME
 # Delete the previous one if any
-rm $ROM_NAME
+rm "$ROM_NAME"
 # Build the snes rom using the makefile
 make all
 
