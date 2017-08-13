@@ -218,7 +218,7 @@ unsigned int Crecompilateur::writeRamRoutineBinary(const char *fileName, std::ve
 	  pPatch->ramSize = RamBuffer.size() - pPatch->ramOffset;
 	}
       // Replace lda PPUSTATUS or ldx PPUSTATUS or ldy PPUSTATUS with a shorter version
-      else if ((pPatch->opcode == 0xAD /*|| pPatch->opcode == 0xAE*/) && pPatch->operand <= 0x2002)
+      else if ((pPatch->opcode == 0xAD /*|| pPatch->opcode == 0xAE*/) && pPatch->operand == 0x2002)
 	{
 	  /*
 	  ;; Power up test
@@ -245,10 +245,12 @@ unsigned int Crecompilateur::writeRamRoutineBinary(const char *fileName, std::ve
   	  RamBuffer.push_back(0x12);
   	  RamBuffer.push_back(0x09);
 	  RamBuffer.push_back(0xD0); // bne
-	  RamBuffer.push_back(0x09);
-	  RamBuffer.push_back(0xA9); // lda #00
-	  RamBuffer.push_back(0x00);
-	  RamBuffer.push_back(0x8D); // sta WriteToggle
+	  RamBuffer.push_back(0x07);
+	  //RamBuffer.push_back(0x09);
+	  //RamBuffer.push_back(0xA9); // lda #00
+	  //RamBuffer.push_back(0x00);
+	  //RamBuffer.push_back(0x8D); // sta WriteToggle
+	  RamBuffer.push_back(0x9C); // stz WriteToggle
   	  RamBuffer.push_back(0x06);
   	  RamBuffer.push_back(0x09);
 	  RamBuffer.push_back(0xAD); // lda PPUStatus

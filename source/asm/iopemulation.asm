@@ -262,7 +262,10 @@ novblank:
 	; Vblank interrupt disabled
 	stz NESNMIENABLED
 	lda SNESNMITMP
-	and #$7E      ; Could be $7F but we do not need auto joystick update
+	BREAK4
+	; Th snes VBLANK interrupt is still firing, but it returns after a few updates!!!!!!!!!!!!!
+	and #$FE
+	;and #$7E      ; Could be $7F but we do not need auto joystick update
 	sta NMITIMEN
 	sta SNESNMITMP
 vblankend:
@@ -324,14 +327,13 @@ WPPUC2:
 	lda #$0F		  ;Turn on screen, 100% brightness
 	sta INIDISP
 	; If the screen and sprites are enabled, then sprite 0 hit flag is enabled
-	;jsr InitSprite0
 	jmp endWPPUC2
 blankscreen:
 	lda #$80		  ;Turn off screen
 	sta INIDISP
 
 endWPPUC2:
-	jsr InitSprite0
+	jsr InitSprite0  ; IRQ vector always on
 	RETW
 
 RPPUC2:
@@ -842,7 +844,6 @@ CalculateAttrStart:
 
 ; Inits an array in WRAM used to convert the attribute @ to VRAM start block @
 InitAttrAddrConv:
-	BREAK
 	rep #$20		; A 16bits
 	lda #00
 	sep #$20		; A 8bits
@@ -903,7 +904,6 @@ AttrtableW:
 	sta ATTRV + 3
 	;------------------------------------------------------
 	; First save the value for the next read in the table
-	BREAK
 	rep #$30		; Acc X Y 16bits
 	lda PPUmemaddrL
 	and #$07FF		; Lower address value

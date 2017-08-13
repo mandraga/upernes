@@ -94,6 +94,17 @@ eraseNesRamLoop:
 	jsr setup_spc ; Membler's Nes Apu emulator on the SPC700
 	lda #$0F
     sta SNDCHANSW4015
+	
+	lda #10
+	tay
+waitMore:
+	nop
+	nop
+	nop
+	nop
+	nop
+	dey
+	bne waitMore
 
 	; Video mode settings
 	;; -----------------------------------------------
@@ -164,7 +175,6 @@ eraseNesRamLoop:
 	
 	;----------------------------------------------------------------------------
 	; A table used to convert the attribute @ to VRAM 1rst tile @
-	BREAK
 	jsr InitAttrAddrConv
 	
 	;----------------------------------------------------------------------------
@@ -216,6 +226,8 @@ copyRamCode:
 	sta NMITIMEN
 	sta SNESNMITMP
 
+	jsr InitSprite0
+	
 	; Return to emulation mode and jump to the
 	; recompiled nes reset routine.
 	;; -----------------------------------------------
@@ -244,7 +256,7 @@ copyRamCode:
 	lda SNESNMITMP
 	sta NMITIMEN
 	sta SNESNMITMP
-
+	
 	;; -----------------------------------------------
 	; Does nothing. Just here to help finding the end of the initialisation, and the call of the nes reset vector.
 	nop

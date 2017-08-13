@@ -50,6 +50,7 @@ FastDMAUpdateHandler:
 	;-----------------------------------
 	; Vblank bit update
 	sep #$20		; A 8b
+	BREAK2
 	lda PPUStatus
 	; Set the Vblank flag to one
 	ora #$80
@@ -215,7 +216,7 @@ NativeEmptyNMI:
 ; The Vcount IRQ could trigger while in emulation or native
 ;
 NativeVCountHandler:
-	sei ; Disable interrupts at start ot it will flood the stack
+	sei ; Disable interrupts at start or it will flood the stack
 	pha
 	php ; Only to be able to pop A
 	jml FastVcountHandler

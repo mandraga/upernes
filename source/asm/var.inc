@@ -33,8 +33,8 @@
 
 .DEFINE HCOUNTERL          RAMBASE + 21
 .DEFINE HCOUNTERH          RAMBASE + 22
-.DEFINE TMPVCOUNTL         RAMBASE + 23
-.DEFINE TMPVCOUNTH         RAMBASE + 24
+;.DEFINE TMPVCOUNTL         RAMBASE + 23
+;.DEFINE TMPVCOUNTH         RAMBASE + 24
 
 .DEFINE NESNMIENABLED      RAMBASE + 25 ; Nes NMI enabled, the snes NMI should always be on, and call the nes NMI only when this flag is set.
 .DEFINE PPUReadLatch       RAMBASE + 26 ; Set to One when the ppu addresse register is changed, 0 on the first read
@@ -149,6 +149,8 @@
 .DEFINE SPR0Y3             RAMBASE + 106
 .DEFINE SPR0Y4             RAMBASE + 108
 ; 110 - 115 already used
+
+.DEFINE SPR0Line           RAMBASE + 116
 
 
 .DEFINE ATTRV              RAMBASE + 120 ; Attributes conversion storage
