@@ -13,7 +13,7 @@
 .DW     EmptyHandler		; COP
 .DW     $0000				; (Unused)
 .DW     EmptyHandler		; ABORT
-.DW     NESNMIHandler	    ; NMI
+.DW     EmptyHandler	    ; NMI
 .DW     Reset				; RESET            The entire program starts here and the calls NESReset
 .DW     NESIRQBRKHandler	; NESIRQBRK IRQ/BRK
 
@@ -39,11 +39,33 @@
 .org 0
 .SECTION "EmptyVectors" SEMIFREE
 
-NESNMIHandler:
-	
+
+NESIRQBRKHandler:
+	sei
+	nop
+	BREAK
+	pha
+	lda HVIRQFLG    ; Vertical timer IRQ flag, cleared here
+	jsr ReadVcount
+	lda VCOUNTL
+	cmp #VBSTARTLINE
+	bcc LineBeforeNMI
+	pla
+	jmp NESNMIHandler
+LineBeforeNMI:
+	jsr VCountHandler
+QuitIRQ:
+	pla
+	jml $810862   ; This address ocntains an RTI
+	;rti
+	;jml NESIRQBRK ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called from emulation
+
+
+NESNMIHandler:    ; Called in the timer IRQ... Otherwise it will cause bank problems between emulation and native rti
+
 	; Fast ROM execution
-	jml FastDMAUpdateHandler
-FastDMAUpdateHandler:
+	jml FastHandler
+FastHandler:
 	
 	; If the nes nmi is enables, call it
 	pha
@@ -55,6 +77,8 @@ FastDMAUpdateHandler:
 	; Set the Vblank flag to one
 	ora #$80
 	sta PPUStatus ; PPUSTATUS updated
+	;-----------------------------------
+	jsr ConfigureIRQForLine0
 	;-----------------------------------
 	; Id NMI disabled, return
 	lda NESNMIENABLED
@@ -116,7 +140,7 @@ QuitNMI:
 	;rti
 	;; Go to an RTI in ram
 	jml $810862   ; This address contains an RTI
-	
+
 	;;Prepare the stack for an RTL instead of RTI
 	; pla
 	; sta AccNmi    ; Pop and save Acc
@@ -146,13 +170,6 @@ QuitNMI:
 	; rtl
 ;;; put this on vblank
 
-
-NESIRQBRKHandler:
-	nop
-	jsr VCountHandler
-	jml $810862   ; This address ocntains an RTI
-	;rti
-	;jml NESIRQBRK ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called from emulation
 
 
 

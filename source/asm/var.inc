@@ -143,14 +143,12 @@
 .DEFINE LocalRTI           RAMBASE + 98
 ;;----------------------------------------------
 ; Sprite Zero comparison values
-.DEFINE SPR0Y0             RAMBASE + 100
-.DEFINE SPR0Y1             RAMBASE + 102
-.DEFINE SPR0Y2             RAMBASE + 104
-.DEFINE SPR0Y3             RAMBASE + 106
+.DEFINE IRQLineStart       RAMBASE + 100
+.DEFINE IRQLineSPR0Y       RAMBASE + 102
+.DEFINE IRQLineSound       RAMBASE + 104
+.DEFINE IRQLineVBlank      RAMBASE + 106
 .DEFINE SPR0Y4             RAMBASE + 108
 ; 110 - 115 already used
-
-.DEFINE SPR0Line           RAMBASE + 116
 
 
 .DEFINE ATTRV              RAMBASE + 120 ; Attributes conversion storage

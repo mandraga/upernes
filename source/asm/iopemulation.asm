@@ -252,22 +252,23 @@ BGbankend:
 	beq novblank
 	; Vblank interrupt enabled
 	lda #$01
+	BREAK4
 	sta NESNMIENABLED
-	lda SNESNMITMP
-	ora #$80
-	sta NMITIMEN
-	sta SNESNMITMP
+	;lda SNESNMITMP
+	;ora #$80
+	;sta NMITIMEN
+	;sta SNESNMITMP
 	jmp vblankend
 novblank:
 	; Vblank interrupt disabled
-	stz NESNMIENABLED
-	lda SNESNMITMP
 	BREAK4
+	stz NESNMIENABLED
+	;lda SNESNMITMP
 	; Th snes VBLANK interrupt is still firing, but it returns after a few updates!!!!!!!!!!!!!
-	and #$FE
-	;and #$7E      ; Could be $7F but we do not need auto joystick update
-	sta NMITIMEN
-	sta SNESNMITMP
+	;and #$FF  ; Keep Autoread and NMI if any
+	;;and #$7E      ; Could be $7F but we do not need auto joystick update
+	;sta NMITIMEN
+	;sta SNESNMITMP
 vblankend:
 	;; ------------------------------------------
 	; Test bit 2 of PPUCTRL: 1 or 32 nametable increment

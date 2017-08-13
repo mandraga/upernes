@@ -218,8 +218,9 @@ copyRamCode:
 	stz HTIMEH
 
 	; Enable
-	lda #$81
-	sta SNESNMITMP     ; NMI on Vblank always enabled
+	;lda #$81       ; NMI on Vblank always disabled
+	lda #$01        ; NMI on Vblank always enabled
+	sta SNESNMITMP   
 	lda SNESNMITMP
 	;ora #%00100000 ; Enable V timer
 	;ora #%00010000 ; Enable H timer
@@ -253,9 +254,10 @@ copyRamCode:
 
 	;; -----------------------------------------------
 	; NMI on Vblank always enable because used to update the palettes and backgrounds.
-	lda SNESNMITMP
-	sta NMITIMEN
-	sta SNESNMITMP
+	; Disable, use IRQ
+	;lda SNESNMITMP
+	;sta NMITIMEN
+	;sta SNESNMITMP
 	
 	;; -----------------------------------------------
 	; Does nothing. Just here to help finding the end of the initialisation, and the call of the nes reset vector.

@@ -4,7 +4,7 @@
 .ORG 0
 .SECTION "Sprite0Init"
 
-;.DEFINE VBSTARTLINE  237  ; Should be 240 but gives an interrupt conflict in rti bank value
+.DEFINE VBSTARTLINE  240
 .DEFINE VBSTOPLINE     0
 
 .DEFINE SPRITEOYADD    5
@@ -27,15 +27,15 @@ ReadVcount:
 	sta VCOUNTL
 	rts
 
-
-; USELESS for now
-; This
+;------------------------------------------------------------------
+;
+; Initialises the IRQ for The Vblank flags but also NMI emulation
+;
 InitSprite0:
 	php		;Preserve registers
 	sep #$20	; A 8bits
 	pha
 	BREAK3
-
 	;
 	; Check if the sprite 0 hit flag is enabled (BG or sprites enabled)
 	;lda PPUcontrolreg2
@@ -52,41 +52,55 @@ InitSprite0:
 	and #$00FF
 	clc
 	adc #SPRITEOYADD
-	sta SPR0Line
+	sta IRQLineSPR0Y     ; Set the sprite 0 line
 
-	lda #VBSTOPLINE  ; VBlank ends
-	sta SPR0Y0
-	lda SPR0Line   ; Sprite 0 hits
-	sta SPR0Y1
+	lda #VBSTOPLINE      ; VBlank ends
+	sta IRQLineStart
+	lda IRQLineSPR0Y     ; Sprite 0 hits
+	sta IRQLineSPR0Y
 	lda #SOUNDEMULINE
-	sta SPR0Y2
-	;lda #VBSTARTLINE 
-	;sta SPR0Y3       ; VBlank starts
+	sta IRQLineSound
+	lda #VBSTARTLINE 
+	sta IRQLineVBlank    ; VBlank starts
 
 	jsr ReadVcount
-	rep #$20    ; A 16bits
+	rep #$20             ; A 16bits
 	lda VCOUNTL
 	; Is it greater or equal than VBlank line 240?
-	;cmp SPR0Y3
-	;bcs VblankEndPoint ; A >= 240
+	cmp IRQLineVBlank
+	bcs VblankStartPoint ; A >= 240
+
+	lda IRQLineSPR0Y
+	cmp IRQLineSound
+	bcs SoundPoint       ; Sprite y >= Sound line
+				         ; Sprite y < Sound line
+	lda VCOUNTL
 	; V >= Sprite0_Y
-	cmp SPR0Line
+	cmp IRQLineSPR0Y
 	bcs VblankEndPoint
 	; V < Sprite0_Y
 SpritePoint:
-	sep #$20	; A 8bits
-	lda SPR0Line
+	sep #$20	         ; A 8bits
+	lda IRQLineSPR0Y
+	jmp ProgramVcounter
+	
+SoundPoint:
+	lda VCOUNTL
+	cmp IRQLineSound
+	bcs VblankEndPoint
+	sep #$20             ; A 8bits	
+	lda IRQLineSound     ; next: sound
 	jmp ProgramVcounter
 
-VblankEndPoint:
-	sep #$20	; A 8bits	
-	lda #VBSTOPLINE ; VBlank
+VblankEndPoint:          ; Line 0
+	sep #$20             ; A 8bits	
+	lda IRQLineVBlank    ; next: VBlank
 	jmp ProgramVcounter
 
-;VblankStartPoint:
-;	sep #$20	; A 8bits	
-;	lda #VBSTARTLINE ; VBlank
-;	jmp ProgramVcounter
+VblankStartPoint:        ; > Line 240
+	sep #$20	         ; A 8bits
+	lda IRQLineStart     ; Next is line 0
+	jmp ProgramVcounter
 
 ProgramVcounter:
 	sta VTIMEL
@@ -108,22 +122,21 @@ EndInitSprite0:
 	rts		;Return to caller
 
 
-
 ; Updates the sprite zero flag only by reading to the counter
 updateSprite0Flag:
 	;
 	sep #$20    ; A 8bits
 	lda #$00
-	sta SPR0Line
+	sta IRQLineSPR0Y
 	lda SpriteMemoryBase + 1 ; sprite 0's Y
 	clc
 	adc #$05 ; Ack fixme
-	sta SPR0Line
+	sta IRQLineSPR0Y
 
 	; Read the vertical line counter position
 	jsr ReadVcount
 
-	cmp SPR0Line ; Compare to sprite 0's Y
+	cmp IRQLineSPR0Y ; Compare to sprite 0's Y
 	bcc Sprite0NotSet        ; If below, the sprite is not set
 	;cmp #260                 ; If above 260, it is pre render
 	;bcs Sprite0NotSet        ; Say it is pre render
@@ -150,40 +163,44 @@ Sprite0NotSet:
 ; Custom line where to proceed to APU emulation (sound registers updated), say line 150
 ;
 
+; Clears the flag and sets the nex interrupt on line 0
+ConfigureIRQForLine0:
+	lda HVIRQFLG    ; Vertical timer IRQ flag, cleared here
+	stz TMPVTIMEL   
+	stz VTIMEL      ; The next interrupt will be on line 0
+	stz VTIMEH
+	rts
+
 ; Called by the Native IRQ handler
 VCountHandler:
-	BREAK
 	sep #$20		; A 8b
 	pha
-	lda HVIRQFLG    ; Vertical timer IRQ flag, cleared here
-	and #$80        ; Get rid of the open bus value (MDR in bsnes emulator's source code)
-	bne continueWithIRQ
-	jmp HCountFlagCleared ; If not set, return to the interrupt routine to call the nes vector
-continueWithIRQ:
-	lda SNESNMITMP
-	and #%00100000  ; Check the V count interrupt enabled flag
-	bne continueWithIRQ2
-	jmp NoVcountIntEnabled
+	
+	;lda SNESNMITMP
+	;and #%00100000  ; Check the V count interrupt enabled flag
+	;bne continueWithIRQ2
+	;jmp NoVcountIntEnabled
+	
 continueWithIRQ2:
 	;---------------------------------------------------------
 	; Check the line of the interrupt
-	jsr ReadVcount
+	;jsr ReadVcount
 	rep #$20		; A 16bits
-	;lda SPR0Line
+	;lda IRQLineSPR0Y
 	;cmp #MAXSPR0Y   ; Check if sprite 0 Y is past 236
 	;bcs NoSprite0OnScreen
 	; Test sprite 0 line, it should be below the sound IRQ line
 	lda VCOUNTL
-	cmp SPR0Y1 ; SPR0LINE
+	cmp IRQLineSPR0Y ; SPR0LINE
 	bcs testSoundIRQLine ; A >= Spr0
 ;NoSprite0OnScreen:
 	; Test a second time in case sound line < sprite line
-	cmp SPR0Y2
+	cmp IRQLineSound
 	bcs SoundLine   ; A >= Sound Emu Line
 	jmp VBlankEnds       ; A <  Spr0
 	; Is it sound emulation time?
 testSoundIRQLine:
-	cmp SPR0Y2
+	cmp IRQLineSound
 	bcs SoundLine   ; A >= Sound Emu Line
 	;-----------------------------------
 	; A < Sound Emu Line && A >= Spr0Y
@@ -196,12 +213,12 @@ Sprite0Hits:
 	jmp PrepareSoundIRQ    ; If Zero, wait for the Sound interrupt
 spr0Sequence:
 	; Check if the sprite 0 is not off screen
-	lda SPR0Y1 ; Load the Byte
+	lda IRQLineSPR0Y ; Load the Byte
 	cmp #MAXSPR0Y ; Check if it is past 236
 	bcs SoundLine ; if Spr0Y > 236 wait for Sound Emulaiton IRQ
 	; Set the counter for the line where the APU register update to SPC700 is called
 	rep #$20		; A 16bits
-	lda SPR0Y2    ; The next interrupt will be on the sound update line from the 'ini' file
+	lda IRQLineSound    ; The next interrupt will be on the sound update line from the 'ini' file
 	sta TMPVTIMEL
 	sta VTIMEL
 	; Set the Sprite 0 flag bit to one
@@ -211,7 +228,7 @@ spr0Sequence:
 	sta PPUStatus   ; PPUSTATUS updated
 PrepareSoundIRQ:
 	rep #$20		; A 16bits
-	lda SPR0Y2      ;  Load Sound Emu line IRQ trigger
+	lda IRQLineSound      ;  Load Sound Emu line IRQ trigger
 	sta TMPVTIMEL
 	sta VTIMEL      ; The next interrupt will be on the sound update line from the 'ini' file
 	jmp VlineCheckEnds
@@ -219,7 +236,7 @@ SoundLine:
 	; Set the counter for the line where the APU register update to SPC700 is called
 	rep #$20		; A 16bits
 	
-	lda SPR0Y0      ;  Load Vblank stop as Vcount IRQ trigger
+	lda IRQLineVBlank  ;  Load Vblank start as Vcount IRQ trigger
 	sta TMPVTIMEL
 	sta VTIMEL      ; The next interrupt will be on the sound update line from the 'ini' file
 	; Call the update routine
@@ -228,13 +245,12 @@ SoundLine:
 ;VblankStarts:
 ;	; Set the counter for the VBlank end                 Moved to NMI interrupt
 ;	rep #$20		; A 16bits
-;	lda SPR0Y3
+;	lda IRQLineVBlank
 ;	sta TMPVTIMEL
 ;	sta VTIMEL      ; The next interrupt will be on the line 0, at the end of vblank
-;	; Set the Sprite 0 flag bit to one
-;	sep #$20		; A 8b
-;	lda PPUStatus
 ;	; Set the Vblank flag to one
+;	sep #$20		; A 8b
+	lda PPUStatus
 ;	ora #$80
 ;	sta PPUStatus ; PPUSTATUS updated
 ;	jmp VlineCheckEnds
@@ -246,11 +262,10 @@ VBlankEnds:
 	adc #SPRITEOYADD
 	; The next interrupt will be on the sprite zero Y position (0 to 255)
 	sta TMPVTIMEL
-	sta SPR0Line
-	sta SPR0Y1
-	cmp SPR0Y2      ; Compare to the sound interrupt line
+	sta IRQLineSPR0Y
+	cmp IRQLineSound      ; Compare to the sound interrupt line
 	bcc useSpr0Line ; If below then it will be the next IRQ
-	lda SPR0Y2      ; else it is the sound line
+	lda IRQLineSound      ; else it is the sound line
 useSpr0Line:
 	sta VTIMEL
 	stz VTIMEH
@@ -261,19 +276,6 @@ useSpr0Line:
 	sep #$20		; A 8b
 	stz PPUStatus   ; PPUSTATUS updated
 HCountFlagCleared:
-	jmp VlineCheckEnds
-NoVcountIntEnabled:
-	; It should not be here
-	; Clear the flag in the register
-	;lda NMIFLAG ; ????
-	sep #$20		; A 8b
-	lda HVIRQFLG
-	stz VTIMEL
-	stz VTIMEH	
-	lda SNESNMITMP
-	and #$81 ; Disable the timers
-	sta NMITIMEN
-	sta SNESNMITMP
 VlineCheckEnds:
 	sep #$20		; A 8b
 	pla
