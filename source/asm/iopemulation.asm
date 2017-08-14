@@ -169,7 +169,11 @@ WPPUC1:
 ;	sta PPUcontrolreg1   ; Save the written value
 	;----------------------------------------------------------
 	; Update the scroll register bit 8
+.IFDEF VETICALSCROLLING
+    jsr UpdateVScroll
+.ELSE
 	jsr UpdateHScroll
+.ENDIF
 	;
 NoScrollChange:
 ;	txa
@@ -184,10 +188,15 @@ NoScrollChange:
     ;sta BG1SC
 	;jmp endnametableaddress
 firstnametableaddress:
-	; Always on bank 0 and add this bit to the scrolling ergister
+.IFDEF VETICALSCROLLING
+    lda #$02             ; Vertical scrolling
+    sta BG1SC
+.ELSE
+	; Always on bank 0 and add this bit to the scrolling register
     lda #$00             ; (1k word segment $0000)
 	ora #$01             ; Right screen following the first one
     sta BG1SC
+.ENDIF
 endnametableaddress:
 	;; ------------------------------------------
 	lda tmpPPUcontrolreg1
@@ -631,8 +640,12 @@ forg2:
 	bcs ignorescrollvalue	
 	; Update vscroll only during vblank?
 	;lda NESVSCROLL
+.IFDEF VETICALSCROLLING
+    jsr UpdateVScroll
+.ELSE
 	sta BG1VOFS             ; This register must be written twice
 	stz BG1VOFS 		    ; High byte is 0
+.ENDIF
 	jmp chgscrollregister
 horizontal_scroll:
 	sep #$30		; All 8b
@@ -669,7 +682,12 @@ forg1:
 	;----------------------------------------------------------
 	; Change the horisontal scroll values
 	stx NESHSCROLL
+.IFDEF VETICALSCROLLING
+	sta BG1HOFS             ; This register must be written twice
+	stz BG1HOFS 		    ; High byte is 0
+.ELSE
 	jsr UpdateHScroll
+.ENDIF
 ignorescrollvalue:          ; ignore the value but change the register state
 chgscrollregister:
 	lda WriteToggle
@@ -680,11 +698,28 @@ chgscrollregister:
 SetSCrollRegister:
 	rts
 
+.IFDEF VETICALSCROLLING
+UpdateVScroll:
+	pha
+	stx XsavScroll
+	ldx NESVSCROLL
+	lda tH                  ; Load the tmp register
+	and #$0C
+	beq BanlYScroll
+	lda #$01
+	jmp Ban2YScroll	
+BanlYScroll:
+	lda #$00
+Ban2YScroll:
+	stx BG1VOFS		        ; This register must be written twice
+	sta BG1VOFS 		    ; High byte's lower bit comes from PPU control 1 lower bit when scrolling horizontally	
+	ldx XsavScroll
+	pla
+	rts
+.ELSE
 UpdateHScroll:
 	pha
 	stx XsavScroll
-	lda tH
-	and #$0C
 	ldx NESHSCROLL
 	lda tH                  ; Load the tmp register
 	and #$0C
@@ -699,6 +734,7 @@ Ban2XScroll:
 	ldx XsavScroll
 	pla
 	rts
+.ENDIF
 
 ; ------+-----+---------------------------------------------------------------
 ; $2006 | W   | PPU Memory Address
@@ -811,7 +847,6 @@ WPPUMEMDATA:
 	sep #$20		; A 8bit
 .ENDM
 
-
 	;; -------------------------------------------------------------------------
 	;;  Converts an attribute address to a VRAM address start of a 4x4 block
 ppuAttrAddToVram:
@@ -828,9 +863,15 @@ ppuAttrAddToVram:
 	tax
 	; Add the bank @
 	sep #$20		; A 8bits
+.IFDEF VETICALSCROLLING
+	lda #$08
+	bit PPUmemaddrH
+	beq AttBank1
+.ELSE
 	lda PPUmemaddrH
 	and #$04 ; Look at bit 2 for BANK 1 or 2
 	beq AttBank1
+.ENDIF
 AttrBank2:	
 	rep #$20		; A 16bits
 	txa
@@ -1016,9 +1057,26 @@ NametableW:
 	; Store the byte
 	;; -----------------------------------
 	tay
+.IFDEF VETICALSCROLLING
+	; The upper bank is at $2800 or $2C00 and not $2400
+	lda #$08
+	bit PPUmemaddrH
+	bne NameBank2
 	rep #$30		; A X Y 16bits
 	lda PPUmemaddrL
 	and #$07FF		; Lower address value
+	bra WriteName
+NameBank2:
+	rep #$30		; A X Y 16bits
+	lda PPUmemaddrL
+	and #$07FF		; Lower address value
+	ora #$0400
+WriteName:
+.ELSE
+	rep #$30		; A X Y 16bits
+	lda PPUmemaddrL
+	and #$07FF		; Lower address value
+.ENDIF
 	; The adress is in word count (should be $(3/7)000 to $(3/7)003F)
 	tax
 	sep #$20		; A 8bits
@@ -1142,10 +1200,27 @@ NametableR:
 	rep #$10        ; X Y are 16bits
 	lda PPUReadLatch
 	bne LatchedNameValue
-	; Store the byte
-	rep #$20		; A 16bits
+	; Get the byte
+.IFDEF VETICALSCROLLING
+	; The upper bank is at $2800 or $2C00 and not $2400
+	lda #$08
+	bit PPUmemaddrH
+	bne NameRBank2
+	rep #$30		; A X Y 16bits
 	lda PPUmemaddrL
 	and #$07FF		; Lower address value
+	bra ReadName
+NameRBank2:
+	rep #$30		; A X Y 16bits
+	lda PPUmemaddrL
+	and #$07FF		; Lower address value
+	ora #$0400
+ReadName:
+.ELSE
+	rep #$30		; A X Y 16bits
+	lda PPUmemaddrL
+	and #$07FF		; Lower address value
+.ENDIF
 	tax
 	sep #$20		; A 8bits
 	lda NametableBaseBank1,X

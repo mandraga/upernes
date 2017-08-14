@@ -251,6 +251,7 @@ PrepareSoundIRQFromSpr0:
 	sep #$20		   ; A 8bits
 	; Check if sprite Zero is enabled
 	lda PPUcontrolreg2
+	and #%00011000
 	cmp #%00011000     ; $18 Test if BG and sprites enabled
 	bne SetSoundIRQ    ; If Zero, wait for the Sound interrupt
 Sprite0Hits:

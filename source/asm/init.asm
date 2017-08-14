@@ -132,8 +132,13 @@ waitMore:
 	; BG1 tilemap (fusion of the "nes name table + attibute tables")
 	; Set tile map address (Addr >> 11) << 2
 	sep #$30		;  All 8bits
-	lda #$00		; (1k word segment at $0000)
-	sta BG1SC       ;  the two lower bits are the screen size and are set to 00 : only one screen
+.IFDEF VETICALSCROLLING
+    lda #$02             ; Vertical scrolling
+    sta BG1SC
+.ELSE
+    lda #$01             ; Horizontal scrolling
+    sta BG1SC
+.ENDIF
 	
 	; Initialises the nes port emulation vars
 	;; -----------------------------------------------
