@@ -19,17 +19,30 @@ NesBackgroundCHRtoVram:
 	lda #$80
 	sta VMAINC
 	; --------------------------
-	; First 4k
+	; First 4k (nes chr bank 0 @ $0000 in nes ppu address space)
 	; --------------------------
 	ldx #SPRITECHRBASE
 	stx VMADDL		; Word address $1000 (= $2000 bytes)
 	ldx #$0000
 	ldy #$0100		; 256 8x8 tiles
 	jsr copySPRchr
+
+	ldx #BGCHRBASE
+	stx VMADDL		; Word address $3000 (= $6000 bytes)
+	ldx #$0000		; Offset in CHR data
+	ldy #$0100		; 256 8x8 tiles
+	jsr copyBGchr
+	
 	; --------------------------
 	; Second 4k (nes chr bank 1 @ $1000 in nes ppu address space)
 	; --------------------------
-	ldx #BGCHRBASE
+	ldx #(SPRITECHRBASE + $2000)
+	stx VMADDL		; Word address $1000 (= $2000 bytes)
+	ldx #$1000
+	ldy #$0100		; 256 8x8 tiles
+	jsr copySPRchr
+
+	ldx #(BGCHRBASE + $1000)
 	stx VMADDL		; Word address $3000 (= $6000 bytes)
 	ldx #$1000		; Offset in CHR data
 	ldy #$0100		; 256 8x8 tiles
@@ -68,7 +81,8 @@ charloop:
 	rts
 
 ;; --------------------------------------------------------------------------
-
+;	X VRAM @
+;	Y 8x8 tile number
 copySPRchr:
 Stileloop:
 	phy
@@ -99,6 +113,7 @@ clr16loop:
 	dey
 	bne Stileloop		; > 0 then branch
 	rts
+
 
 ;; --------------------------------------------------------------------------
 

@@ -35,7 +35,6 @@ InitSprite0:
 	php		;Preserve registers
 	sep #$20	; A 8bits
 	pha
-	BREAK3
 	;
 	; Check if the sprite 0 hit flag is enabled (BG or sprites enabled)
 	;lda PPUcontrolreg2

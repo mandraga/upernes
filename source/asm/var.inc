@@ -232,6 +232,9 @@
 .DEFINE SprCHRInit               2
 .DEFINE SpriteCHRChg            IOBASE + 48  ; Sprite chr has not changed
 
+; If commented, the sprite data could be messed up by VRAM@ changes
+.DEFINE USE2SPRCHRBUFFERS      ; Uncoment to remove sprite CHR updates on bank change (usend in pinbal.nes)
+
 ;;;.DEFINE ColumnUpdateFlags       IOBASE + 49  ; 8 bytes to update the colums of the 2 banks
 ;;;.DEFINE UpdateCtr               IOBASE + 57  ;
 ;;;.DEFINE ColumnTableLo           IOBASE + 58  ;
@@ -305,7 +308,7 @@
 .DEFINE TEXTNAMEBASE            $1800
 .DEFINE SPRITECHRBASE           $2000  ; OBSEL has 8K granularity
 
-.DEFINE BGCHRBASE               $3000
+.DEFINE BGCHRBASE               $6000
 
 
 

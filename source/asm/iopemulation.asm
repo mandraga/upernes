@@ -136,6 +136,7 @@ WPPUC1:
 	;cmp PPUcontrolreg1 	; Anything changed?
 	;bne testPPUCtrl1Chg
 	;jmp vblankend
+	BREAK
 	sta tmpPPUcontrolreg1
 	;sta PPUcontrolreg1   ; Save the written value
 ;testPPUCtrl1Chg:
@@ -204,11 +205,27 @@ endnametableaddress:
 	beq Spritebankend
 	lda #SprCHRB1
 	sta SpriteCHRChg
-	;; Do a conversion in the WRAM and then a DMA transfert to $0000 in vram
-	lda #$00		;; TODO use a table to organise the sprite buffers as a cache
-	ldy #$00
-	jsr NesSpriteCHRtoWram
-	jsr DMA_WRAMtoVRAM_sprite_bank
+	;;; Do a conversion in the WRAM and then a DMA transfert to $0000 in vram
+	;lda #$00		;; TODO use a table to organise the sprite buffers as a cache
+	;ldy #$00
+	;jsr NesSpriteCHRtoWram
+	;jsr DMA_WRAMtoVRAM_sprite_bank
+.IFDEF USE2SPRCHRBUFFERS
+	lda #$01        ; 8kW
+	sta OBSEL       ; Sprite CHR base address
+.ELSE
+	phb
+	lda #:NESCHR		; Bank of the CHR data
+	pha
+	plb			; Data Bank Register = A
+	rep #$10		; X/Y = 16 bit
+	ldx #SPRITECHRBASE
+	stx VMADDL		; Word address $1000 (= $2000 bytes)
+	ldx #$0000
+	ldy #$0100		; 256 8x8 tiles
+	jsr copySPRchr
+	plb
+.ENDIF
 	jmp Spritebankend
 Spritesinsecondbank:
 	; Update the bank
@@ -218,10 +235,27 @@ Spritesinsecondbank:
 	lda #SprCHRB2
 	sta SpriteCHRChg
 	; Bank 2 update
-	lda #$01
-	ldy #$01
-	jsr NesSpriteCHRtoWram
-	jsr DMA_WRAMtoVRAM_sprite_bank
+	;lda #$01
+	;ldy #$01
+	;jsr NesSpriteCHRtoWram
+	;jsr DMA_WRAMtoVRAM_sprite_bank
+.IFDEF USE2SPRCHRBUFFERS
+	lda #$02        ; 16kW
+	sta OBSEL       ; Sprite CHR base address
+.ELSE
+; Should use DMA otherwise the VRAM address is messed up
+	phb
+	lda #:NESCHR		; Bank of the CHR data
+	pha
+	plb			; Data Bank Register = A
+	rep #$10		; X/Y = 16 bit
+	ldx #SPRITECHRBASE
+	stx VMADDL		; Word address $1000 (= $2000 bytes)
+	ldx #$1000
+	ldy #$0100		; 256 8x8 tiles
+	jsr copySPRchr
+	plb
+.ENDIF
 	jmp Spritebankend
 Spritebankend:
 	sep #$30		; All 8 bit
@@ -229,14 +263,15 @@ Spritebankend:
 	sta PPUcontrolreg1
 	;; ------------------------------------------
 	;; Test Screen Pattern Table Address (BG chr 4kB bank 0 or 1)
-	lda #$10 ; FIXME it should be bit 0?
+	BREAK2
+	lda #$10  ; Test bit 4
 	bit PPUcontrolreg1
 	bne secondbgchrbank
-	lda #$02		; 0x0002 -> 4kWord=8kB segment 2
+	lda #$06		; 0x0002 -> 4kWord=8kB segment 6
 	sta BG12NBA		; CHR data in VRAM starts at 0x2000
 	jmp BGbankend
 secondbgchrbank:
-	lda #$03		; 0x0003 -> 4kWord=8kB segment 3
+	lda #$07		; 0x0003 -> 4kWord=8kB segment 7
 	sta BG12NBA		; CHR data in VRAM starts at 0x3000
 BGbankend:
 	;; ------------------------------------------
@@ -252,7 +287,6 @@ BGbankend:
 	beq novblank
 	; Vblank interrupt enabled
 	lda #$01
-	BREAK4
 	sta NESNMIENABLED
 	;lda SNESNMITMP
 	;ora #$80
@@ -261,7 +295,6 @@ BGbankend:
 	jmp vblankend
 novblank:
 	; Vblank interrupt disabled
-	BREAK4
 	stz NESNMIENABLED
 	;lda SNESNMITMP
 	; Th snes VBLANK interrupt is still firing, but it returns after a few updates!!!!!!!!!!!!!
@@ -652,7 +685,6 @@ UpdateHScroll:
 	stx XsavScroll
 	lda tH
 	and #$0C
-	;BREAK2
 	ldx NESHSCROLL
 	lda tH                  ; Load the tmp register
 	and #$0C

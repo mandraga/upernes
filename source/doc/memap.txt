@@ -134,20 +134,18 @@ $1000
   Ascii nametable 4KB 2KW   $0800
 ------------------------
 $2000 Word @  8KW           $2000
-  SPRITE 4bpp CHR 16KB 8KW
+  SPRITE 4bpp CHR 16KB 8KW CHR Bank1
 ------------------------
 $4000 Word @ 16KW
-  BG CHR          4KB 2kW
-  - Empty -       4KB 2KW
-  BG CHR          4KB 2kW
-  - Empty -       4KB 2KW
+  SPRITE 4bpp CHR 16KB 8KW CHR Bank2
 ------------------------
 $6000 Word @ 24KW
-  - Empty -       8KB 4KW
+  BG CHR          4KB 2kW  CHR Bank1
+  - Empty -       4KB 2KW
 $7000
+  BG CHR          4KB 2kW  CHR Bank2
   - Empty -       4KB 2KW
-  - Empty -       4KB 2KW
-$7FFF
+ $7FFF
 ------------------------
 
 Snes OAM:
