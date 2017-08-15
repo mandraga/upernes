@@ -136,7 +136,6 @@ WPPUC1:
 	;cmp PPUcontrolreg1 	; Anything changed?
 	;bne testPPUCtrl1Chg
 	;jmp vblankend
-	BREAK
 	sta tmpPPUcontrolreg1
 	;sta PPUcontrolreg1   ; Save the written value
 ;testPPUCtrl1Chg:
@@ -272,15 +271,14 @@ Spritebankend:
 	sta PPUcontrolreg1
 	;; ------------------------------------------
 	;; Test Screen Pattern Table Address (BG chr 4kB bank 0 or 1)
-	BREAK2
 	lda #$10  ; Test bit 4
 	bit PPUcontrolreg1
 	bne secondbgchrbank
-	lda #$06		; 0x0002 -> 4kWord=8kB segment 6
+	lda #$06		; 0x0006 -> 4kWord=8kB segment 6
 	sta BG12NBA		; CHR data in VRAM starts at 0x2000
 	jmp BGbankend
 secondbgchrbank:
-	lda #$07		; 0x0003 -> 4kWord=8kB segment 7
+	lda #$07		; 0x0007 -> 4kWord=8kB segment 7
 	sta BG12NBA		; CHR data in VRAM starts at 0x3000
 BGbankend:
 	;; ------------------------------------------
@@ -1521,10 +1519,12 @@ RJOYSTICK1:
 ;      | 2-5 | Unused, set to 000 (???)
 ;      | 6-7 | Unknown, set to 10 (???)
 ;------+-----+---------------------------------------------------------------
+; Read on the joystick
 RJOYSTICK2:
 	sep #$20	; A 8b
-	lda $4016
-	rol A		; Paddle 2 bit goes from bit 1 to bit 0
+	lda $4017
 	ora #$40	; bits 7-6 set to 01
 	RETR
+
+
 .ENDS

@@ -242,7 +242,7 @@ PrepareSoundIRQFromVblanEnd:
 	sep #$20		   ; A 8b
 	stz PPUStatus      ; PPUSTATUS updated
 	rep #$20		   ; A 16bits
-	lda IRQLineSound   ;  Load Sound Emu line IRQ trigger
+	lda IRQLineSound   ; Load Sound Emu line IRQ trigger
 	sta TMPVTIMEL
 	jmp SetIRQCounter
 	;---------------------------------------------------------

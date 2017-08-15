@@ -139,6 +139,7 @@ WSNDDMCSLEN:
 ;       |   7 | mode: 0:4step squence; 1:5step sequence
 
 WSNDSEQUENCER:
+	; ???? It should be in use
 	RETW
 	
 	

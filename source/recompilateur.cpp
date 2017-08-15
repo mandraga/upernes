@@ -121,11 +121,11 @@ int Crecompilateur::isreplaced(t_pinstr pinstr, Copcodes *popcode_list)
     case IndX:
     case IndY:
       addr = pinstr->operand;
-      if (IS_PORT(addr) && addr != JOYSTICK1)
+      if (IS_PORT(addr) && addr != JOYSTICK1 /*&& addr != JOYSTICK2_SNDSEQUENCER*/)
 	{
 	  return replaceIOPort;
 	}
-      if (IS_PORT_RANGE(addr) && addr != JOYSTICK1)
+      if (IS_PORT_RANGE(addr) && addr != JOYSTICK1 /*&& !(addr == JOYSTICK2_SNDSEQUENCER && pinstr->type == read)*/)
 	{
 	  snprintf(m_error_str, sizeof(m_error_str),
 		   "unknown Io port $%4X", addr);

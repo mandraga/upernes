@@ -72,7 +72,6 @@ FastHandler:
 	;-----------------------------------
 	; Vblank bit update
 	sep #$20		; A 8b
-	BREAK2
 	lda PPUStatus
 	; Set the Vblank flag to one
 	ora #$80
