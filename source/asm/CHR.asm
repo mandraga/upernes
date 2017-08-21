@@ -21,7 +21,7 @@ NesBackgroundCHRtoVram:
 	; --------------------------
 	; First 4k (nes chr bank 0 @ $0000 in nes ppu address space)
 	; --------------------------
-	ldx #SPRITECHRBASE
+	ldx #(SPRITECHRBASE + $1000)
 	stx VMADDL		; Word address $1000 (= $2000 bytes)
 	ldx #$0000
 	ldy #$0100		; 256 8x8 tiles

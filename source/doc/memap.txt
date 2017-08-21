@@ -133,13 +133,17 @@ $1000
   Ascii tiles     4KB 2KW   $1000 ascii table CHR 2K
   Ascii nametable 4KB 2KW   $0800
 ------------------------
-$2000 Word @  8KW           $2000
-  SPRITE 4bpp CHR 16KB 8KW CHR Bank1
+$2000 Word @ 16KW           $2000      OAM base
+  - Empty -       8KB 4KW              N is 1 in sprite flags
+  SPRITE 4bpp CHR 8KB 4KW CHR Bank1
 ------------------------
 $4000 Word @ 16KW
-  SPRITE 4bpp CHR 16KB 8KW CHR Bank2
+  SPRITE 4bpp CHR 8KB 4KW CHR Bank2
+  SPRITE 4bpp CHR 8KB 4KW CHR Bank3
+  SPRITE 4bpp CHR 8KB 4KW CHR Bank4
+  - Empty -       8KB 4KW
 ------------------------
-$6000 Word @ 24KW
+$6000 Word @ 16KW
   BG CHR          4KB 2kW  CHR Bank1
   - Empty -       4KB 2KW
 $7000

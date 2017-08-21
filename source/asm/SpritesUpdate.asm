@@ -75,7 +75,8 @@ convert_sprflags_to_snes:
 	and #$E0		; Keep vh and 0
 	eor #$30  ; On the nes: 0 for front or 1 for back. On the Snes 2 or 3 for front or 0 for back of BG 1.  Reverse the value
 	;ora #$30 ; Force to max prior
-	ora PPTMP		; Add pp
+	ora PPTMP	    ; Add pp
+	ora #$01        ; N bit, index the sprite tables
 	;; o (priority flag) will be 2 or 0. If 1 the sprite will be above BG3 and 4
 	;; maximum priority: 3 = over everything but the printf BG must be on top, so use 2
 	; force priority lda #$34

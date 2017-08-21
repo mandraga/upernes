@@ -219,8 +219,11 @@ endnametableaddress:
 	;jsr NesSpriteCHRtoWram
 	;jsr DMA_WRAMtoVRAM_sprite_bank
 .IFDEF USE2SPRCHRBUFFERS
-	lda #$01        ; 8kW
+	lda OBSELTMP
+	and #$E7        ; Clear the name select flags
+	;ora #$00        ; Name 1
 	sta OBSEL       ; Sprite CHR base address
+	sta OBSELTMP
 .ELSE
 	phb
 	lda #:NESCHR		; Bank of the CHR data
@@ -242,20 +245,24 @@ Spritesinsecondbank:
 	beq Spritebankend
 	lda #SprCHRB2
 	sta SpriteCHRChg
+	BREAK2
 	; Bank 2 update
 	;lda #$01
 	;ldy #$01
 	;jsr NesSpriteCHRtoWram
 	;jsr DMA_WRAMtoVRAM_sprite_bank
 .IFDEF USE2SPRCHRBUFFERS
-	lda #$02        ; 16kW
+	lda OBSELTMP
+	and #$E7        ; Clear the name select flags
+	ora #$08        ; Name 2
 	sta OBSEL       ; Sprite CHR base address
+	sta OBSELTMP
 .ELSE
 ; Should use DMA otherwise the VRAM address is messed up
 	phb
-	lda #:NESCHR		; Bank of the CHR data
+	lda #:NESCHR	; Bank of the CHR data
 	pha
-	plb			; Data Bank Register = A
+	plb			    ; Data Bank Register = A
 	rep #$10		; X/Y = 16 bit
 	ldx #SPRITECHRBASE
 	stx VMADDL		; Word address $1000 (= $2000 bytes)
@@ -267,6 +274,29 @@ Spritesinsecondbank:
 	jmp Spritebankend
 Spritebankend:
 	sep #$30		; All 8 bit
+	lda PPUcontrolreg1
+	;; ------------------------------------------
+	; 5 | Sprite Size, 1 = 8x16, 0 = 8x8.
+	eor tmpPPUcontrolreg1
+	and #$20
+	beq EndSprSizeChange
+	lda #$20
+	bit tmpPPUcontrolreg1
+	bne SetSPR16
+	; Spr 8x8
+	lda OBSELTMP
+	and #$1F        ; Clear the size select flags
+	sta OBSEL
+	sta OBSELTMP
+	jmp EndSprSizeChange
+SetSPR16:
+	; Spr 8x16
+	lda OBSELTMP
+	and #$1F        ; Clear the size select flags
+	ora #$60
+	sta OBSEL
+	sta OBSELTMP
+EndSprSizeChange:
 	lda tmpPPUcontrolreg1
 	sta PPUcontrolreg1
 	;; ------------------------------------------

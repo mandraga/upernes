@@ -82,6 +82,7 @@ eraseNesRamLoop:
 	jsr ClearOAMHposMSB
 	sep #$30		; All 8bit
 	lda #$01        ; 8kW
+	sta OBSELTMP
 	sta OBSEL       ; Sprite base address for object data at 8kw (1 * 8k), OBJ size 8/16
 
 	; Move the last 64 sprites to a corner

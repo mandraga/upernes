@@ -33,7 +33,8 @@
 
 .DEFINE HCOUNTERL          RAMBASE + 21
 .DEFINE HCOUNTERH          RAMBASE + 22
-;.DEFINE TMPVCOUNTL         RAMBASE + 23
+
+.DEFINE OBSELTMP           RAMBASE + 23
 ;.DEFINE TMPVCOUNTH         RAMBASE + 24
 
 .DEFINE NESNMIENABLED      RAMBASE + 25 ; Nes NMI enabled, the snes NMI should always be on, and call the nes NMI only when this flag is set.
