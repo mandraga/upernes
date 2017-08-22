@@ -22,99 +22,94 @@ PrecalculateJumpTable:
 	pha
 	plb
 	;; ---------------------------------------------------------------------------
-	; Add the routines for Pattern Table 0 and 1 from 0 to $2000 >> 2 == $0800
-	rep #$30 ; All 16bits
+	; Add the routines for Pattern Table 0 and 1 from 0 to $2000 >> 3 == $0400
+	rep #$10 ; X Y 16bits
 	ldx #0000
 InitPatternJumps:
-	lda #emptyW ; This is assumed to be a ROM
+	sep #$20 ; A 8bits
+	lda #IemptyW ; This is assumed to be a ROM
 	sta WRamPPUADDRJmps, X
-	lda #CHRDataR
-	sta WRamPPUADDRJmps + 2, X
+	lda #ICHRDataR
+	sta WRamPPUADDRJmps + 1, X
 	inx
 	inx
-	inx
-	inx
+	rep #$20 ; A 16bits
 	txa
-	cmp #$0800 
+	cmp #$0400
 	bne InitPatternJumps
 	;; ---------------------------------------------------------------------------
 	; Add the routines for Name Table 1 from $2000 to $23C0
 	ldx #0000
 InitName1Jmps:
-	lda #NametableW
-	sta WRamPPUADDRJmps + $0800, X
-	lda #NametableR
-	sta WRamPPUADDRJmps + $0802, X
+	sep #$20 ; A 8bits
+	lda #INametableW
+	sta WRamPPUADDRJmps + $0400, X
+	lda #INametableR
+	sta WRamPPUADDRJmps + $0401, X
 	inx
 	inx
-	inx
-	inx
+	rep #$20 ; A 16bits
 	txa
-	cmp #$00F0   ; $03C0 >> 2
+	cmp #$0078   ; $03C0 >> 3
 	bne InitName1Jmps
 	;; ---------------------------------------------------------------------------
 	; Add the routines for Attribute Table 1 from $23C0 to $3000
 	ldx #0000
 InitAttr1Jmps:
-	lda #AttrtableW
-	sta WRamPPUADDRJmps + $08F0, X
-	lda #AttrtableR
-	sta WRamPPUADDRJmps + $08F2, X
+	sep #$20 ; A 8bits
+	lda #IAttrtableW
+	sta WRamPPUADDRJmps + $0478, X
+	lda #IAttrtableR
+	sta WRamPPUADDRJmps + $0479, X
 	inx
 	inx
-	inx
-	inx
+	rep #$20 ; A 16bits
 	txa
-	cmp #$0010   ; $0400 - $03C0 = $40     $40 >> 2 = 10
+	cmp #$0008   ; $0400 - $03C0 = $40     $40 >> 3 = 08
 	bne InitAttr1Jmps
 	;; ---------------------------------------------------------------------------
 	; Copy the routines for NameTables2/Attr2 from the first nametable&attributes bank
+	rep #$20 ; A 16bits
 	ldx #0000
 InitName234Jmps:
-	lda WRamPPUADDRJmps + $0800, X  ; $0400 >> 2 = $0100
-	sta WRamPPUADDRJmps + $0900, X  ; NameTables2/Attr2
-	sta WRamPPUADDRJmps + $0A00, X  ; NameTables3/Attr3
-	sta WRamPPUADDRJmps + $0B00, X  ; NameTables4/Attr4
-	lda WRamPPUADDRJmps + $0802, X
-	sta WRamPPUADDRJmps + $0902, X
-	sta WRamPPUADDRJmps + $0A02, X
-	sta WRamPPUADDRJmps + $0B02, X
-	inx
-	inx
+	lda WRamPPUADDRJmps + $0400, X  ; $0400 >> 2 = $0100
+	sta WRamPPUADDRJmps + $0480, X  ; NameTables2/Attr2
+	sta WRamPPUADDRJmps + $0500, X  ; NameTables3/Attr3
+	sta WRamPPUADDRJmps + $0580, X  ; NameTables4/Attr4
 	inx
 	inx
 	txa
-	cmp #$0100   ; $0400 >> 2
+	cmp #$0080   ; $0400 >> 3
 	bne InitName234Jmps
 	;; ---------------------------------------------------------------------------
 	; Add the routines for the empty range from $3000 to $4000 (not counting the palette)
 	ldx #0000
 InitEmpyJmps:
-	lda #emptyW
-	sta WRamPPUADDRJmps + $0C00, X  ; $3000 >> 2 = $0C00
-	lda #emptyR
-	sta WRamPPUADDRJmps + $0C02, X
+	sep #$20 ; A 8bits
+	lda #IemptyW
+	sta WRamPPUADDRJmps + $0600, X  ; $3000 >> 3 = $0600
+	lda #IemptyR
+	sta WRamPPUADDRJmps + $0601, X
 	inx
 	inx
-	inx
-	inx
+	rep #$20 ; A 16bits
 	txa
-	cmp #$0400   ; $1000 >> 2
+	cmp #$0200   ; $1000 >> 3
 	bne InitEmpyJmps
 	;; ---------------------------------------------------------------------------
 	; Add the palette routines on top of it
 	ldx #0000
 InitPaletteJmps:
-	lda #paletteW
-	sta WRamPPUADDRJmps + $0FC0, X  ; $3F00 >> 2 = $0FC0
-	lda #paletteR
-	sta WRamPPUADDRJmps + $0FC2, X
+	sep #$20 ; A 8bits
+	lda #IpaletteW
+	sta WRamPPUADDRJmps + $07E0, X  ; $3F00 >> 3 = $07E0
+	lda #IpaletteR
+	sta WRamPPUADDRJmps + $07E1, X
 	inx
 	inx
-	inx
-	inx
+	rep #$20 ; A 16bits
 	txa
-	cmp #$0008   ; $0020 >> 2
+	cmp #$0004   ; $0020 >> 3
 	bne InitPaletteJmps
 	;; ---------------------------
 	plb ; Restore the Data bank

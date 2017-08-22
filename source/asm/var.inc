@@ -261,7 +261,7 @@
 ;--------------------------------------------------------------------
 .DEFINE SpriteMemoryBase		$0A00       ; 256 bytes
 
-.DEFINE NametableChanges        $0B00       ; 256 bytes, the changed bytes in the nametables, up to 128 names.
+.DEFINE SpriteMemoryBaseTmp		$0A00       ; 256 bytes
 
 ;--------------------------------------------------------------------
 ; String buffer
@@ -293,13 +293,24 @@
 .DEFINE NAMETABLEINTERVAL       $0400
 
 .DEFINE WRamBank                $7F
-.DEFINE WRamPPUADDRJmps         $4000       ; Jump tables for all the PPU routines (PPU @ space size / 16 in word @ = $400 word@ = $800 bytes 2kBytes)
-.DEFINE WRamPPUADDRJmpsLI     $7F4000       ; Long indexed value of the same @
+.DEFINE WRamPPUADDRJmps         $2000       ; Jump tables for all the PPU routines (PPU @ space size / 16 in word @ = $400 word@ = $800 bytes 2kBytes)
+.DEFINE WRamPPUADDRJmpsLI     $7F2000       ; Long indexed value of the same @
 .DEFINE PPUADDRJmps             $400
 
-.DEFINE WRamSpriteFlagConvLI  $7F7000       ; 256 Bytes of nes to snes sprite flags conversion <- could be in rom
+.DEFINE	IemptyW      0
+.DEFINE	IemptyR      2
+.DEFINE	ICHRDataW    4
+.DEFINE	ICHRDataR    6
+.DEFINE	INametableW  8
+.DEFINE	INametableR  10
+.DEFINE	IAttrtableW  12
+.DEFINE	IAttrtableR  14
+.DEFINE	IpaletteW    16
+.DEFINE	IpaletteR    18
 
-.DEFINE WRamAttAddrConv       $7F7100       ; 128 bytes to store the conversion from attribute table to VRAM 4x4 block @
+.DEFINE WRamSpriteFlagConvLI  $7F5000       ; 256 Bytes of nes to snes sprite flags conversion <- could be in rom
+
+.DEFINE WRamAttAddrConv       $7F5100       ; 128 bytes to store the conversion from attribute table to VRAM 4x4 block @
 
 ;--------------------------------------------------------------------
 ;               SNES VRAM defines (WORD addresses)
@@ -312,4 +323,19 @@
 .DEFINE BGCHRBASE               $6000
 
 
+;--------------------------------------------------------------------
+;               native/emmulation macros
+;--------------------------------------------------------------------
+
+.MACRO NATIVE
+	sei         ; disable interrupts, because we do not want any interrupt in the native mode
+	clc			; native 65816 mode
+	xce
+.ENDM
+
+.MACRO EMULATION
+	sec			; 6502 emulation mode
+	xce
+	; Any call to sta lda sti will restore the status register and hence interrupt mask bit
+.ENDM
 

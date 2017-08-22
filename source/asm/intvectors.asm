@@ -19,20 +19,6 @@
 
 ; ============================================
 
-.MACRO NATIVE
-	sei         ; disable interrupts, because we do not want any interrupt in the native mode
-	clc			; native 65816 mode
-	xce
-.ENDM
-
-.MACRO EMULATION
-	sec			; 6502 emulation mode
-	xce
-	; Any call to sta lda sti will restore the status register and hence interrupt mask bit
-.ENDM
-
-; ============================================
-
 ;.BASE $80 ; Fast ROM
 
 .BANK 0 SLOT 0

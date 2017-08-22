@@ -245,7 +245,6 @@ Spritesinsecondbank:
 	beq Spritebankend
 	lda #SprCHRB2
 	sta SpriteCHRChg
-	BREAK2
 	; Bank 2 update
 	;lda #$01
 	;ldy #$01
@@ -274,29 +273,30 @@ Spritesinsecondbank:
 	jmp Spritebankend
 Spritebankend:
 	sep #$30		; All 8 bit
-	lda PPUcontrolreg1
+	; Sprites are always 8bit because the nes 8x16 sprites do not exist on the snes.
+;	lda PPUcontrolreg1
 	;; ------------------------------------------
 	; 5 | Sprite Size, 1 = 8x16, 0 = 8x8.
-	eor tmpPPUcontrolreg1
-	and #$20
-	beq EndSprSizeChange
-	lda #$20
-	bit tmpPPUcontrolreg1
-	bne SetSPR16
-	; Spr 8x8
-	lda OBSELTMP
-	and #$1F        ; Clear the size select flags
-	sta OBSEL
-	sta OBSELTMP
-	jmp EndSprSizeChange
-SetSPR16:
-	; Spr 8x16
-	lda OBSELTMP
-	and #$1F        ; Clear the size select flags
-	ora #$60
-	sta OBSEL
-	sta OBSELTMP
-EndSprSizeChange:
+;	eor tmpPPUcontrolreg1
+;	and #$20
+;	beq EndSprSizeChange
+;	lda #$20
+;	bit tmpPPUcontrolreg1
+;	bne SetSPR16
+;	; Spr 8x8
+;	lda OBSELTMP
+;	and #$1F        ; Clear the size select flags
+;	sta OBSEL
+;	sta OBSELTMP
+;	jmp EndSprSizeChange
+;SetSPR16:
+;	; Spr 8x16
+;	lda OBSELTMP
+;	and #$1F        ; Clear the size select flags
+;	;ora #$60
+;	sta OBSEL
+;	sta OBSELTMP
+;EndSprSizeChange:
 	lda tmpPPUcontrolreg1
 	sta PPUcontrolreg1
 	;; ------------------------------------------
@@ -849,7 +849,20 @@ emptyR:
 ;       |     | Name and attributes tables for backgrounds
 ;       |     |	16 colors Background and Sprites Palettes
 
+PPUMemRoutineTable:
+.DW	emptyW
+.DW	emptyR
+.DW	CHRDataW
+.DW	CHRDataR
+.DW	NametableW
+.DW	NametableR
+.DW	AttrtableW
+.DW	AttrtableR
+.DW	paletteW
+.DW	paletteR
+
 WPPUMEMDATA:
+	BREAK
 	sep #$20 ; A 8bits
 	pha
 	; Use the WRAM buffer of PPU@ routines.
@@ -858,13 +871,15 @@ WPPUMEMDATA:
 	lda PPUmemaddrL ; Load the PPUADDRESS
 	and #$3FF0 ; Clear the 2 upper and lower bits
 	lsr
-	lsr ; >> 2
+	lsr
+	lsr ; >> 3
 	tax
-	lda WRamPPUADDRJmpsLI, X
-	sta tmp_addr
+	lda #$0000
 	sep #$20 ; A 8bits
+	lda WRamPPUADDRJmpsLI, X
+	tax
 	pla
-	jmp (tmp_addr)   ; indirect jump to the routine for the PPU address.
+	jmp (PPUMemRoutineTable,X)   ; indirect jump to the routine for the PPU address.
 
 .MACRO INCPPUADDR
 	rep #$20		; A 16bits
@@ -1177,6 +1192,7 @@ UpdateAllMirrorColors:
 ;----------------------------------------------------------------------
 ; 
 RPPUMEMDATA:
+	BREAK
 	sep #$20 ; A 8bits
 	pha
 	; Use the WRAM buffer of PPU@ routines.
@@ -1185,15 +1201,16 @@ RPPUMEMDATA:
 	lda PPUmemaddrL ; Load the PPUADDRESS
 	and #$3FF0 ; Clear the 2 upper and lower bits
 	lsr
-	lsr ; >> 2
+	lsr
+	lsr ; >> 3
 	tax
-	lda WRamPPUADDRJmpsLI + 2, X
-	sta tmp_addr
+	lda #$0000
 	sep #$20 ; A 8bits
+	lda WRamPPUADDRJmpsLI + 1, X
+	tax
 	pla
-	jmp (tmp_addr)   ; indirect jump to the routine for the PPU address.
-
-
+	jmp (PPUMemRoutineTable,X)   ; indirect jump to the routine for the PPU address.
+	
 AttrtableR:
 	; Read it from the sram buffer
 	sep #$30		; All 8bit
@@ -1273,6 +1290,9 @@ paletteR:
 	tax
 	lda Palettebuffer,X
 	INCPPUADDR ; jsr IncPPUmemaddrL
+	RETR
+
+CHRDataW:
 	RETR
 
 CHRDataR:
@@ -1362,12 +1382,18 @@ WDMASPRITEMEMACCESS:
 	tcd
 	;;------------------------------------------------------------------------------
 	; This conversion could be made in the Sound IRQ on line 150, it takes 16 lines.
+	
+	;lda PPUcontrolreg1
+	;and #$0020      ; Test if sprites size is 8x16?
+	;beq SprSz88
+	;jsr saveSprites
+	;jmp EndSprconversionloop
 
 	;;------------------------------------------------------------------------------
 	;; First convert the 256 bytes of the memory area to 256bytes of snes oam data
 	;
 	; Simple copy for the bytes 1 and 2
-testit:
+SprSz88:
 	rep #$30    ; All 16b
 	and #$0000  ;  X = 0
 	tax
@@ -1458,6 +1484,40 @@ EndSprconversionloop:
 	pld
 	RETW
 
+; Makes an unchande copy of the sprites in the bank, they will be changed later
+saveSprites:
+	rep #$30    ; All 16b
+	and #$0000  ;  X = 0
+	tax
+EzSprCopyLoop:	
+	lda $00,X
+	sta SpriteMemoryBaseTmp + 0,X    ; Store it
+	lda $00 + 2,X
+	sta SpriteMemoryBaseTmp + 2,X    ; Store it
+	;--
+	lda $00 + 4,X
+	sta SpriteMemoryBaseTmp + 4,X    ; Store it
+	lda $00 + 6,X
+	sta SpriteMemoryBaseTmp + 6,X    ; Store it
+	;--
+	lda $00 + 8,X
+	sta SpriteMemoryBaseTmp + 8,X    ; Store it
+	lda $00 + 10,X
+	sta SpriteMemoryBaseTmp + 10,X    ; Store it
+	;--
+	lda $00 + 12,X
+	sta SpriteMemoryBaseTmp + 12,X    ; Store it
+	lda $00 + 14,X
+	sta SpriteMemoryBaseTmp + 14,X    ; Store it
+	;--
+	; Increment
+	txa
+	clc
+	adc #16
+	and #$00FF
+	tax
+	bne EzSprCopyLoop	           ; loop if not zero(passed 256)
+	rts
 	
 ;; NES
 ; Sprite Attribute RAM:

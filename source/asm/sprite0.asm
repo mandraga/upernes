@@ -221,6 +221,8 @@ PrepareSpr0IRQFromSoundLine:
 	rep #$20		   ; A 16bits
 	; Call the update routine
 	jsr SoundAPURegUpdate	
+	; Convert the sprite buffer
+	;jsr SprConv
 PrepareSpr0IRQ:
 	; Line 0
 	; Set the counter for the sprite zero hit
@@ -274,6 +276,8 @@ SoundLine:
 	rep #$20		   ; A 16bits
 	; Call the update routine
 	jsr SoundAPURegUpdate
+	; Convert the sprite buffer
+	;jsr SprConv
 	lda IRQLineVBlank  ;  Load Vblank start as Vcount IRQ trigger
 	sta TMPVTIMEL
 	jmp SetIRQCounter
@@ -312,5 +316,217 @@ VlineCheckEnds:
 	pla
 	rts  ; To the nes IRQ
 
+;-------------------------------------------------------------------
+; This converts sprites in 8x16 size;
+;	
+Convert8x16:
+	php
+	pha
+	phy
+	phx
+	NATIVE
+	sep #$20    ; A 8b
+	lda PPUcontrolreg1
+	and #$0020      ; Test if sprites size is 8x16?
+	beq SprAre8x8
+		BREAK2
+	;-------------------------------
+	; 8x16 format conversion
+	rep #$10    ; X Y 16b
+	lda #$0000  ; X = 0
+	tax
+	;sep #$20    ; A 8b
+Sprconversionloop:	
+	lda SpriteMemoryBase,X	    ; Y
+	pha
+	lda SpriteMemoryBase + 3,X  ; X
+	sta SpriteMemoryBase,X
+	;
+	lda SpriteMemoryBase + 2,X 	; Attr
+	pha
+	;
+	lda SpriteMemoryBase + 1,X 	; Name
+	and #$01
+	beq CHRBank0
+	lda SpriteMemoryBase + 1,X 	; Name
+	;lsr
+	sta SpriteMemoryBase + 2,X 
+	jmp SprAttr
+CHRBank0:
+	lda SpriteMemoryBase + 1,X 	; Name	
+	sta SpriteMemoryBase + 2,X
+
+SprAttr:
+	pla
+	txy
+	tax
+	lda WRamSpriteFlagConvLI,X    ; Acc converted from NES vhoxxxpp to SNES vhoopppN
+	tyx
+	ora #$01
+	sta SpriteMemoryBase + 3,X 
+	; Y
+	pla
+	sta SpriteMemoryBase + 1,X 
+	; Increment
+	txa
+	clc
+	adc #04
+	and #$00FF
+	tax
+	bne Sprconversionloop	; loop if not zero	(passed 256)	
+	; Finished
+	jmp SprConvFinished
+
+SprAre8x8:
+	;-------------------------------
+	; 8x8 format conversion
+	rep #$10    ; X Y 16b
+	lda #$0000  ; X = 0
+	tax
+	;sep #$20    ; A 8b
+Sprconversionloop8x8:	
+	lda SpriteMemoryBase,X	    ; Y
+	pha
+	lda SpriteMemoryBase + 3,X  ; X
+	sta SpriteMemoryBase,X
+	;
+	lda SpriteMemoryBase + 2,X 	; Attr
+	pha
+	;
+	lda SpriteMemoryBase + 1,X 	; Name
+	;and #$01
+	;beq CHRBank0
+	lda SpriteMemoryBase + 1,X 	; Name
+	;lsr
+	sta SpriteMemoryBase + 2,X 
+	jmp SprAttr8x8
+CHRBank08x8:
+	lda SpriteMemoryBase + 1,X 	; Name
+	sec
+	ror
+	sta SpriteMemoryBase + 2,X 	
+SprAttr8x8:
+	pla
+	txy
+	tax
+	lda WRamSpriteFlagConvLI,X    ; Acc converted from NES vhoxxxpp to SNES vhoopppN
+	tyx
+	sta SpriteMemoryBase + 3,X 
+	; Y
+	pla
+	sta SpriteMemoryBase + 1,X 
+	; Increment
+	txa
+	clc
+	adc #04
+	and #$00FF
+	tax
+	bne Sprconversionloop8x8	; loop if not zero	(passed 256)	
+	; Finished
+	
+SprConvFinished:
+	EMULATION
+	plx
+	ply
+	pla
+	plp
+	rts
+	
+	
+
+;;------------------------------------------------------------------------------
+;; Sprite buffer conversion routine
+;;
+SprConv:
+	php
+	pha
+	phy
+	phx
+	NATIVE
+	rep #$30    ; All 16b
+	and #$0000  ;  X = 0
+	tax
+EzSprconversionloopIRQ:	
+	lda SpriteMemoryBaseTmp,X	  ; Read Y, direct page  *(DP + $00 + X) and tile index
+	sta SpriteMemoryBase + 1,X    ; Store it
+	lda SpriteMemoryBaseTmp + 4,X	  ; Read Y, and tile index
+	sta SpriteMemoryBase + 5,X    ; Store it
+	lda SpriteMemoryBaseTmp + 8,X	  ; Read Y, and tile index
+	sta SpriteMemoryBase + 9,X    ; Store it
+	lda SpriteMemoryBaseTmp + 12,X	  ; Read Y, and tile index
+	sta SpriteMemoryBase + 13,X    ; Store it
+	lda SpriteMemoryBaseTmp + 16,X	  
+	sta SpriteMemoryBase + 17,X    ; Store it
+	lda SpriteMemoryBaseTmp + 20,X	  
+	sta SpriteMemoryBase + 21,X    ; Store it
+	lda SpriteMemoryBaseTmp + 24,X	  
+	sta SpriteMemoryBase + 25,X    ; Store it
+	lda SpriteMemoryBaseTmp + 28,X	  
+	sta SpriteMemoryBase + 29,X    ; Store it
+	; Increment
+	txa
+	clc
+	adc #32
+	and #$00FF
+	tax
+	bne EzSprconversionloopIRQ	; loop if not zero	(passed 256)
+
+	; Conversion
+	sep #$30    ; All 8b
+	;;;;ldy SpriteMemoryAddress ; Origin of the data OAMADDR not in use here 256 bytes
+	; It uses a direct page indexed address, meaning it reads from the 256Bytes page with X as index.	
+	ldx #$00
+sprconversionloopeIRQ:	
+	lda SpriteMemoryBaseTmp + 2,X	  ; Read the flags (direct page indexed)
+	txy
+	tax              ; Should be in rom to use Y on it
+	lda WRamSpriteFlagConvLI,X    ; Acc converted from NES vhoxxxpp to SNES vhoopppN
+	tyx
+	sta SpriteMemoryBase + 3,X    ; Store them
+	lda SpriteMemoryBaseTmp + 3,X	  ; Read X
+	sta SpriteMemoryBase + 0,X    ; Store it
+	;-------------------------------------------------------------
+	lda SpriteMemoryBaseTmp + 2 + 4,X	  ; Read the flags (direct page indexed)
+	txy
+	tax
+	lda WRamSpriteFlagConvLI,X    ; Acc converted from NES vhoxxxpp to SNES vhoopppN
+	tyx
+	sta SpriteMemoryBase + 7,X    ; Store them
+	lda SpriteMemoryBaseTmp + 3 + 4,X	  ; Read X
+	sta SpriteMemoryBase + 4,X    ; Store it
+	;-------------------------------------------------------------
+	lda SpriteMemoryBaseTmp + 2 + 8,X	  ; Read the flags (direct page indexed)
+	txy
+	tax
+	lda WRamSpriteFlagConvLI,X    ; Acc converted from NES vhoxxxpp to SNES vhoopppN
+	tyx
+	sta SpriteMemoryBase + 11,X   ; Store them
+	lda SpriteMemoryBaseTmp + 3 + 8,X	  ; Read X
+	sta SpriteMemoryBase + 8,X    ; Store it
+	;-------------------------------------------------------------
+	lda SpriteMemoryBaseTmp + 2 + 12,X	  ; Read the flags (direct page indexed)
+	txy
+	tax
+	lda WRamSpriteFlagConvLI,X    ; Acc converted from NES vhoxxxpp to SNES vhoopppN
+	tyx
+	sta SpriteMemoryBase + 15,X   ; Store them
+	lda SpriteMemoryBaseTmp + 3 + 12,X	  ; Read X
+	sta SpriteMemoryBase + 12,X   ; Store it
+	;-------------------------------------------------------------
+	; Increment
+	txa
+	clc
+	adc #16
+	tax
+	beq EndSprconversionloopIRQ	; loop if not zero	(passed 256)	
+	jmp sprconversionloopeIRQ
+EndSprconversionloopIRQ:
+	EMULATION
+	plx
+	ply
+	pla
+	plp
+	rts
+	
 .ENDS
 
