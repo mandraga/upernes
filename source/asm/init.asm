@@ -18,6 +18,7 @@
 .include "intvectors.asm"
 .include "LoadGraphics.asm"
 .include "zeromem.asm"
+.include "PrgBank.asm"
 .include "ppujmp.asm"
 .include "Strings.asm"
 .include "print.asm"
@@ -210,6 +211,10 @@ copyRamCode:
 	sta JumpAddress + 1
 	sta JumpAddress + 2
 
+	;----------------------------------------------------------------------------
+	; Copy the patched PRG ROM code to the wram banks $7E
+	jsr CopyPrgBank
+	
 	;; -----------------------------------------------
 	; Setup the timer interrupt routines
 	; Set the first interrupt on line 261 which is the end of Vblank on the nes
@@ -234,6 +239,17 @@ copyRamCode:
 	sta SNESNMITMP
 
 	jsr InitSprite0
+
+	;; -----------------------------------------------
+	sep #$30		; All 8bits
+	;lda #$0F		; Turn on screen, 100% brightness
+	lda #$80	    ; Turn off screen, the real default value.
+	sta INIDISP
+
+	;; -----------------------------------------------
+	; Use fast rom
+	lda #$01 
+	sta MEMSEL
 	
 	; Return to emulation mode and jump to the
 	; recompiled nes reset routine.
@@ -243,20 +259,12 @@ copyRamCode:
 	; Bank 2 is chr data 
 	sep #$30		; All 8bits
 	lda #$01        ; Data bank
+	;lda #$7E        ; Data bank, this is the WRAM bank do not forget to go back to a $80 or $8N bank to access the SNES registers
 	pha
 	plb
 	; Set 6502 emulation mode
 	sec
 	xce
-
-	;lda #$0F		; Turn on screen, 100% brightness
-	lda #$80	    ; Turn off screen, the real default value.
-	sta INIDISP
-
-	;; -----------------------------------------------
-	; Use fast rom
-	lda #$01 
-	sta MEMSEL
 
 	;; -----------------------------------------------
 	; NMI on Vblank always enable because used to update the palettes and backgrounds.

@@ -42,7 +42,7 @@ LineBeforeNMI:
 	jsr VCountHandler
 QuitIRQ:
 	pla
-	jml $810862   ; This address ocntains an RTI
+	jml $7E0862   ; This address ocntains an RTI
 	;rti
 	;jml NESIRQBRK ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called from emulation
 
@@ -124,7 +124,7 @@ QuitNMI:
 	; But the code is in bank1 and the rti must go to bank $81
 	;rti
 	;; Go to an RTI in ram
-	jml $810862   ; This address contains an RTI
+	jml $7E0862   ; This address contains an RTI
 
 	;;Prepare the stack for an RTL instead of RTI
 	; pla
@@ -173,7 +173,7 @@ DebugHandler:
 	nop
 	nop
 	nop
-	jml $810862   ; This address ocntains an RTI
+	jml $7E0862   ; This address ocntains an RTI
 	;rti
 
 EmptyHandler:
@@ -183,7 +183,7 @@ EmptyHandler:
 	nop
 	nop
 	pla
-	jml $810862   ; This address ocntains an RTI
+	jml $7E0862   ; This address ocntains an RTI
     ;rti
 
 ;----------------------------------------------------------------

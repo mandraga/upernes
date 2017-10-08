@@ -77,7 +77,6 @@ void Crecompilateur::patchBRK(t_pinstr pinstr, Copcodes *popcode_list, unsigned 
   unsigned long instruction;
   bool          bRoutineFound;
   unsigned int  lastRoutine;
-  unsigned int  SndRegEmuAddress;
   
   PRGAddress = pmapper->cpu2prg(pinstr->addr);
   instruction = pPRG[PRGAddress] + (pPRG[PRGAddress + 1] << 8) + (pPRG[PRGAddress + 2] << 16);
@@ -86,9 +85,11 @@ void Crecompilateur::patchBRK(t_pinstr pinstr, Copcodes *popcode_list, unsigned 
   if ((pinstr->operand >= 0x4000 && pinstr->operand <= 0x4013) || pinstr->operand == 0x4015)
     {
       printf("%02X kept at %04X\n", pPRG[PRGAddress], pinstr->addr);
-      SndRegEmuAddress = pinstr->operand - 0x4000 + SNDREGEMUBASE;
-      pPRG[PRGAddress + 1] = SndRegEmuAddress & 0xFF;
-      pPRG[PRGAddress + 2] = (SndRegEmuAddress >> 8) & 0xFF;
+      // The data is directly written in $FE4000 without patching
+      // unsigned int  SndRegEmuAddress;
+      // SndRegEmuAddress = pinstr->operand - 0x4000 + SNDREGEMUBASE;
+      // pPRG[PRGAddress + 1] = SndRegEmuAddress & 0xFF;
+      // pPRG[PRGAddress + 2] = (SndRegEmuAddress >> 8) & 0xFF;
       printf("Using register %04X\n", pinstr->addr);
     }
   else if (pinstr->opcode == 0x6C)
@@ -489,13 +490,13 @@ void Crecompilateur::writeRoutineVector(FILE *fp, Copcodes *popcode_list, std::v
 	  fprintf(fp, "IndJumpTable:\n");
 	}
       if ((Patches[i].operand >= 0x4000 && Patches[i].operand <= 0x4013) || Patches[i].operand == 0x4015)
-       {
-	 fprintf(fp, "jmp %s\t\t; not used, Sound regs\n", Patches[i].RoutineName);
-       }
-     else
-       {
-	 fprintf(fp, "jmp %s\n", Patches[i].RoutineName);
-       }
+	{
+	  fprintf(fp, "jmp %s\t\t; not used, Sound regs\n", Patches[i].RoutineName);
+	}
+      else
+	{
+	  fprintf(fp, "jmp %s\n", Patches[i].RoutineName);
+	}
     }
   // Number of io routines
   fprintf(fp, "\n.DEFINE NBIOROUTINES %d\n", (int)Patches.size());
@@ -573,16 +574,16 @@ int Crecompilateur::patchPrgRom(const char *outName, Cprogramlisting *plisting, 
 	    {
 	    case resetstart:
 	      // Label of the first instruction executed on start/reset. Bank 1
-	      fprintf(fp, "\n.DEFINE NESRESET   $81%04X", pinstr->addr);
+	      fprintf(fp, "\n.DEFINE NESRESET   $7E%04X", pinstr->addr);
 	      break;
 	    case nmistart:
 	      // Label of the non maskable interrupt routine
-	      fprintf(fp, "\n.DEFINE NESNMI     $81%04X", pinstr->addr);
+	      fprintf(fp, "\n.DEFINE NESNMI     $7E%04X", pinstr->addr);
 	      bnesNMIVect = true;
 	      break;
 	    case irqbrkstart:
       	      // Label of the IRQ/BRK interrupt routine
-	      fprintf(fp, "\n.DEFINE NESIRQBRK  $81%04X", pinstr->addr);
+	      fprintf(fp, "\n.DEFINE NESIRQBRK  $7E%04X", pinstr->addr);
 	      bnesIRQVect = true;
 	      break;
 	    case novector:

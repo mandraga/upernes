@@ -170,10 +170,14 @@ next 4KB begining at 0x1000 is used as a the nes nametable buffer (transfered wi
 
 Snes WRAM:
 
-128K work ram: 64K in 7E:2000 and 64K in 7F:0000 (the first 8K bytes of the bank 7E are the mirroring of the sram at 00:0000).
-This 120KB memory can be used for caches or buffers, like address conversion buffers.
-56KB could be used for 7 Sprites CHRs
-32KB could be used for the prg switching will be needed then only 2x5CHR banks will be stored here
+128K work ram: 
+
+64K in 7E:2000 The first 8K bytes of the bank 7E are the mirroring of the sram at 00:0000. It is in slow access memory.
+The upper area of 56KB is used for Sound emulation and as the PRG ROM bank, this allows to switch PRG banks.
+The low part of the bank at 0x4000 is used to store the audio IO writes, it is usefull to emulate complex writes difficult to detect
+when disassembling (like in pacman).
+
+64K in 7F:0000 64NB of fast ram. It is used for caches or buffers, like address conversion buffers.
 
 Lorom maper:
 

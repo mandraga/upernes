@@ -74,6 +74,8 @@
 ;; Sound emulation write only registers
 ;; Written direclty from the patch.
 ;; Like 'sta $4000' replaced by 'sta RAMBASE + 48' = 'sta $830'
+.IFDEF USEAPUREGCOPY
+;;!!!!!!!!!!!!!!!!!!!!!!!!!!! NOT USED
 .DEFINE SNDSQR1CTRL4000    RAMBASE + 48
 .DEFINE SNDSQR1E4001       RAMBASE + 49
 .DEFINE SNDSQR1PERIOD4002  RAMBASE + 50
@@ -97,7 +99,7 @@
 .DEFINE SNDWDMASPRUNUSED   RAMBASE + 68
 .DEFINE SNDCHANSW4015      RAMBASE + 69
 .DEFINE SNDEMU4016         RAMBASE + 70   ; Nothing to do with the pad, unused variable
-
+.ENDIF
 
 ;;--------
 .DEFINE SNDSTATUS          RAMBASE + 71
@@ -140,7 +142,9 @@
 .DEFINE TMPVTIMEH          RAMBASE + 115
 
 ;;----------------------------------------------
-;; Do not move this variable
+;; Do not move this variable!
+;; It is used to store an rti instruction and
+;; do a long jump to it.
 .DEFINE LocalRTI           RAMBASE + 98
 ;;----------------------------------------------
 ; Sprite Zero comparison values
@@ -284,7 +288,40 @@
 .DEFINE AttributePrecalc        $1F80       ; 128Bytes to precalculate the Attribute @ nes to snes conversion
 
 ;--------------------------------------------------------------------
-; Wram table at bank $7E or $7F
+; Wram table at bank $7E Stores the PRG ROM and audio IO
+;--------------------------------------------------------------------
+
+.DEFINE SOUND_IO_BANK  $7E
+.DEFINE SOUND_IO_BASE  $4000
+
+;; Sound emulation write only registers
+.DEFINE SNDSQR1CTRL4000    SOUND_IO_BASE + 0
+.DEFINE SNDSQR1E4001       SOUND_IO_BASE + 1
+.DEFINE SNDSQR1PERIOD4002  SOUND_IO_BASE + 2
+.DEFINE SNDSQR1LENPH4003   SOUND_IO_BASE + 3
+.DEFINE SNDSQR2CTRL4004    SOUND_IO_BASE + 4
+.DEFINE SNDSQR2E4005       SOUND_IO_BASE + 4
+.DEFINE SNDSQR2PERIOD4006  SOUND_IO_BASE + 6
+.DEFINE SNDSQR2LENPH4007   SOUND_IO_BASE + 7
+.DEFINE SNDTRIACTRL4008    SOUND_IO_BASE + 8
+.DEFINE SNDTRIAPERIOD4009  SOUND_IO_BASE + 9
+.DEFINE SNDTRIALENPH400A   SOUND_IO_BASE + 10
+.DEFINE SNDNOISECTRL400B   SOUND_IO_BASE + 11
+.DEFINE SNDNOISESHM400C    SOUND_IO_BASE + 12
+.DEFINE SNDNOISELEN400D    SOUND_IO_BASE + 13
+.DEFINE SNDDMCCTRL400E     SOUND_IO_BASE + 14
+.DEFINE SNDDMCDAC400F      SOUND_IO_BASE + 15
+.DEFINE SNDDMCSADDR4010    SOUND_IO_BASE + 16
+.DEFINE SNDDMCSLEN4011     SOUND_IO_BASE + 17
+.DEFINE SNDCOMONCTRL14012  SOUND_IO_BASE + 18
+.DEFINE SNDCOMONCTRL24013  SOUND_IO_BASE + 19
+.DEFINE SNDWDMASPRUNUSED   SOUND_IO_BASE + 20
+.DEFINE SNDCHANSW4015      SOUND_IO_BASE + 21
+.DEFINE SNDEMU4016         SOUND_IO_BASE + 22   ; Nothing to do with the pad, unused variable
+
+
+;--------------------------------------------------------------------
+; Wram table at bank $7F
 ;--------------------------------------------------------------------
 .DEFINE NameTransferTables      $8000       ; Used to transfer the data with HDMA
 
@@ -338,4 +375,17 @@
 	xce
 	; Any call to sta lda sti will restore the status register and hence interrupt mask bit
 .ENDM
+
+
+.MACRO TOIOBANK
+;	phb
+;	lda #$80
+;	pha
+;	plb
+.ENDM
+
+.MACRO POPBANK
+;	plb
+.ENDM
+
 
