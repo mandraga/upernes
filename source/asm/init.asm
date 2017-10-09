@@ -258,8 +258,8 @@ copyRamCode:
 	; Program bank is 0 contains recompiled source code
 	; Bank 2 is chr data 
 	sep #$30		; All 8bits
-	lda #$01        ; Data bank
-	;lda #$7E        ; Data bank, this is the WRAM bank do not forget to go back to a $80 or $8N bank to access the SNES registers
+	;lda #$01        ; Data bank
+	lda #$7E        ; Data bank, this is the WRAM bank do not forget to go back to a $80 or $8N bank to access the SNES registers
 	pha
 	plb
 	; Set 6502 emulation mode

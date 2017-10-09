@@ -185,7 +185,7 @@ unsigned int Crecompilateur::writeRamRoutineBinary(const char *fileName, std::ve
   unsigned int   sta2006Address;
 #endif
   t_PatchRoutine *pPatch;
-  //unsigned int    SndRegEmuAddress;
+  unsigned int    SndRegEmuAddress;
   
   for (i = 0; i < Patches.size(); i++)
     {
@@ -195,14 +195,15 @@ unsigned int Crecompilateur::writeRamRoutineBinary(const char *fileName, std::ve
       if ((pPatch->operand >= 0x4000 && pPatch->operand <= 0x4013) || pPatch->operand == 0x4015)
 	{
 	  pPatch->ramOffset = RamBuffer.size();
-	  /*
+	  // Should not be called!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	  RamBuffer.push_back(pPatch->opcode);
-	  SndRegEmuAddress = pPatch->operand - 0x4000 + SNDREGEMUBASE;
+	  //SndRegEmuAddress = pPatch->operand - 0x4000 + SNDREGEMUBASE;
+	  SndRegEmuAddress = pPatch->operand;	  
 	  RamBuffer.push_back(SndRegEmuAddress & 0xFF);
 	  RamBuffer.push_back((SndRegEmuAddress >> 8) & 0xFF);
 	  RamBuffer.push_back(0x60); // RTS
 	  pPatch->ramSize = RamBuffer.size() - pPatch->ramOffset;
-	  */
+	  //
 	  pPatch->ramSize = 0;
 	}
       // If it is an indirect jump, only do a jml

@@ -454,10 +454,12 @@ void Crecompilateur::writeiop_routines(FILE *fp, Cprogramlisting *plisting, Copc
     {
       start = false;
       iopaddr = (*plist->begin())->operand; // Get the address from the first access
+#ifndef REPLACEJOYPADRW
       if (iopaddr == JOYSTICK1)
 	continue ;
+#endif
       // The list of accesses contains all the instructions using the IO port
-      // If an instruciton is found, write his emulation routine to the file
+      // If an instruction is found, write his emulation routine to the file
       if (findinstr("lda", plist, popcode_list, addressing, instrList))
 	{
 	    it = instrList.begin();
@@ -470,11 +472,11 @@ void Crecompilateur::writeiop_routines(FILE *fp, Cprogramlisting *plisting, Copc
 		    routineLDAiop(fp, iopaddr, popcode_list, pinstr, PatchRoutines);
 		    break;
 		  case AbsX:
-		    printf("lda AbsX addressing mode non implemented\n");
+		    printf("lda AbsX addressing mode not implemented\n");
 		    assert(false);
 		    break;
 		  case AbsY:
-		    printf("lda AbsY addressing mode non implemented\n");
+		    printf("lda AbsY addressing mode not implemented\n");
 		    assert(false);
 		    break;
 		  };
@@ -514,7 +516,7 @@ void Crecompilateur::writeiop_routines(FILE *fp, Cprogramlisting *plisting, Copc
 		  routineLDYiop(fp, iopaddr, popcode_list, pinstr, PatchRoutines);
 		  break;
 		case AbsX:
-		  printf("ldy AbsX addressing mode non implemented\n");
+		  printf("ldy AbsX addressing mode not implemented\n");
 		  assert(false);
 		  break;
 		};

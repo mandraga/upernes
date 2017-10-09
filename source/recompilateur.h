@@ -1,4 +1,7 @@
 
+// When defined, the joypad reads are patched
+#define REPLACEJOYPADRW
+
 enum
   {
     noreplace,

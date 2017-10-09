@@ -378,14 +378,16 @@
 
 
 .MACRO TOIOBANK
-;	phb
-;	lda #$80
-;	pha
-;	plb
+	phb
+	pha
+	lda #$80
+	pha
+	plb
+	pla
 .ENDM
 
 .MACRO POPBANK
-;	plb
+	plb
 .ENDM
 
 

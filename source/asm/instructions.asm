@@ -98,6 +98,7 @@ ldaioportroutine:
 	sty YiLeveL1
 	;; Native mode
 	NATIVE
+	TOIOBANK
 .IFDEF COUNTCALLS
 	rep #$20
 	inc IOCallArray, X
@@ -109,6 +110,7 @@ ldaioportroutine:
 	rep #$10
 	jmp (IORroutinestable,X)
 RetIOroutineR:
+	POPBANK
 	;; Emulation mode
 	EMULATION
 	ldy YiLeveL1
@@ -133,6 +135,7 @@ staioportroutine:
 	sty YiLeveL1
 	;; Native mode
 	NATIVE
+	TOIOBANK
 .IFDEF COUNTCALLS
 	rep #$20
 	inc IOCallArray, X
@@ -144,6 +147,7 @@ staioportroutine:
 	rep #$10
 	jmp (IOWroutinestable,X)
 RetIOroutineW:
+	POPBANK
 	;; Emulation mode
 	EMULATION
 	ldy YiLeveL1

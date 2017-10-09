@@ -30,6 +30,7 @@ NESIRQBRKHandler:
 	sei
 	nop
 	BREAK
+	TOIOBANK
 	pha
 	lda HVIRQFLG    ; Vertical timer IRQ flag, cleared here
 	jsr ReadVcount
@@ -42,6 +43,7 @@ LineBeforeNMI:
 	jsr VCountHandler
 QuitIRQ:
 	pla
+	POPBANK
 	jml $7E0862   ; This address ocntains an RTI
 	;rti
 	;jml NESIRQBRK ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called from emulation
@@ -117,9 +119,11 @@ ClrShit:
 	;BREAK ; something is wrong if removed
 
 	;BREAK2
+	POPBANK
 	jml NESNMI ; Call the patched NMI vector code on the PRG bank. This is a 16 bit instruction called form emulation
 QuitNMI:
 	pla
+	POPBANK
 	; No interrupt can occur in bank 0, it is designed like this
 	; But the code is in bank1 and the rti must go to bank $81
 	;rti
@@ -223,7 +227,9 @@ NativeVCountHandler:
 	php ; Only to be able to pop A
 	jml FastVcountHandler
 FastVcountHandler:
+	TOIOBANK
 	jsr VCountHandler
+	POPBANK
 	plp ; Only to be able to pop A
 	pla
 	;cli                  <- RTI does it
