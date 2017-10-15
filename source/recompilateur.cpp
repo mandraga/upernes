@@ -122,7 +122,7 @@ int Crecompilateur::isreplaced(t_pinstr pinstr, Copcodes *popcode_list)
     case IndY:
       addr = pinstr->operand;
       if (IS_PORT(addr)
-#ifndef REPLACEJOYPADRW
+#ifdef DONOTPATCHJOYPADRW
 	  && addr != JOYSTICK1 /*&& addr != JOYSTICK2_SNDSEQUENCER*/
 #endif
 	  )
@@ -130,7 +130,7 @@ int Crecompilateur::isreplaced(t_pinstr pinstr, Copcodes *popcode_list)
 	  return replaceIOPort;
 	}
       if (IS_PORT_RANGE(addr)
-#ifndef REPLACEJOYPADRW
+#ifdef DONOTPATCHJOYPADRW
 	  && addr != JOYSTICK1 /*&& !(addr == JOYSTICK2_SNDSEQUENCER && pinstr->type == read)*/
 #endif
 	  )

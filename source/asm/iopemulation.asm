@@ -100,8 +100,8 @@ IORroutinestable:
 ;; DMA
 .DW	$0000				; $4014 DMA
 .DW	RSNDCHANSWITCH		; $4015 APU status register
-.DW	RJOYSTICK1
-.DW	RJOYSTICK2
+.DW	RJOYSTICK1          ; $4016 WJOYSTICK1
+.DW	RJOYSTICK2          ; WSNDSEQUENCER / WJOYSTICK2
 
 
 ; ------+-----+---------------------------------------------------------------

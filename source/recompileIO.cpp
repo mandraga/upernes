@@ -94,8 +94,10 @@ void Crecompilateur::routineSTAAbsXiop(FILE *fp, int iopaddr, Copcodes *popcode_
 	 adc #$portindex;
 	 tax               X == ioport routine address + X
 	 lda Acc
-         ldx #$portindex
-	 ...
+	 jsr staioportroutine
+	 lda Acc
+	 ldx Xi
+	 rtl
   */
   char routine[LABELSZ];
 
@@ -170,6 +172,40 @@ void Crecompilateur::routineLDAiop(FILE *fp, int iopaddr, Copcodes *popcode_list
   // In RAM  
   //fprintf(fp, "\tora #$00		; test N Z flags without affecting A\n");
   fprintf(fp, "\trtl\n");
+  AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
+}
+
+void Crecompilateur::routineLDAAbsXiop(FILE *fp, int iopaddr, Copcodes *popcode_list, t_pinstr pinstr, std::vector<t_PatchRoutine> &PatchRoutines)
+{
+  char routine[LABELSZ];
+
+  /*
+    rlda_4000AbsX:
+      stx Xi
+      txa
+      asl A
+      clc
+      adc #$portindex
+      tax
+      jsr ldaioportroutine
+      ldx Xi
+      ora #$00
+      rtl
+   */
+  snprintf(routine, LABELSZ, "rlda_%02XAbsX", iopaddr); // Print the label name);
+  fprintf(fp, "\n%s:\n", routine);
+  print_save(fp);
+  // Put the io port somewhere
+  fprintf(fp, "\ttxa\n");
+  fprintf(fp, "\tasl A\n");
+  fprintf(fp, "\tclc\n");
+  fprintf(fp, "\tadc #$%02X\n", 2 * PORT2INDEX(iopaddr));
+  fprintf(fp, "\ttax\n");
+  fprintf(fp, "\tjsr ldaioportroutine\n");
+  print_restore(fp);
+  fprintf(fp, "\tora #$00		; test N Z flags without affecting A\n");
+  fprintf(fp, "\trtl\n");
+  //
   AddPRGPatch(iopaddr, popcode_list, pinstr, routine, PatchRoutines);
 }
 
@@ -454,7 +490,7 @@ void Crecompilateur::writeiop_routines(FILE *fp, Cprogramlisting *plisting, Copc
     {
       start = false;
       iopaddr = (*plist->begin())->operand; // Get the address from the first access
-#ifndef REPLACEJOYPADRW
+#ifdef DONOTPATCHJOYPADRW
       if (iopaddr == JOYSTICK1)
 	continue ;
 #endif
@@ -472,8 +508,7 @@ void Crecompilateur::writeiop_routines(FILE *fp, Cprogramlisting *plisting, Copc
 		    routineLDAiop(fp, iopaddr, popcode_list, pinstr, PatchRoutines);
 		    break;
 		  case AbsX:
-		    printf("lda AbsX addressing mode not implemented\n");
-		    assert(false);
+		    routineLDAAbsXiop(fp, iopaddr, popcode_list, pinstr, PatchRoutines);
 		    break;
 		  case AbsY:
 		    printf("lda AbsY addressing mode not implemented\n");
@@ -482,7 +517,6 @@ void Crecompilateur::writeiop_routines(FILE *fp, Cprogramlisting *plisting, Copc
 		  };
 		it++;
 	      }
-	    assert(addressing == 1);
 	}
       if (findinstr("ldx", plist, popcode_list, addressing, instrList))
 	{
