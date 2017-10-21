@@ -142,6 +142,21 @@ WSNDSEQUENCER:
 	; ???? It should be in use
 	RETW
 	
+; ------+-----+---------------------------------------------------------------
+; Changes the banks
+;
+.MACRO TOWRAMBANK
+	phb
+	pha
+	lda #$7E
+	pha
+	plb
+	pla
+.ENDM
+
+.MACRO BACKTOIOBANK
+	plb
+.ENDM
 	
 ; ------+-----+---------------------------------------------------------------
 ; This routine sends the program to the SP700.
@@ -225,9 +240,11 @@ SoundAPURegUpdate:
 .ENDIF
 	phx
 	phy
+	TOWRAMBANK
 	jsr detect_changes
     jsr emulate_length_counter
     jsr backup_regs
+	BACKTOIOBANK
     jsr update_dsp
 	; Last piece of code
 	lda SNDTMP4016
@@ -341,7 +358,7 @@ decay_disabled2:
         lda SNDDMCDAC400F
         sta SNDTMP400F
 end_noise:
-                        ; check freq for sweeps
+        ; check freq for sweeps
         lda SNDSQR1E4001
         and #%10000000
         beq sqsw1
