@@ -230,7 +230,7 @@ copyRamCode:
 
 	; Enable
 	;lda #$81       ; NMI on Vblank always disabled
-	lda #$01        ; NMI on Vblank always enabled
+	lda #$00        ; NMI on Vblank always enabled
 	sta SNESNMITMP   
 	lda SNESNMITMP
 	;ora #%00100000 ; Enable V timer

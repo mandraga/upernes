@@ -92,7 +92,7 @@ void Crecompilateur::patchBRK(t_pinstr pinstr, Copcodes *popcode_list, unsigned 
       // pPRG[PRGAddress + 2] = (SndRegEmuAddress >> 8) & 0xFF;
       printf("Using register %04X\n", pinstr->addr);
     }
-  else if (pinstr->opcode == 0x6C)
+  else if (pinstr->opcode == 0x6C) // JMP
     {
       printf("%02X replaced by %02X at %04X\n", pPRG[PRGAddress], 0x4C, pinstr->addr);
       pPRG[PRGAddress] = 0x4C; // JMP
@@ -198,13 +198,67 @@ unsigned int Crecompilateur::writeRamRoutineBinary(const char *fileName, std::ve
 	  // Should not be called!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	  RamBuffer.push_back(pPatch->opcode);
 	  //SndRegEmuAddress = pPatch->operand - 0x4000 + SNDREGEMUBASE;
-	  SndRegEmuAddress = pPatch->operand;	  
+	  SndRegEmuAddress = pPatch->operand;
 	  RamBuffer.push_back(SndRegEmuAddress & 0xFF);
 	  RamBuffer.push_back((SndRegEmuAddress >> 8) & 0xFF);
 	  RamBuffer.push_back(0x60); // RTS
 	  pPatch->ramSize = RamBuffer.size() - pPatch->ramOffset;
 	  //
 	  pPatch->ramSize = 0;
+	}
+      else if ((pPatch->operand == 0x4016 || pPatch->operand == 0x4017)) // Joypadx accesses
+	{
+	  // Only needs to go from the wram bank to a bank were it can access the io register
+	  /*
+	    Reading:
+	    phb
+	    lda #$80
+	    pha
+	    plb
+	    exec
+	    plb
+	    rts
+
+	    Writing:
+	    phb
+	    pha
+	    lda #$80
+	    pha
+	    plb
+	    exec
+	    pla
+	    plb
+	    rts	
+	  */
+	  pPatch->ramOffset = RamBuffer.size();
+	  RamBuffer.push_back(0x8B); // phb
+	  if (pPatch->opcode == 0xAD || pPatch->opcode == 0xBD) // LDA ABS; LDA ABS,X
+	    {
+	      RamBuffer.push_back(0xA9); // lda #80
+	      RamBuffer.push_back(0x80);
+	      RamBuffer.push_back(0x48); // pha
+	      RamBuffer.push_back(0xAB); // plb
+	    }
+	  else if (pPatch->opcode == 0x8D) // STA
+	    {
+	      RamBuffer.push_back(0x48); // pha
+	      RamBuffer.push_back(0xA9); // lda #80
+	      RamBuffer.push_back(0x80);
+	      RamBuffer.push_back(0x48); // pha
+	      RamBuffer.push_back(0xAB); // plb
+      	      RamBuffer.push_back(0x68); // pla
+	    }
+	  else
+	    {
+	      printf("Unsuported joypad read.\n");
+	      assert(false);
+	    }
+	  RamBuffer.push_back(pPatch->opcode);
+	  RamBuffer.push_back(pPatch->operand & 0xFF);
+	  RamBuffer.push_back((pPatch->operand >> 8) & 0xFF);
+	  RamBuffer.push_back(0xAB); // plb
+       	  RamBuffer.push_back(0x60); // rts
+	  pPatch->ramSize = RamBuffer.size() - pPatch->ramOffset;
 	}
       // If it is an indirect jump, only do a jml
       else if (pPatch->opcode == 0x6C) // Indirect jump
