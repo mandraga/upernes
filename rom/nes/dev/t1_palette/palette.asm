@@ -64,6 +64,16 @@ overpal:
 
 	lda REFR_CTR
 iloop:
+	; Bank test
+	lda $918
+	ldy #$00
+	lda #$CC
+	sta $0000
+	lda #$34
+	sta $00CC
+	lda #$00
+	lda [$00], y
+	;
 	jsr waitvblank
 	inc REFR_CTR
 	lda #$40

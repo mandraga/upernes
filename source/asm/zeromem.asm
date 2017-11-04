@@ -218,4 +218,46 @@ ClearOAMH:
    plx
    rts
 
+;----------------------------------------------------------------------------
+; ClearWRAM - Clear bank $7F (64KB) and $7E (56KB)
+; In: None
+; Out: None
+; Modifies: flags
+;----------------------------------------------------------------------------
+ClearWRAM:
+   BREAK
+   phx
+   php
+   phb
+   ; $7F
+   sep #$20             ; A 8bits
+   lda #$7F
+   pha
+   plb
+   rep #$30             ; mem/A, X/Y = 16 bit
+   ldx #$0000           ; 64k
+   lda #$0000
+Clear7F:
+   dex
+   dex
+   sta $7F0000,X
+   bne Clear7F
+   ; $7E
+   sep #$20             ; A 8bits
+   lda #$7E
+   pha
+   plb
+   rep #$30             ; mem/A, X/Y = 16 bit
+   ldx #$C000          ; 56k
+   lda #$0000
+Clear7E:
+   dex
+   dex
+   sta $7E2000,X          ; It begins at 8K
+   bne Clear7E
+   plb
+   plp
+   plx
+   rts
+   
 .ENDS

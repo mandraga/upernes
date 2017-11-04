@@ -86,6 +86,12 @@ palconv3:
 endindjmp:
 	;; Print error msg
 	;; "Unknown indirect jump \"$pc@ jmp ($06)\" to @"
+	; Restore $81 data bank
+	sep #$20
+	lda #$80
+	pha
+	plb
+	; print
 	rep #$30
 	ldy #Printfbuffer
 	swa

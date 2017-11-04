@@ -77,6 +77,7 @@ eraseNesRamLoop:
 	jsr ClearPPUEmuBuffer
 	jsr ClearRegisters
 	jsr ClearVRAM
+	jsr ClearWRAM
 	jsr ClearCGRam
 	; Sprite init
 	;; -----------------------------------------------
