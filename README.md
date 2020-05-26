@@ -17,6 +17,7 @@ Tricky modifications:
 The indirect jumps cannot be detected by reading the ROM, they must be displayed on the SNES at runtime
 when running into an unknown address. Then added manually to a txt file, and the
 rom recompiled including the new indirect address.
+
 The read/writes to the Nes hardware: replaced by 16 bit routines.
 
 At start it looked tricky, but Memblers had made the sound emulator already.
@@ -26,7 +27,7 @@ How it is developed:
 Very simple test roms each one targeting an hardware aspect are written in the directory "rom/nes/dev/".
 Those roms are single test cases for things like background, scrolling, sprites, indirect jumps.
 They are simple because in 2010 it was difficult to debug snes code.
-The program is written in C++ and 65C816 assembler routines plus 6502 test roms. You need the "wla-65816" snes
+The program is written in C++ and 65C816 assembler routines plus 6502 test roms. In order to develop upernes you need the "wla-65816" snes
 assembler, nesasm, an snes emulator with debug functionality (like bsnes+). You may also need a software to edit nes
 graphic data.
 (check source/asm/memap.txt for information on code and data remaping)
@@ -34,12 +35,10 @@ graphic data.
 Status:
 The disassembler, and instructions rewriting coded in C++ is more or less finished since 2011.
 The emulated PPU is ok (games like in Battle city not working due to special tile sizes), it needs a good knowledge of what's going on in the consoles.
-Any working contribution will be apreciated. Basically, the remaining work is: finish the PPU io emulation,
-The NSF player for SNES by Memblers is used but some adjustments on the line where it is calle dmust be mad ein order to have proper sound.
+Basically, the remaining work is: finish the PPU io emulation, The NSF player for SNES by Memblers is used but some adjustments on the line where it is called must be made in order to have proper sound.
 add/fix interrupts.
 And finally add comon bank switching for bigger roms (double dragon2 or SMB3 roms have complex bank switching and timers).
-The emulation part is very tricky because not everything is at his original place and the Snes cpu is not much powerfull compared
-too the nes, you get and extra Mhz but that's it. So code in ram is often used to speed up port emulation calls.
+The emulation part is very tricky because not everything is at his original place, and the Snes cpu is not much powerfull compared to the nes, you get and extra Mhz but that's it. So code in ram is often used to speed up port emulation calls.
 
 Tests:
 T1 Palette   1
