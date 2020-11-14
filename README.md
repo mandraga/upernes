@@ -38,7 +38,7 @@ The emulated PPU is ok (games like in Battle city not working due to special til
 Basically, the remaining work is: finish the PPU io emulation, The NSF player for SNES by Memblers is used but some adjustments on the line where it is called must be made in order to have proper sound.
 add/fix interrupts.
 And finally add comon bank switching for bigger roms (double dragon2 or SMB3 roms have complex bank switching and timers).
-The emulation part is very tricky because not everything is at his original place, and the Snes cpu is not much powerfull compared to the nes, you get and extra Mhz but that's it. So code in ram is often used to speed up port emulation calls.
+The emulation part is very tricky because not everything is at his original place, and the Snes cpu is not so much powerfull compared to the nes, you get an extra Mhz but that's it. So code in ram is often used to speed up port emulation calls. Unused nes adress space in witch we find sram on the snes, is used to be able to execute code in the same bank. Hence avoiding bank switching and sparing cpu cycles.
 
 Tests:
 T1 Palette   1
@@ -63,7 +63,7 @@ You must install the following modules from the Msys module installer:
     Flex and Bison - Used to parse opcodes
 You need to install wla-65816 from the web site. Wla-65816 is one of the best assemblers for retro gaming.
 Add wla-65816 to your windows path (like adding C:\dev\snes\wladx_binaries_20040822\ to your $PATH)
-I use FCEUX for the nes roms and bsnes-plus for the snes roms because they have a debugger.
+I use FCEUX for the nes roms, and bsnes-plus for the snes roms, because they have a debugger.
 
 How to use upernes:
 
