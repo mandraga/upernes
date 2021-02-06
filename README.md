@@ -41,26 +41,41 @@ And finally add comon bank switching for bigger roms (double dragon2 or SMB3 rom
 The emulation part is very tricky because not everything is at his original place, and the Snes cpu is not so much powerfull compared to the nes, you get an extra Mhz but that's it. So code in ram is often used to speed up port emulation calls. Unused nes adress space in witch we find sram on the snes, is used to be able to execute code in the same bank. Hence avoiding bank switching and sparing cpu cycles.
 
 Tests:
+
 T1 Palette   1
+
 T2 PPU       1
+
 T3 PPU       0
+
 T4 PPU       0
+
 T5 PPUScrol  0 scrolling ok
+
 T6 PPUSprtie 0 too much sprites
+
 T7 Pad0      0 color and backgorund error
+
 T8 indjump   1 displays the adress
+
 
 
 Windows installation:
 
 Since the best snes debuggers are only available on windows, you may be interested in how to install
 upernes on windows.
+
 First install Msys2, it is the build environment, using gcc, make.
 You must install the following modules from the Msys module installer:
+
     Make - Used to make upernes and to call wla-65816
+    
     Gdb - Used to debug upernes (the disassembler/reassembler)
+    
     SDL2 - Used to show the disassembly progress.
+    
     Flex and Bison - Used to parse opcodes
+    
 You need to install wla-65816 from the web site. Wla-65816 is one of the best assemblers for retro gaming.
 Add wla-65816 to your windows path (like adding C:\dev\snes\wladx_binaries_20040822\ to your $PATH)
 I use FCEUX for the nes roms, and bsnes-plus for the snes roms, because they have a debugger.
@@ -77,19 +92,30 @@ convertion until all the indirect jumps are known.
 Sample of working roms:
 
 Pinball
+
 Super Mario Brothers
+
 Excite bike
+
 Pacman
+
 Donkey Kong
+
 (basically the simplest rom mapper)
 
 Tools used, & authors:
+
 SPC700 APU emulator (c)2001-2003 Joey Parsell (Memblers http://www.parodius.com/~memblers/) w/ assistance from Kevin Horton, and others
 wla-65816 assembler by Ville Helin
+
 NESASM3
+
 the FCEUX comunity
+
 NES Screen Tool by Shiru
+
 Super Sleuth by Kris Bleakley (was the best emulator with debugger at the start of the project)
+
 "bsnes-plus" based on Byuu's bsnes with improved debugging added by devinacker, undisbeliever and others.
 
 
