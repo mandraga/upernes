@@ -3,7 +3,8 @@ A Nes to Super Nes recompiler.
 
 upernes takes rom files for the Nintendo Nes and recompiles them to make Super Nes smc rom files.
 
-Principle:
+## Principle:
+
 The rom is disassembled, the tile data is separated. The 6502  machine code is analysed and stored in a list.
 Once this list is made, the code is modified in order to replace read/writes to the original nes hardware by
 calls to 65C816 assembler routines. Those calls emulate the nes hardware (PPU and sound). The memory is slightly reorganised, the data is taken from the original code
@@ -13,7 +14,8 @@ upernes outputs an assembler file and converted tile data in outsrc, they must b
 and compiled to a Snes rom with "wla-65816".
 "wla-65816" puts everything back together to an smc file.
 
-Tricky modifications:
+## Tricky modifications:
+
 The indirect jumps cannot be detected by reading the ROM, they must be displayed on the SNES at runtime
 when running into an unknown address. Then added manually to a txt file, and the
 rom recompiled including the new indirect address.
@@ -23,7 +25,8 @@ The read/writes to the Nes hardware: replaced by 16 bit routines.
 At start it looked tricky, but Memblers had made the sound emulator already.
 And problem by problem it has been proven possible to make the conversion.
 
-How it is developed:
+## How it is developed:
+
 Very simple test roms each one targeting an hardware aspect are written in the directory "rom/nes/dev/".
 Those roms are single test cases for things like background, scrolling, sprites, indirect jumps.
 They are simple because in 2010 it was difficult to debug snes code.
@@ -32,7 +35,8 @@ assembler, nesasm, an snes emulator with debug functionality (like bsnes+). You 
 graphic data.
 (check source/asm/memap.txt for information on code and data remaping)
 
-Status:
+## Status:
+
 The disassembler, and instructions rewriting coded in C++ is more or less finished since 2011.
 The emulated PPU is ok (games like in Battle city not working due to special tile sizes), it needs a good knowledge of what's going on in the consoles.
 Basically, the remaining work is: finish the PPU io emulation, The NSF player for SNES by Memblers is used but some adjustments on the line where it is called must be made in order to have proper sound.
@@ -40,7 +44,8 @@ add/fix interrupts.
 And finally add comon bank switching for bigger roms (double dragon2 or SMB3 roms have complex bank switching and timers).
 The emulation part is very tricky because not everything is at his original place, and the Snes cpu is not so much powerfull compared to the nes, you get an extra Mhz but that's it. So code in ram is often used to speed up port emulation calls. Unused nes adress space in witch we find sram on the snes, is used to be able to execute code in the same bank. Hence avoiding bank switching and sparing cpu cycles.
 
-Tests:
+## Tests:
+
 
 T1 Palette   1
 
@@ -60,7 +65,7 @@ T8 indjump   1 displays the adress
 
 
 
-Windows installation:
+## Windows installation:
 
 Since the best snes debuggers are only available on windows, you may be interested in how to install
 upernes on windows.
@@ -80,7 +85,7 @@ You need to install wla-65816 from the web site. Wla-65816 is one of the best as
 Add wla-65816 to your windows path (like adding C:\dev\snes\wladx_binaries_20040822\ to your $PATH)
 I use FCEUX for the nes roms, and bsnes-plus for the snes roms, because they have a debugger.
 
-How to use upernes:
+## How to use upernes:
 
 Once everythnig is installed, go to the directory upernes/source/workdir/ and call ./convert.sh "rompath/romname" "outputpath"
 This script calls upernes on the nes rom file and disassembles it and rebuilds the graphic tables. It then makes copies
@@ -89,12 +94,12 @@ Indirect jumps cannot be analysed until the jump address is known. Therefore the
 indirect jump adress and display the adress on a "crash" screen. You must add this address to romfilename.txt and call a new
 convertion until all the indirect jumps are known.
 
-Sample of working roms:
+## Sample of working roms:
 
 Pinball, Super Mario Brothers, Excite bike, Pacman, Donkey Kong (basically the simplest rom mapper)
 
 
-Tools used, & authors:
+## Tools used, & authors:
 
 SPC700 APU emulator (c)2001-2003 Joey Parsell (Memblers http://www.parodius.com/~memblers/) w/ assistance from Kevin Horton, and others
 wla-65816 assembler by Ville Helin
