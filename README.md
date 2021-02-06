@@ -91,17 +91,8 @@ convertion until all the indirect jumps are known.
 
 Sample of working roms:
 
-Pinball
+Pinball, Super Mario Brothers, Excite bike, Pacman, Donkey Kong (basically the simplest rom mapper)
 
-Super Mario Brothers
-
-Excite bike
-
-Pacman
-
-Donkey Kong
-
-(basically the simplest rom mapper)
 
 Tools used, & authors:
 
