@@ -121,7 +121,10 @@ upernes,(c)2015 Patrick Areny, upernes is released under the GPL licence.
 
 my blog: http://www.blog.vreemdelabs.com/ <- Burnt in OVH fire in 2021 :( 
 
+## Some screenshots:
 
+### First development in 2011
 ![alt text](Screenshot.png)
 
+### Just before SMB works
 ![alt text](SMB.png)
