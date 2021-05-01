@@ -2,6 +2,7 @@
 A Nes to Super Nes recompiler.
 
 upernes takes rom files for the Nintendo Nes and recompiles them to make Super Nes smc rom files.
+It Works on linux and windows.
 
 ## Principle:
 
