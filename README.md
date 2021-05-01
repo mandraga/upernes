@@ -22,7 +22,7 @@ rom recompiled including the new indirect address.
 
 The read/writes to the Nes hardware: replaced by 16 bit routines.
 
-At start it looked tricky, but Memblers had made the sound emulator already.
+At start it looked tricky, but Memblers had already made the sound emulator.
 And problem by problem it has been proven possible to make the conversion.
 
 ## How it is developed:
@@ -96,12 +96,13 @@ convertion until all the indirect jumps are known.
 
 ## Sample of working roms:
 
-Pinball, Super Mario Brothers, Excite bike, Pacman, Donkey Kong (basically the simplest rom mapper)
+Ballon fight, Pinball, Super Mario Brothers, Excite bike, Pacman, Donkey Kong (basically the simplest rom mapper)
 
 
 ## Tools used, & authors:
 
-SPC700 APU emulator (c)2001-2003 Joey Parsell (Memblers http://www.parodius.com/~memblers/) w/ assistance from Kevin Horton, and others
+SPC700 APU emulator (c)2001-2003 Joey Parsell (Memblers http://membler-industries.com/) w/ assistance from Kevin Horton, and others
+
 wla-65816 assembler by Ville Helin
 
 NESASM3
@@ -116,5 +117,5 @@ Super Sleuth by Kris Bleakley (was the best emulator with debugger at the start 
 
 
 upernes,(c)2015 Patrick Areny, upernes is released under the GPL licence.
-my blog: http://www.blog.vreemdelabs.com/
+my blog: http://www.blog.vreemdelabs.com/ <- Burnt in OVH fire in 2021 :( 
 
