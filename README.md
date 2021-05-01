@@ -125,6 +125,8 @@ my blog: http://www.blog.vreemdelabs.com/ <- Burnt in OVH fire in 2021 :(
 
 ### First development in 2011
 ![alt text](Screenshot.png)
+The background tiles and palete test ROM being automaticly ported to SNES. The original on nesticle and the other one on Zsnes (fedora linux system)
 
 ### Just before SMB works in 2016
 ![alt text](SMB.png)
+This is a screenshot of super mario brothers, with a background palette bug and indirect jump detection printed on the screen.
