@@ -3,6 +3,7 @@ A Nes to Super Nes recompiler.
 
 upernes takes rom files for the Nintendo Nes and recompiles them to make Super Nes smc rom files.
 It Works on linux and windows.
+A docker image can also be used.
 
 ## Principle:
 
@@ -65,7 +66,12 @@ T7 Pad0      0 color and backgorund error
 T8 indjump   1 displays the adress
 
 
+## Build upernes:
 
+Call:
+make
+
+That's it for bulding.
 ## Windows installation:
 
 Since the best snes debuggers are only available on windows, you may be interested in how to install
@@ -78,13 +84,23 @@ You must install the following modules from the Msys module installer:
     
     Gdb - Used to debug upernes (the disassembler/reassembler)
     
-    SDL2 - Used to show the disassembly progress.
+    SDL2 - if enabled to show the disassembly progress.
     
     Flex and Bison - Used to parse opcodes
     
 You need to install wla-65816 from the web site. Wla-65816 is one of the best assemblers for retro gaming.
 Add wla-65816 to your windows path (like adding C:\dev\snes\wladx_binaries_20040822\ to your $PATH)
 I use FCEUX for the nes roms, and bsnes-plus for the snes roms, because they have a debugger.
+
+ ## Docker Image
+
+ The docker image is a Debian with bash, build-essentials, and wla-65816 assembler.
+ You can build it with init_docker.sh
+
+ But first you need to install docker, for linux, I suggest this link: https://docs.docker.com/engine/install/ubuntu/
+ 
+ The docker container allows to build upernes as well as calling it to convert roms.
+ Call ./docker/run_docker.sh and you will have a bash shell in the container in the current directory.
 
 ## How to use upernes:
 

@@ -1,0 +1,5 @@
+*.o
+lex.yy.c
+lex.zz.c
+test_lex_yy
+test_lex_zz
