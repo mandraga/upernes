@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 echo "cp ../outsrc/recomp.asm ../asm/recomp.asm"
 cp ../outsrc/recomp.asm ../asm/recomp.asm

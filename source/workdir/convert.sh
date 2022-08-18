@@ -1,8 +1,16 @@
-#!bash
+#!/bin/bash
 # echo commands
 #set -vx
 
-UPERNES_PATH="../binw64"
+OS_NAME=$(uname -s)
+if [ "$OS_NAME" = "Linux" ]
+then
+	UPERNES_PATH="../binl64"
+	UPERNES_BINARY="upernes"
+else
+	UPERNES_PATH="../binw64"
+	UPERNES_BINARY="upernes.exe"
+fi
 
 if [ "$1" = "" ]; then
 	echo "usage: convert.sh \"rompath/romname\" [\"output_path\"]";
@@ -12,8 +20,8 @@ if [ "$2" = "" ]; then
 else
 	OUTPUT_PATH=$2
 fi
-echo "output path = " $OUTPUT_PATH
-# Copy all the things in the asm directory
+echo "output path = $OUTPUT_PATH"
+# Copy all the things from the asm directory
 cp ../asm/*.asm ./
 cp ../asm/*.inc ./
 cp ../asm/linkfile.prj ./
@@ -21,15 +29,16 @@ cp ../opcodes.txt ./
 cp ../asm/data/* ./data/
 cp ../asm/Memblers_2a03.bin ./
 
-echo "romefile = " $1
+echo "romfile = $1"
+
 # Runs uppernes on the nes rom
 set +vx
-$UPERNES_PATH/upernes.exe "$1" $OUTPUT_PATH
+$UPERNES_PATH/$UPERNES_BINARY "$1" "$OUTPUT_PATH"
 
 # Extract the ROM name from the path
-ROM_NAME=$(echo $1 | sed "s/.*\///")
-ROM_NAME=$(echo $ROM_NAME | sed "s/nes/fig/")
-echo "Rom name = " $ROM_NAME
+ROM_NAME=$(echo "$1" | sed "s/.*\///")
+ROM_NAME=$(echo "$ROM_NAME" | sed "s/nes/fig/")
+echo "Rom name = $ROM_NAME"
 # Put it in the environment for the Makefile
 export ROM_NAME
 # Delete the previous one if any
