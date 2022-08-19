@@ -34,6 +34,10 @@ echo "romfile = $1"
 # Runs uppernes on the nes rom
 set +vx
 $UPERNES_PATH/$UPERNES_BINARY "$1" "$OUTPUT_PATH"
+if [ $? -ne 0 ]
+then
+	exit 1
+fi
 
 # Extract the ROM name from the path
 ROM_NAME=$(echo "$1" | sed "s/.*\///")
@@ -45,6 +49,7 @@ export ROM_NAME
 rm "$ROM_NAME"
 # Build the snes rom using the makefile
 make all
+RET=$?
 
 unset ROM_NAME
 set +vx
