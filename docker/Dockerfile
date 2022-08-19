@@ -7,7 +7,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get --allow-releaseinfo-change update && apt-get -y upgrade
 
 RUN apt-get update && apt-get install -y gawk wget git-core diffstat unzip build-essential curl flex bison cmake
-RUN apt-get update && apt-get install -y libsdl2-dev
+RUN apt-get update && apt-get install -y libsdl1.2-dev
 
 RUN groupadd -r builder \
 	&& useradd -m -d /home/builder -g builder builder \

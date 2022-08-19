@@ -95,21 +95,39 @@ I use FCEUX for the nes roms, and bsnes-plus for the snes roms, because they hav
  ## Docker Image
 
  The docker image is a Debian with bash, build-essentials, and wla-65816 assembler.
- You can build it with init_docker.sh
+ You can build it with:
+ 
+ ```
+ cd docker/
+ ./init_docker.sh
+ ```
 
  But first you need to install docker, for linux, I suggest this link: https://docs.docker.com/engine/install/ubuntu/
  
  The docker container allows to build upernes as well as calling it to convert roms.
- Call ./docker/run_docker.sh and you will have a bash shell in the container in the current directory.
+ Call ./docker/run_docker.sh and you will have a bash shell in the container at the current directory.
 
+## How to build:
+
+./build.sh will compile the nes test roms and the upernes binary.
+If nesasm is not found, it will try with docker.
 ## How to use upernes:
 
-Once everythnig is installed, go to the directory upernes/source/workdir/ and call ./convert.sh "rompath/romname" "outputpath"
+Once everythnig is installed, go to the directory ./source/workdir/ and call:
+
+```
+./convert.sh "rompath/romname" "outputpath"
+```
+
 This script calls upernes on the nes rom file and disassembles it and rebuilds the graphic tables. It then makes copies
 of the source code and ressources and builds the output rom using wla-65816.
 Indirect jumps cannot be analysed until the jump address is known. Therefore the snes rom will stop on every missing
 indirect jump adress and display the adress on a "crash" screen. You must add this address to romfilename.txt and call a new
 convertion until all the indirect jumps are known.
+
+### Use upernes with docker:
+
+Same thing but in the root folder: ./convert.sh "rompath/romname" "outputpath"
 
 ## Sample of working roms:
 

@@ -19,12 +19,12 @@ endif
 PROJECT=ppuIO
 
 clean:
-	rm -f *.o
-	rm -f *.nes
-	rm -f *.fns
-	rm -f *~
-	rm -f $(COMMONSRCDIR)/*~
-	rm -f $(OUTPUT_DIR)$(EXE_NAME)
+	@rm -f *.o
+	@rm -f *.nes
+	@rm -f *.fns
+	@rm -f *~
+	@rm -f $(COMMONSRCDIR)/*~
+	@rm -f $(OUTPUT_DIR)$(EXE_NAME)
 
 
 all: 
