@@ -14,6 +14,7 @@ fi
 
 if [ "$1" = "" ]; then
 	echo "usage: convert.sh \"rompath/romname\" [\"output_path\"]";
+	exit 0
 fi
 if [ "$2" = "" ]; then
 	OUTPUT_PATH="./"
@@ -33,6 +34,7 @@ echo "romfile = $1"
 
 # Runs uppernes on the nes rom
 set +vx
+echo -e "Calling: $UPERNES_PATH/$UPERNES_BINARY \"$1\" \"$OUTPUT_PATH\""
 $UPERNES_PATH/$UPERNES_BINARY "$1" "$OUTPUT_PATH"
 if [ $? -ne 0 ]
 then

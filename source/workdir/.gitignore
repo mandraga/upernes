@@ -1,0 +1,5 @@
+*.asm
+*.bin
+*.inc
+*.prj
+opcodes.txt

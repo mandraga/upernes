@@ -2,8 +2,13 @@
 # echo commands
 #set -vx
 
-# You can test with
-#  ./conversion.sh ./rom/nes/dev/t2_ppu0/ppu0.fns ./
+if [ $# -eq 0 ]; then
+    echo -e "Usage: ./conversion.sh inputrom.fns outputdir/"
+    echo -e ""
+    echo -e "You can test with"
+    echo -e "./conversion.sh ./rom/nes/dev/t2_ppu0/ppu0.fns ./"
+    exit 0
+fi
 
 # If the assembler is not on the system, then try the docker image
 if [ -z $(which wla-65816) ]
