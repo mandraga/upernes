@@ -1,5 +1,3 @@
-
-
 class Cdisasm : public Ivideo
 {
   enum

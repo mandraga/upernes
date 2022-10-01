@@ -1,4 +1,5 @@
 
+#define ERRMSGSZ 8192
 
 #define SZ_INES_HEADER 16
 
@@ -30,7 +31,7 @@ private:
 private:
   char m_name_str[128];
 public:
-  char m_error_str[128];
+  char m_error_str[ERRMSGSZ];
   unsigned char *m_pPRG;
   unsigned char *m_pCHR;
   int  m_PRG_size;
