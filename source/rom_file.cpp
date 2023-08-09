@@ -69,23 +69,23 @@ int Crom_file::proces_header(unsigned char *header)
   for (i = 0; i < 4; i++)
     if (cheader[i] != header[i])
       {
-	snprintf(m_error_str, sizeof(m_error_str), "ines header");
-	return 1;
+        snprintf(m_error_str, sizeof(m_error_str), "ines header 0x%2X != 0x%2X", cheader[i], header[i]);
+        return 1;
       }
   // PRG
   i = (int)header[4];
   if (i == 0 || i > 64)
       {
-	snprintf(m_error_str, sizeof(m_error_str), "wrong PRG memory size");
-	return 1;
+        snprintf(m_error_str, sizeof(m_error_str), "wrong PRG memory size");
+        return 1;
       }
   m_PRG_size = i * PRG_BANK_SIZE; // 16KB page
   // CHR
   i = (int)header[5];
   if (i > 64)
       {
-	snprintf(m_error_str, sizeof(m_error_str), "wrong CHR memory size");
-	return 1;
+        snprintf(m_error_str, sizeof(m_error_str), "wrong CHR memory size");
+        return 1;
       }  
   m_CHR_size = i * CHR_BANK_SIZE; // 8KB page
   // Read rom mapper and flags
@@ -95,8 +95,8 @@ int Crom_file::proces_header(unsigned char *header)
   for (i = 8; i < 16; i++)
     if (header[i])
       {
-	snprintf(m_error_str, sizeof(m_error_str), " byte %d in ines header is not 0", i);
-	return 1;
+        snprintf(m_error_str, sizeof(m_error_str), " byte %d in ines header is not 0", i);
+        return 1;
       }
   return 0;
 }

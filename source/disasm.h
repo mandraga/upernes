@@ -2,7 +2,7 @@ class Cdisasm : public Ivideo
 {
   enum
     {
-      unrecerror,
+      unrecerror = 1,
       newinstruction,
       jumpto,
       alreadyread,

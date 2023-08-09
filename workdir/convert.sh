@@ -5,10 +5,10 @@
 OS_NAME=$(uname -s)
 if [ "$OS_NAME" = "Linux" ]
 then
-	UPERNES_PATH="../binl64"
+	UPERNES_PATH="../bin/binl64"
 	UPERNES_BINARY="upernes"
 else
-	UPERNES_PATH="../binw64"
+	UPERNES_PATH="../bin/binw64"
 	UPERNES_BINARY="upernes.exe"
 fi
 
@@ -23,12 +23,12 @@ else
 fi
 echo "output path = $OUTPUT_PATH"
 # Copy all the things from the asm directory
-cp ../asm/*.asm ./
-cp ../asm/*.inc ./
-cp ../asm/linkfile.prj ./
-cp ../opcodes.txt ./
-cp ../asm/data/* ./data/
-cp ../asm/Memblers_2a03.bin ./
+cp ../source/asm/*.asm ./
+cp ../source/asm/*.inc ./
+cp ../source/asm/linkfile.prj ./
+cp ../source/opcodes.txt ./
+cp ../source/asm/data/* ./data/
+cp ../source/asm/Memblers_2a03.bin ./
 
 echo "romfile = $1"
 
@@ -38,6 +38,7 @@ echo -e "Calling: $UPERNES_PATH/$UPERNES_BINARY \"$1\" \"$OUTPUT_PATH\""
 $UPERNES_PATH/$UPERNES_BINARY "$1" "$OUTPUT_PATH"
 if [ $? -ne 0 ]
 then
+	echo "Conversion failed"
 	exit 1
 fi
 
@@ -48,7 +49,9 @@ echo "Rom name = $ROM_NAME"
 # Put it in the environment for the Makefile
 export ROM_NAME
 # Delete the previous one if any
-rm "$ROM_NAME"
+if [ -f "$ROM_NAME" ]; then
+	rm "$ROM_NAME"
+fi
 # Build the snes rom using the makefile
 make all
 RET=$?
