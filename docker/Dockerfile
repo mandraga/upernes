@@ -17,7 +17,8 @@ RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 # Build wla from source
 RUN git clone https://github.com/vhelin/wla-dx
-RUN cd wla-dx && git checkout v10.2 && mkdir build && cd build && cmake .. && cmake --build . --config Release && cmake -P cmake_install.cmake
+#RUN cd wla-dx && git checkout v10.2 && mkdir build && cd build && cmake .. && cmake --build . --config Release && cmake -P cmake_install.cmake
+RUN cd wla-dx && git checkout 8fb00753aa633b1e5ccabf502037e23b334d5d82 && cmake -G "Unix Makefiles" . && make && cp ./binaries/* /usr/sbin/
 
 # Build nesasm from source
 RUN git clone https://github.com/camsaul/nesasm.git

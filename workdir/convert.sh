@@ -59,6 +59,7 @@ RET=$?
 unset ROM_NAME
 set +vx
 
+#exit 0
 # Clean the static sources
 rm ./CHR.asm
 rm ./indjmp.asm
