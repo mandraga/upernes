@@ -2,8 +2,8 @@
 A Nes to Super Nes recompiler.
 
 upernes takes rom files for the Nintendo Nes and recompiles them to make Super Nes smc rom files.
-It Works on linux and windows.
-A docker image can also be used.
+
+It runs on linux and windows. A docker image can also be used.
 
 ## Principle:
 
@@ -66,10 +66,9 @@ T8 indjump   1 displays the adress
 
 ## Build upernes:
 
-'''
-cd source
-make
-'''
+```
+cd source; make
+```
 
 That's it for bulding.
 ## Windows installation:
@@ -132,7 +131,7 @@ Same thing but in the root folder: ./convert.sh "rompath/romname" "outputpath"
 
 ## Some working roms:
 
-Ballon fight, Pinball, Super Mario Brothers, Excite bike, Pacman, Donkey Kong (basically the simplest rom mapper)
+Balloon fight, Pinball, Super Mario Brothers, Excite bike, Pacman, Donkey Kong (basically the simplest rom mapper)
 
 
 ## Tools used, & authors:
