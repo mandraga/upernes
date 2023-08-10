@@ -131,7 +131,7 @@ Same thing but in the root folder: ./convert.sh "rompath/romname" "outputpath"
 
 ## Some working roms:
 
-Ballon fight, Pinball, Super Mario Brothers, Excite bike, Pacman, Donkey Kong (basically the simplest rom mapper)
+Balloon fight, Pinball, Super Mario Brothers, Excite bike, Pacman, Donkey Kong (basically the simplest rom mapper)
 
 
 ## Tools used, & authors:
