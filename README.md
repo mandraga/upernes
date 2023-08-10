@@ -67,8 +67,7 @@ T8 indjump   1 displays the adress
 ## Build upernes:
 
 '''
-cd source
-make
+cd source; make
 '''
 
 That's it for bulding.
