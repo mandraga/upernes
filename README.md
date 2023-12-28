@@ -43,11 +43,11 @@ The emulated PPU is ok (games like in Battle city not working due to special til
 Basically, the remaining work is: finish the PPU io emulation, The NSF player for SNES by Memblers is used but some adjustments on the line where it is called must be made in order to have proper sound.
 add/fix interrupts.
 And finally add comon bank switching for bigger roms (double dragon2 or SMB3 roms have complex bank switching and timers).
-The emulation part is very tricky because not everything is at his original place, and the Snes cpu is not so much powerfull compared to the nes, you get an extra Mhz but that's it. So code in ram is often used to speed up port emulation calls. Unused nes adress space in witch we find sram on the snes, is used to be able to execute code in the same bank. Hence avoiding bank switching and sparing cpu cycles.
+The emulation part is very tricky because not everything is at his original place, and the Snes cpu is not so much powerfull compared to the nes, you get an extra Mhz but that's it. So code in ram is often used to speed up port emulation calls. Unused nes adress space in which we find sram on the snes, is used to be able to execute code in the same bank. Hence avoiding bank switching and sparing cpu cycles.
 
 ## Tests:
 
-
+g
 T1 Palette   1
 
 T2 PPU       1
