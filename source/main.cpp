@@ -107,6 +107,7 @@ int open_rom(char *file_path, char *output_path, Copcodes *popcode_list)
 
 int main(int argc, char *argv[])
 {
+  int retval = 0;
   Copcodes *popcode_list;
   char path[] = "./opcodes.txt";
   char outpath[] = "./";
@@ -150,10 +151,10 @@ int main(int argc, char *argv[])
 #else
       printf("\n\n");
 #endif
-      open_rom(ROMpath, OutputPath, popcode_list);
+      retval = open_rom(ROMpath, OutputPath, popcode_list);
     }
   delete popcode_list;
   scr.free_video();
-  return 0;
+  return retval;
 }
 

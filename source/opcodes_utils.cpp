@@ -159,7 +159,7 @@ void Copcodes::out_instruction(FILE *fd, int opcode, int operand, char *label)
 void Copcodes::print_instruction(int instr_addr, unsigned long instruction)
 {
   unsigned char opcode = instruction & 0xFF;
-  char  out[50];
+  char  out[sizeof(Cmnemonic_6502::pstr_description) + 2];
 
   if (!is_valid(opcode))
     {

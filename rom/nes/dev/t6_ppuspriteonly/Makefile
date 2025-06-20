@@ -16,7 +16,7 @@ else
 	ASM=NESASM3.EXE
 endif
 
-PROJECT=palette
+PROJECT=ppuspr
 
 clean:
 	@rm -f *.o

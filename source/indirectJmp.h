@@ -52,7 +52,7 @@ private:
   void get_8b_line(int res);
 
 public:
-  char              m_error_str[4096];
+  char              m_error_str[ERRMSGSZ];
 private:
   unsigned long     m_crc;
   int               m_state;

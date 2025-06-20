@@ -31,6 +31,7 @@ Ivideo::~Ivideo()
 {
 }
 
+#ifdef USE_VIDEO
 int Ivideo::init_video(int resolutionx, int resolutiony)
 {
   assert (g_pvideout == NULL || pscr == NULL);
@@ -88,3 +89,28 @@ int Ivideo::update_screen()
   g_pvideout->copy_to_screen(pscr);
   return 0;
 }
+#else
+int Ivideo::init_video(int resolutionx, int resolutiony)
+{
+  return 0;
+}
+
+int Ivideo::free_video()
+{
+  return 0;
+}
+
+void Ivideo::clear()
+{
+}
+
+int Ivideo::copy_to_bitmap(Cimage *pimg, int xpos, int ypos)
+{
+  return 0;
+}
+
+int Ivideo::update_screen()
+{
+  return 0;
+}
+#endif //USE_VIDEO

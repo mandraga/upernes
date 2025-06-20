@@ -13,5 +13,5 @@ private:
   void AddPRGPatch(int OpAddr, char *routineName, std::vector<t_PatchRoutine> &Patches);
 
 public:
-  char              m_error_str[64];
+  char              m_error_str[ERRMSGSZ];
 };

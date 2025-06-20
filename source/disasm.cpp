@@ -359,8 +359,10 @@ int Cdisasm::disasm(Copcodes *pops, Crom_file *prom, CindirectJmpRuntimeLabels *
       return 1;
     }
   m_listing.removeNonUpdateOpcodes(); // bit trick to jump opver ldy are not updated (opcode == -1)
+#ifdef USE_VIDEO
   copy_to_bitmap(&m_img, 30, 30);
   update_screen();
+#endif
   //m_listing.print_listing(pops);
   m_listing.list_IO_accessed();
   m_listing.print_IO_accessed();

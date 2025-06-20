@@ -80,7 +80,7 @@ private:
   bool isIn(t_pinstr pinstr, t_instrlist& instrList);
   
 public:
-  char m_error_str[128];
+  char m_error_str[ERRMSGSZ];
 private:
   t_label_list m_label_gen_list;
   unsigned int m_PPUAddrRoutineSize;

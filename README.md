@@ -2,16 +2,16 @@
 A Nes to Super Nes recompiler.
 
 upernes takes rom files for the Nintendo Nes and recompiles them to make Super Nes smc rom files.
-It Works on linux and windows.
+
+It runs on linux and windows. A docker image can also be used.
 
 ## Principle:
 
 The rom is disassembled, the tile data is separated. The 6502  machine code is analysed and stored in a list.
 Once this list is made, the code is modified in order to replace read/writes to the original nes hardware by
-calls to 65C816 assembler routines. Those calls emulate the nes hardware (PPU and sound). The memory is slightly reorganised, the data is taken from the original code
-in a first bank and the modified code runs from a second bank. Most of the original 6502 code is kept and runs
+calls to 65C816 assembler routines. Those calls emulate the nes hardware (PPU and sound). The memory is slightly reorganised, the data is taken from the original code in a first bank and the modified code runs from a second bank. Most of the original 6502 code is kept and runs
 in emulation mode.
-upernes outputs an assembler file and converted tile data in outsrc, they must be copied in asm/ with "cpconversion.sh"
+Upernes outputs an assembler file and converted tile data in outsrc, they must be copied in asm/ with "cpconversion.sh"
 and compiled to a Snes rom with "wla-65816".
 "wla-65816" puts everything back together to an smc file.
 
@@ -40,14 +40,13 @@ graphic data.
 
 The disassembler, and instructions rewriting coded in C++ is more or less finished since 2011.
 The emulated PPU is ok (games like in Battle city not working due to special tile sizes), it needs a good knowledge of what's going on in the consoles.
-Basically, the remaining work is: finish the PPU io emulation, The NSF player for SNES by Memblers is used but some adjustments on the line where it is called must be made in order to have proper sound.
+Basically, it converts "Super mario brothers" since 2016. The remaining work is: finish the PPU io emulation, The NSF player for SNES by Memblers is used but some adjustments on the line where it is called must be made in order to have proper sound.
 add/fix interrupts.
 And finally add comon bank switching for bigger roms (double dragon2 or SMB3 roms have complex bank switching and timers).
-The emulation part is very tricky because not everything is at his original place, and the Snes cpu is not so much powerfull compared to the nes, you get an extra Mhz but that's it. So code in ram is often used to speed up port emulation calls. Unused nes adress space in which we find sram on the snes, is used to be able to execute code in the same bank. Hence avoiding bank switching and sparing cpu cycles.
+The emulation part is very tricky because not everything is at his original place, and the Snes cpu is not so much powerfull compared to the nes, you get an extra Mhz but that's it. So code in ram is often used to speed up port emulation calls. Unused nes address space in witch we find sram on the snes, is used to be able to execute code in the same bank. Hence avoiding bank switching and sparing cpu cycles.
 
 ## Tests:
 
-g
 T1 Palette   1
 
 T2 PPU       1
@@ -65,7 +64,13 @@ T7 Pad0      0 color and backgorund error
 T8 indjump   1 displays the adress
 
 
+## Build upernes:
 
+```
+cd source; make
+```
+
+That's it for bulding.
 ## Windows installation:
 
 Since the best snes debuggers are only available on windows, you may be interested in how to install
@@ -78,7 +83,7 @@ You must install the following modules from the Msys module installer:
     
     Gdb - Used to debug upernes (the disassembler/reassembler)
     
-    SDL2 - Used to show the disassembly progress.
+    SDL2 - if enabled to show the disassembly progress.
     
     Flex and Bison - Used to parse opcodes
     
@@ -86,18 +91,47 @@ You need to install wla-65816 from the web site. Wla-65816 is one of the best as
 Add wla-65816 to your windows path (like adding C:\dev\snes\wladx_binaries_20040822\ to your $PATH)
 I use FCEUX for the nes roms, and bsnes-plus for the snes roms, because they have a debugger.
 
+ ## Docker Image
+
+ The docker image is used to build everything without installing the tools directly on your system.
+ The docker image is a Debian with bash, build-essentials, and wla-65816 assembler.
+ You can build it with:
+ 
+ ```
+ cd docker/
+ ./init_docker.sh
+ ```
+
+ But first you need to install docker, for linux, I suggest this link: https://docs.docker.com/engine/install/ubuntu/
+ 
+ The docker container allows to build upernes as well as calling it to convert roms.
+ Call ./docker/run_docker.sh and you will have a bash shell in the container at the current directory.
+
+## How to build:
+
+./build.sh will compile the nes test roms and the upernes binary.
+If nesasm is not found, it will try running it with docker.
 ## How to use upernes:
 
-Once everythnig is installed, go to the directory upernes/source/workdir/ and call ./convert.sh "rompath/romname" "outputpath"
+Once everything is installed, go to the directory ./workdir/ and call:
+
+```
+./convert.sh "rompath/romname" "outputpath"
+```
+
 This script calls upernes on the nes rom file and disassembles it and rebuilds the graphic tables. It then makes copies
 of the source code and ressources and builds the output rom using wla-65816.
 Indirect jumps cannot be analysed until the jump address is known. Therefore the snes rom will stop on every missing
 indirect jump adress and display the adress on a "crash" screen. You must add this address to romfilename.txt and call a new
 convertion until all the indirect jumps are known.
 
-## Sample of working roms:
+### Use upernes with docker:
 
-Ballon fight, Pinball, Super Mario Brothers, Excite bike, Pacman, Donkey Kong (basically the simplest rom mapper)
+Same thing but in the root folder: ./convert.sh "rompath/romname" "outputpath"
+
+## Some working roms:
+
+Balloon fight, Pinball, Super Mario Brothers, Excite bike, Pacman, Donkey Kong (basically the simplest rom mapper)
 
 
 ## Tools used, & authors:

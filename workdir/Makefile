@@ -13,7 +13,9 @@ default: all
 $(objects): %.o: %.asm
 	@echo "$@" >> $(LILKFILE)
 	@echo "-------- Makes: $<"
-	$(ASM) $(FLAGS) $<
+	$(ASM) $(FLAGS) $< 
+
+#For versoin 10 which doe snot assemble well  witht he current code: $(ASM) $(FLAGS) $@ $< 
 
 linkfile:
 	-rm $(LILKFILE)
@@ -21,7 +23,7 @@ linkfile:
 
 # linkfile.prj
 all: linkfile $(objects)
-	wlalink -vr linkfile.prj "$(ROM_NAME)"
+	wlalink -rv linkfile.prj "$(ROM_NAME)"
 
 clean:
 	-rm *.obj

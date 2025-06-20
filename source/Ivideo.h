@@ -1,4 +1,6 @@
 
+
+//#define USE_VIDEO
 class Ivideo
 {
 public:

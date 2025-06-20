@@ -16,14 +16,18 @@ INCLUDES = "/usr/include/"
 
 ifeq ($(OPERATINGON),__LINUX)
 	CHECKSTACK=-fstack-protector-all
-	OUTPUT_DIR=./binl64/
+	OUTPUT_DIR=../bin/binl64/
 else
 	CHECKSTACK=
-	OUTPUT_DIR=./binw64/
+	OUTPUT_DIR=../bin/binw64/
 endif
 
 FLAGS = -Wall -g $(CHECKSTACK) -c -I$(INCLUDES)
+ifeq ($(USE_VIDEO),TRUE)
 LIB = -L./video/ -lvideo -lSDL
+else
+LIB =
+endif
 ifeq ($(OPERATINGON),__LINUX)
 CONSOLEFLAG=
 EXT=
@@ -53,20 +57,20 @@ test:
 testzz:
 	cat opcodes.txt | ./test_lex_zz$(EXT)
 
-lex.yy.o: opcode_desctxt.l parse_codes.h yywrap.c
+$(OBJDIR)/lex.yy.o: opcode_desctxt.l parse_codes.h yywrap.c
 	flex opcode_desctxt.l
-	$(C) -c lex.yy.c
-	$(C) -c yywrap.c
-	$(C) -c test_lex_yy.c
-	$(C) lex.yy.o yywrap.o test_lex_yy.o -o test_lex_yy$(EXT) $(CONSOLEFLAG)
+	$(C) -c lex.yy.c -o $(OBJDIR)/lex.yy.o
+	$(C) -c yywrap.c -o $(OBJDIR)/yywrap.o
+	$(C) -c test_lex_yy.c -o $(OBJDIR)/test_lex_yy.o
+	$(C) $(OBJDIR)/lex.yy.o $(OBJDIR)/yywrap.o $(OBJDIR)/test_lex_yy.o -o test_lex_yy$(EXT) $(CONSOLEFLAG)
 #-lfl
 
-lex.zz.o: runtimeaddrcfg.l parse_codes.h zzwrap.c
+$(OBJDIR)/lex.zz.o: runtimeaddrcfg.l parse_codes.h zzwrap.c
 	flex -P zz runtimeaddrcfg.l
-	$(C) -c lex.zz.c
-	$(C) -c zzwrap.c
-	$(C) -c test_lex_zz.c
-	$(C) lex.zz.o zzwrap.o test_lex_zz.o -o test_lex_zz$(EXT) $(CONSOLEFLAG)
+	$(C) -c lex.zz.c -o $(OBJDIR)/lex.zz.o
+	$(C) -c zzwrap.c -o $(OBJDIR)/zzwrap.o
+	$(C) -c test_lex_zz.c -o $(OBJDIR)/test_lex_zz.o
+	$(C) $(OBJDIR)/lex.zz.o $(OBJDIR)/zzwrap.o $(OBJDIR)/test_lex_zz.o -o test_lex_zz$(EXT) $(CONSOLEFLAG)
 
 $(OBJDIR)/opcode_6502.o: opcode_6502.h
 $(OBJDIR)/parser.o: parser.h parse_codes.h
@@ -114,9 +118,9 @@ $(OBJS): $(OBJDIR)/%.o : $(SRCDIR)/%.cpp
 	@echo "-------- : $<"
 	$(CC) $(FLAGS) $< -o $@
 
-flexObjects = lex.yy.o yywrap.o lex.zz.o zzwrap.o
+flexObjects = $(OBJDIR)/lex.yy.o $(OBJDIR)/yywrap.o $(OBJDIR)/lex.zz.o $(OBJDIR)/zzwrap.o
 
-all: lex.yy.o lex.zz.o $(OBJS)
+all: $(OBJDIR)/lex.yy.o $(OBJDIR)/lex.zz.o $(OBJS)
 	@echo "-------- Makes: $(EXE_NAME)$(EXT)"
 	$(CC) $(flexObjects) $(OBJS) -Lsystem/ $(LIB) -o $(OUTPUT_DIR)$(EXE_NAME)$(EXT) $(CONSOLEFLAG)
 

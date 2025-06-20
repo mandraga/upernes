@@ -66,7 +66,7 @@ CindirectJmpRuntimeLabels::~CindirectJmpRuntimeLabels()
 // Constructs the indirect address parameter text file name from the rom name
 int CindirectJmpRuntimeLabels::find_config_filename(Crom_file *rom, char *cfg_file_name, char *output_path)
 {
-  char tmp_rom_file_name[CFG_FILENAME_SZ];
+  char tmp_rom_file_name[CFG_FILENAME_SZ - 2];
   int  i;
 
   if (rom->getromname(tmp_rom_file_name, CFG_FILENAME_SZ))
